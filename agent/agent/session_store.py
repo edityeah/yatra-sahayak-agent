@@ -3,7 +3,10 @@
 POC-only: survives within a single running process, NOT across restarts or
 multiple instances. It exists because the webhook strips internal markers
 before streaming, so the chosen language/yatra can't ride back in the client
-history. Plan 2 replaces this with DB-backed `user_state` for durability.
+history. Not concurrency-safe for simultaneous requests on the same
+conversation_id (last write wins) — fine for turn-taking chat. The transcript
+grows unbounded per conversation (no TTL/cap) — acceptable for short demos.
+Plan 2 replaces this with DB-backed `user_state` for durability.
 """
 from __future__ import annotations
 from typing import Any

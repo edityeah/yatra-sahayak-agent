@@ -45,16 +45,17 @@ def test_multi_turn_persists_language_and_reaches_activity(client):
                   "message": {"content": [{"type": "text", "text": {"value": text}}]}},
         ).text
 
-    # Turn 1: greeting → language ask.
-    assert "choose your language" in post("hello")
-    # Turn 2: pick Marathi → language accepted, now asks which yatra (NOT the language ask again).
-    r2 = post("Marathi")
-    assert "choose your language" not in r2
-    # Turn 3: pick the yatra → must NOT revert to asking which yatra.
-    r3 = post("pandharpur")
-    assert "Which yatra" not in r3 and "कोणत्या यात्रे" not in r3
-    # Turn 4: emergency → SOS fast-path reaches the drills_sos activity stub.
-    r4 = post("emergency stampede help")
-    assert "drills_sos" in r4
-
-    session_store.clear(conv)
+    try:
+        # Turn 1: greeting → language ask.
+        assert "choose your language" in post("hello")
+        # Turn 2: pick Marathi → language accepted, now asks which yatra (NOT the language ask again).
+        r2 = post("Marathi")
+        assert "choose your language" not in r2
+        # Turn 3: pick the yatra → must NOT revert to asking which yatra.
+        r3 = post("pandharpur")
+        assert "Which yatra" not in r3 and "कोणत्या यात्रे" not in r3
+        # Turn 4: emergency → SOS fast-path reaches the drills_sos activity stub.
+        r4 = post("emergency stampede help")
+        assert "drills_sos" in r4
+    finally:
+        session_store.clear(conv)

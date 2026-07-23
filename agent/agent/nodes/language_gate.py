@@ -1,9 +1,12 @@
-"""language_gate — pick language once, then mirror it every turn.
+"""language_gate — pick language once, then keep it for the conversation.
 
-Sets state['language'] to 'mr' | 'hi' | 'en'. On a fresh thread with no
-prior assistant turn, appends the selection prompt and leaves language=None
-(the graph ends the turn there). Once chosen, the language is re-derived
-from the [lang:xx] marker on the earliest post-selection assistant turn.
+Sets state['language'] to 'mr' | 'hi' | 'en'. On a fresh thread it appends
+the selection prompt and leaves language=None (the graph ends the turn).
+Persistence across turns is provided by the webhook's session_store, which
+injects the resolved language back into state; when it's already set we
+honour it and skip the ask. The [lang:xx] marker scan below is only a
+best-effort fallback for histories that happen to carry such a marker (none
+are written today). Plan 2 replaces the store with DB-backed user_state.
 """
 from __future__ import annotations
 import re

@@ -1,8 +1,9 @@
 """yatra_context — resolve which yatra the user is on (Pandharpur/Kumbh).
 
-Like language, the active yatra is persisted statelessly via a [yatra:xx]
-marker on assistant turns and re-derived each turn. An explicit switch
-phrase ("switch to kumbh") overrides the stored value.
+Precedence: an explicit mention in the latest turn ("switch to kumbh") wins,
+then the value the webhook's session_store injects into state, then a
+best-effort [yatra:xx] marker scan of history (no markers are written today),
+else we ask. Plan 2 replaces the store with DB-backed user_state.
 """
 from __future__ import annotations
 import re
