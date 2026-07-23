@@ -29,7 +29,11 @@ _ACTIVITY_INTENTS = ("weather", "advisory", "logistics", "helpline", "drills_sos
 
 
 def _after_policy(state: YatraState):
-    return END if state.get("policy_result") == "blocked" else "language_gate"
+    if state.get("policy_result") == "blocked":
+        return END
+    if state.get("sos"):
+        return "intent_router"   # emergency: skip language/yatra gates
+    return "language_gate"
 
 
 def _after_language(state: YatraState):

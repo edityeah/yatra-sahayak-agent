@@ -33,9 +33,11 @@ def test_multi_turn_persists_language_and_reaches_activity(client):
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
     from agent import session_store
+    from agent import persistence
 
     conv = "mt-persist-1"
     session_store.clear(conv)
+    persistence.reset()
 
     def post(text):
         return client.post(
@@ -59,3 +61,4 @@ def test_multi_turn_persists_language_and_reaches_activity(client):
         assert "drills_sos" in r4
     finally:
         session_store.clear(conv)
+        persistence.reset()
