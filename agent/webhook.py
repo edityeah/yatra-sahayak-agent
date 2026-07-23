@@ -22,6 +22,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from agent.config import get_settings
 from agent.state import new_state
 from agent.graph import yatra_graph
+from agent import db
 
 load_dotenv()
 settings = get_settings()
@@ -33,6 +34,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def _startup() -> None:
+    await db.run_migrations()
 
 
 @app.get("/health")
