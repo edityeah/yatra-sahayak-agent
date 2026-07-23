@@ -3,7 +3,6 @@ get_pool() returns None and callers fall back to in-memory behaviour.
 Ported from swift-learning-agent/agent/agent/db.py."""
 from __future__ import annotations
 import logging
-from typing import Optional
 
 import psycopg
 from psycopg.rows import dict_row

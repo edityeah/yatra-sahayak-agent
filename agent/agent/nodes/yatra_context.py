@@ -33,7 +33,7 @@ def detect_yatra(text: str) -> str | None:
 
 
 def _current_yatra(messages) -> str | None:
-    for m in messages:
+    for m in reversed(messages):
         if isinstance(m, AIMessage):
             hit = _YATRA_MARKER_RE.search(str(m.content))
             if hit:
@@ -53,7 +53,12 @@ async def yatra_context(state: YatraState) -> YatraState:
     if mentioned:
         return {**state, "current_node": "yatra_context", "active_yatra": mentioned}  # type: ignore[typeddict-item]
 
-    # Otherwise carry forward the stored choice.
+    # Honour a yatra already resolved for this conversation (injected by the
+    # webhook from the session store).
+    if state.get("active_yatra"):
+        return {**state, "current_node": "yatra_context", "active_yatra": state["active_yatra"]}  # type: ignore[typeddict-item]
+
+    # Otherwise carry forward via a marker in history (fallback).
     stored = _current_yatra(messages)
     if stored:
         return {**state, "current_node": "yatra_context", "active_yatra": stored}  # type: ignore[typeddict-item]

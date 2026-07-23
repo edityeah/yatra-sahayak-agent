@@ -23,6 +23,7 @@ from agent.config import get_settings
 from agent.state import new_state
 from agent.graph import yatra_graph
 from agent import db
+from agent import session_store
 
 load_dotenv()
 settings = get_settings()
@@ -82,12 +83,35 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     history = body.get("history", [])
 
     state = new_state(session_id=conv_id, user_id=user_id)
-    state["messages"] = _rebuild_messages(history, user_text)
     state["context_from_webview"] = body.get("context_from_webview")
+
+    # Restore this conversation's transcript + resolved language/yatra from the
+    # in-process session store. SwiftChat's webhook doesn't resend prior turns
+    # and markers are stripped before streaming, so this store is the POC
+    # stand-in for the reference's DB-backed history + user_state.
+    sess = session_store.load(conv_id)
+    prior = sess.get("messages")
+    if prior is not None:
+        state["messages"] = list(prior) + [HumanMessage(content=user_text)]
+    else:
+        # First turn in this process — seed from any client-sent history.
+        state["messages"] = _rebuild_messages(history, user_text)
+    if sess.get("language"):
+        state["language"] = sess["language"]
+    if sess.get("active_yatra"):
+        state["active_yatra"] = sess["active_yatra"]
 
     before = len(state["messages"])
     result = await yatra_graph.ainvoke(state)
     after_msgs = result.get("messages", [])
+
+    # Persist the updated transcript + any newly-resolved language / yatra.
+    session_store.save(
+        conv_id,
+        messages=after_msgs,
+        language=result.get("language"),
+        active_yatra=result.get("active_yatra"),
+    )
 
     # New assistant text this turn = anything appended past `before`.
     new_texts = [str(m.content) for m in after_msgs[before:] if isinstance(m, AIMessage)]

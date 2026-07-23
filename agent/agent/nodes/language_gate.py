@@ -20,8 +20,8 @@ _LANG_MARKER_RE = re.compile(r"\[lang:(mr|hi|en)\]")
 
 
 def _current_language(messages) -> str | None:
-    """Earliest recorded language marker in the assistant history."""
-    for m in messages:
+    """Most-recent recorded language marker in the assistant history."""
+    for m in reversed(messages):
         if isinstance(m, AIMessage):
             hit = _LANG_MARKER_RE.search(str(m.content))
             if hit:
@@ -41,7 +41,12 @@ def _is_fresh_thread(messages) -> bool:
 async def language_gate(state: YatraState) -> YatraState:
     messages = state.get("messages") or []
 
-    # Already chosen earlier in the thread → carry it forward.
+    # Honour a language already resolved for this conversation (injected by the
+    # webhook from the session store) — don't re-ask.
+    if state.get("language"):
+        return {**state, "current_node": "language_gate", "language": state["language"]}  # type: ignore[typeddict-item]
+
+    # Else re-derive from a marker in history (fallback).
     lang = _current_language(messages)
     if lang:
         return {**state, "current_node": "language_gate", "language": lang}  # type: ignore[typeddict-item]
