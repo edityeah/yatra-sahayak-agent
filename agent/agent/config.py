@@ -32,6 +32,10 @@ class Settings:
     DIRECT_URL:   str = os.environ.get("DIRECT_URL", os.environ.get("DATABASE_URL", "")).strip()
     DB_ENABLED:   bool = bool(os.environ.get("DATABASE_URL", "").strip())
 
+    # IMD weather API. Empty ⇒ always use the cached fallback (data/weather_fallback.json).
+    # When set, may contain a "{yatra}" placeholder, e.g. https://host/forecast?loc={yatra}
+    IMD_API_URL: str = os.environ.get("IMD_API_URL", "").strip()
+
     # Root of shared seed data (rates, routes, drills). data/ is at repo root,
     # two levels up from this file (agent/agent/config.py).
     DATA_DIR: str = os.environ.get(
