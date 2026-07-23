@@ -16,7 +16,28 @@ A yatri bot that greets, selects language, selects yatra, and routes each turn t
 - **signage** — turn-by-turn guidance + a link to the (Plan 3) route-map web app
 - **registration** — multi-turn simulated e-KYC (no real Aadhaar) issuing a Yatra ID + QR pass link
 
-Seed content and cross-turn state (language, yatra, registration intake) are held server-side (`persistence` — Postgres when `DATABASE_URL` is set, in-memory otherwise). Web apps, the officer war-room, and voice arrive in Plans 3–5.
+Seed content and cross-turn state (language, yatra, registration intake) are held server-side (`persistence` — Postgres when `DATABASE_URL` is set, in-memory otherwise).
+
+**Plan 3 complete: yatri web apps + in-browser chat.**
+A React + Vite SPA (`webview/`) served as SwiftChat BotExtension activities, plus a browser chat UI so the whole bot can be exercised **without a SwiftChat registration**. The agent exposes read-only `/api/*` JSON endpoints the SPA reads.
+- **chat** (`/`) — streams the agent over `/messages`; the primary test surface
+- **QR pass** (`/yatri/pass?id=`) — renders the registration + a scannable QR
+- **route map** (`/yatri/map?yatra=`) — Leaflet + OpenStreetMap with geo-tagged halts/ghats/medical/water/toilet pins
+- **logistics / drills / advisories** — live seed-backed lists, trilingual
+
+Deferred: officer war-room dashboard (later) and voice (Plan 5).
+
+## Run the web app + chat locally
+```bash
+# terminal 1 — agent
+cd agent && python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
+OPENAI_API_KEY=sk-... uvicorn webhook:app --port 8000
+
+# terminal 2 — webview
+cd webview && npm install && cp .env.example .env
+npm run dev     # → http://localhost:5174
+```
+Open http://localhost:5174. Deploy (Render + Vercel): see `docs/DEPLOY.md`.
 
 ## Run the agent
 
