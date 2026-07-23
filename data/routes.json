@@ -3,36 +3,50 @@
     {
       "name": {"mr": "सासवड", "hi": "सासवड़", "en": "Saswad"},
       "kind": "night_halt",
+      "lat": 18.345,
+      "lng": 74.031,
       "note": {"mr": "संत ज्ञानेश्वर पालखीचा पहिल्या टप्प्यातील प्रमुख मुक्काम.", "hi": "संत ज्ञानेश्वर पालकी के पहले चरण का प्रमुख पड़ाव।", "en": "Major early night halt on the Sant Dnyaneshwar palkhi route."}
     },
     {
       "name": {"mr": "जेजुरी", "hi": "जेजुरी", "en": "Jejuri"},
       "kind": "night_halt",
+      "lat": 18.277,
+      "lng": 74.161,
       "note": {"mr": "खंडोबा मंदिरासाठी प्रसिद्ध; पालखी विश्रांती स्थळ.", "hi": "खंडोबा मंदिर के लिए प्रसिद्ध; पालकी विश्राम स्थल।", "en": "Known for the Khandoba temple; a palkhi rest stop."}
     },
     {
       "name": {"mr": "वाखरी", "hi": "वाखरी", "en": "Wakhari"},
       "kind": "night_halt",
+      "lat": 17.703,
+      "lng": 75.308,
       "note": {"mr": "पंढरपूरपासून शेवटचा मुक्काम, येथून सर्व दिंड्या एकत्र मार्गक्रमण करतात.", "hi": "पंढरपुर से पहले का अंतिम पड़ाव, यहाँ से सभी दिंडियाँ एक साथ आगे बढ़ती हैं।", "en": "The last halt before Pandharpur, where all dindis converge for the final approach."}
     },
     {
       "name": {"mr": "लोणंद", "hi": "लोनंद", "en": "Lonand"},
       "kind": "night_halt",
+      "lat": 18.036,
+      "lng": 74.196,
       "note": {"mr": "सातारा मार्गावरील मध्यवर्ती मुक्काम.", "hi": "सतारा मार्ग पर मध्यवर्ती पड़ाव।", "en": "A midway halt on the Satara-side route."}
     },
     {
       "name": {"mr": "तरडगाव आरोग्य शिबिर", "hi": "तरडगाँव स्वास्थ्य शिविर", "en": "Tardgaon medical camp"},
       "kind": "medical",
+      "lat": 18.140,
+      "lng": 74.240,
       "note": {"mr": "प्रथमोपचार व सामान्य तपासणीसाठी उभारलेले तात्पुरते आरोग्य केंद्र.", "hi": "प्राथमिक उपचार व सामान्य जाँच के लिए स्थापित अस्थायी स्वास्थ्य केंद्र।", "en": "Temporary health post set up for first aid and general check-ups."}
     },
     {
       "name": {"mr": "वाखरी पिण्याचे पाणी केंद्र", "hi": "वाखरी पेयजल केंद्र", "en": "Wakhari drinking-water point"},
       "kind": "water",
+      "lat": 17.705,
+      "lng": 75.312,
       "note": {"mr": "टँकरद्वारे पुरवठा होणारे सार्वजनिक पिण्याच्या पाण्याचे केंद्र.", "hi": "टैंकर द्वारा आपूर्ति किया जाने वाला सार्वजनिक पेयजल केंद्र।", "en": "Public drinking-water point supplied via tankers."}
     },
     {
       "name": {"mr": "फिरते शौचालय — पालखी मार्ग", "hi": "चलित शौचालय — पालकी मार्ग", "en": "Mobile toilet units — palkhi route"},
       "kind": "toilet",
+      "lat": 17.679,
+      "lng": 75.333,
       "note": {"mr": "प्रत्येक मुक्कामाच्या ठिकाणी उभारलेली स्वच्छतागृहे.", "hi": "प्रत्येक पड़ाव स्थल पर स्थापित शौचालय।", "en": "Sanitation units set up at each halt location."}
     }
   ],
@@ -40,31 +54,43 @@
     {
       "name": {"mr": "रामकुंड घाट", "hi": "रामकुंड घाट", "en": "Ramkund Ghat"},
       "kind": "ghat",
+      "lat": 19.995,
+      "lng": 73.790,
       "note": {"mr": "मुख्य स्नान घाट, गोदावरी नदीकाठी; सर्वाधिक गर्दीचे ठिकाण.", "hi": "मुख्य स्नान घाट, गोदावरी नदी के किनारे; सर्वाधिक भीड़ वाला स्थान।", "en": "The main bathing ghat on the Godavari; the highest-footfall point."}
     },
     {
       "name": {"mr": "त्र्यंबकेश्वर कुशावर्त घाट", "hi": "त्र्यंबकेश्वर कुशावर्त घाट", "en": "Trimbakeshwar Kushavarta Ghat"},
       "kind": "ghat",
+      "lat": 19.932,
+      "lng": 73.529,
       "note": {"mr": "गोदावरीचे उगमस्थान मानले जाणारे पवित्र कुंड.", "hi": "गोदावरी का उद्गम स्थल माना जाने वाला पवित्र कुंड।", "en": "The sacred kund regarded as the source of the Godavari."}
     },
     {
       "name": {"mr": "गोदावरी घाट आरोग्य चौकी", "hi": "गोदावरी घाट स्वास्थ्य चौकी", "en": "Godavari ghat medical post"},
       "kind": "medical",
+      "lat": 19.996,
+      "lng": 73.791,
       "note": {"mr": "घाटावर तात्काळ वैद्यकीय मदतीसाठी उभारलेली चौकी.", "hi": "घाट पर तत्काल चिकित्सा सहायता हेतु स्थापित चौकी।", "en": "Post set up for immediate medical assistance at the ghat."}
     },
     {
       "name": {"mr": "साधुग्राम पिण्याचे पाणी केंद्र", "hi": "साधुग्राम पेयजल केंद्र", "en": "Sadhugram drinking-water point"},
       "kind": "water",
+      "lat": 19.990,
+      "lng": 73.775,
       "note": {"mr": "साधुग्राम व मुख्य मेळा परिसरात पिण्याच्या पाण्याचे केंद्र.", "hi": "साधुग्राम व मुख्य मेला परिसर में पेयजल केंद्र।", "en": "Drinking-water supply point in the Sadhugram and main mela grounds."}
     },
     {
       "name": {"mr": "पंचवटी घाट परिसर", "hi": "पंचवटी घाट परिसर", "en": "Panchavati ghat area"},
       "kind": "ghat",
+      "lat": 20.007,
+      "lng": 73.792,
       "note": {"mr": "श्रीराम-सीता वास्तव्याशी संबंधित मानला जाणारा परिसर, दुय्यम स्नान घाट.", "hi": "श्रीराम-सीता के प्रवास से जुड़ा माना जाने वाला परिसर, द्वितीयक स्नान घाट।", "en": "Area associated with Shri Ram-Sita's stay; a secondary bathing ghat."}
     },
     {
       "name": {"mr": "मेळा परिसर फिरते शौचालय", "hi": "मेला परिसर चलित शौचालय", "en": "Mela grounds mobile toilets"},
       "kind": "toilet",
+      "lat": 19.997,
+      "lng": 73.790,
       "note": {"mr": "मुख्य घाट व साधुग्राम परिसरात उभारलेली स्वच्छतागृहे.", "hi": "मुख्य घाट व साधुग्राम परिसर में स्थापित शौचालय।", "en": "Sanitation units installed around the main ghats and Sadhugram."}
     }
   ]
