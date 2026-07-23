@@ -13,13 +13,15 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: OPENAI_API_KEY
-        sync: false
+        sync: false                 # set on the dashboard (Realtime access needed for voice)
       - key: INTERNAL_API_KEY
         generateValue: true
       - key: LLM_MAIN_MODEL
         value: gpt-4o-mini
       - key: PUBLIC_WEBVIEW_BASE
-        sync: false
+        value: https://yatra-sahayak-agent.vercel.app
+      # LiveKit — set these three on the dashboard (the worker inherits them
+      # via fromService, so you only paste them here, once).
       - key: LIVEKIT_URL
         sync: false
       - key: LIVEKIT_API_KEY
@@ -41,17 +43,33 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      # Inherit the shared secrets from the web service — no need to paste them twice.
       - key: OPENAI_API_KEY
-        sync: false
+        fromService:
+          type: web
+          name: yatra-sahayak-agent
+          envVarKey: OPENAI_API_KEY
       - key: LIVEKIT_URL
-        sync: false
+        fromService:
+          type: web
+          name: yatra-sahayak-agent
+          envVarKey: LIVEKIT_URL
       - key: LIVEKIT_API_KEY
-        sync: false
+        fromService:
+          type: web
+          name: yatra-sahayak-agent
+          envVarKey: LIVEKIT_API_KEY
       - key: LIVEKIT_API_SECRET
-        sync: false
+        fromService:
+          type: web
+          name: yatra-sahayak-agent
+          envVarKey: LIVEKIT_API_SECRET
       - key: AGENT_NAME
         value: yatra-sahayak-voice
       - key: AGENT_API_HOST
-        sync: false
+        value: https://yatra-sahayak-agent.onrender.com
       - key: AGENT_API_KEY
-        sync: false
+        fromService:
+          type: web
+          name: yatra-sahayak-agent
+          envVarKey: INTERNAL_API_KEY
