@@ -20,3 +20,38 @@ services:
         value: gpt-4o-mini
       - key: PUBLIC_WEBVIEW_BASE
         sync: false
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: AGENT_NAME
+        value: yatra-sahayak-voice
+
+  - type: worker
+    name: yatra-sahayak-voice
+    runtime: python
+    plan: starter
+    rootDir: agent
+    branch: main
+    autoDeploy: true
+    buildCommand: pip install --upgrade pip && pip install .
+    startCommand: python voice_agent.py start
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: AGENT_NAME
+        value: yatra-sahayak-voice
+      - key: AGENT_API_HOST
+        sync: false
+      - key: AGENT_API_KEY
+        sync: false

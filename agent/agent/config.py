@@ -52,6 +52,11 @@ class Settings:
                                     and os.environ.get("LIVEKIT_API_KEY", "").strip()
                                     and os.environ.get("LIVEKIT_API_SECRET", "").strip())
 
+    # Voice worker → web service callback (raise_sos tool). The worker has no
+    # DB access of its own; it POSTs to the web service's /api/voice/sos.
+    AGENT_API_HOST: str = os.environ.get("AGENT_API_HOST", "http://localhost:8000").rstrip("/")
+    AGENT_API_KEY:  str = os.environ.get("AGENT_API_KEY", os.environ.get("INTERNAL_API_KEY", "local-dev-key"))
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
