@@ -236,7 +236,7 @@ export default function ChatPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden font-sans bg-surface text-ink">
-      <Header subtitle={subtitle} onMenu={() => setThreadsOpen(true)} />
+      <Header subtitle={subtitle} onMenu={() => setThreadsOpen(true)} onCall={() => navigate("/voice")} />
 
       <div className="flex-1 min-h-0 overflow-y-auto" ref={scrollRef}>
         <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 pt-4 pb-4">

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { MessageSquare, Settings as SettingsIcon, Plus, Trash2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MessageSquare, Settings as SettingsIcon, Plus, Trash2, X, Phone, ChevronRight } from "lucide-react";
 import { useLang } from "../AppShell.jsx";
 import { t } from "../../lib/i18n.js";
 import { deleteThread, groupByRecency } from "../../store/threads.js";
@@ -21,7 +22,7 @@ const ROW_LANGUAGE = { mr: "भाषा", hi: "भाषा", en: "Language" };
 const ROW_VOICE = { mr: "व्हॉइस", hi: "वॉइस", en: "Voice" };
 const ROW_THEME = { mr: "थीम", hi: "थीम", en: "Theme" };
 const ROW_VERSION = { mr: "आवृत्ती", hi: "वर्शन", en: "Version" };
-const HINT_SOON = { mr: "लवकरच येत आहे", hi: "जल्द आ रहा है", en: "Coming soon" };
+const HINT_OPEN = { mr: "कॉल उघडा", hi: "कॉल खोलें", en: "Open call" };
 const HINT_LIGHT = { mr: "लाइट", hi: "लाइट", en: "Light" };
 const CONFIRM_DELETE = { mr: "ही गप्पा हटवायची?", hi: "यह चैट हटाएं?", en: "Delete this chat?" };
 
@@ -31,6 +32,7 @@ const CONFIRM_DELETE = { mr: "ही गप्पा हटवायची?", hi
 export default function ThreadsDrawer({ open, onClose, threads, activeId, onPick, onNewChat }) {
   const [tab, setTab] = useState("chats");
   const { language, setLanguage } = useLang();
+  const navigate = useNavigate();
   if (!open) return null;
 
   const list = Object.values(threads || {});
@@ -96,7 +98,15 @@ export default function ThreadsDrawer({ open, onClose, threads, activeId, onPick
                   ))}
                 </div>
               </div>
-              <SettingsRow label={t(ROW_VOICE, language)} hint={t(HINT_SOON, language)} />
+              <button
+                onClick={() => { onClose(); navigate("/voice"); }}
+                className="w-full flex items-center gap-2 border-b border-bdr-soft py-3 text-left"
+              >
+                <Phone size={15} className="text-primary flex-shrink-0" />
+                <div className="flex-1 text-[14px] font-semibold text-ink">{t(ROW_VOICE, language)}</div>
+                <div className="text-[12px] text-primary font-bold">{t(HINT_OPEN, language)}</div>
+                <ChevronRight size={15} className="text-muted" />
+              </button>
               <SettingsRow label={t(ROW_THEME, language)} hint={t(HINT_LIGHT, language)} />
               <SettingsRow label={t(ROW_VERSION, language)} hint="0.1.0 · dev" />
             </div>
