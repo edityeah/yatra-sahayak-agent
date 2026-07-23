@@ -45,3 +45,14 @@ def test_kumbh_prefix():
         yid = await p.create_registration("u3", yatra="kumbh", name="X", phone="", group_name="", emergency_contact="", medical_flags="")
         assert yid.startswith("KUMBH-")
     asyncio.run(go())
+
+
+def test_get_registration_by_id():
+    async def go():
+        yid = await p.create_registration("u4", yatra="pandharpur", name="Bala",
+                                          phone="+9197", group_name="Dindi 9",
+                                          emergency_contact="+9196", medical_flags="")
+        reg = await p.get_registration_by_id(yid)
+        assert reg is not None and reg["name"] == "Bala" and reg["yatra_id"] == yid
+        assert await p.get_registration_by_id("NOPE-0000") is None
+    asyncio.run(go())
