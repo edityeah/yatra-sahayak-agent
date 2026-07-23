@@ -154,6 +154,15 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     if ustate.get("active_yatra"):
         state["active_yatra"] = ustate["active_yatra"]
 
+    # The webview (which has its own language switcher + a yatra in the header)
+    # may send `language`/`yatra` hints so the agent skips the in-chat language
+    # and yatra prompts — e.g. tapping a "Register" quick-activity should go
+    # straight to the intake. These override any stored value for this turn.
+    if body.get("language") in ("mr", "hi", "en"):
+        state["language"] = body["language"]
+    if body.get("yatra") in ("pandharpur", "kumbh"):
+        state["active_yatra"] = body["yatra"]
+
     before = len(state["messages"])
     result = await yatra_graph.ainvoke(state)
     after_msgs = result.get("messages", [])

@@ -1,3 +1,5 @@
+import { getContext } from "./swiftchat";
+
 const BASE = import.meta.env.VITE_AGENT_URL || "http://localhost:8000";
 const KEY = import.meta.env.VITE_AGENT_KEY || "local-dev-key";
 
@@ -10,11 +12,15 @@ export async function apiGet(path) {
 // Stream a chat turn from the agent's /messages SSE endpoint (POST). Calls
 // onDelta(textChunk) as text arrives. Returns the full reply string.
 export async function streamChat({ user_id, conversation_id, text }, onDelta) {
+  // The web app already knows the user's language (switcher / ?lang=) and the
+  // active yatra (header). Pass them so the agent skips the in-chat language +
+  // yatra prompts and goes straight to the intent (e.g. a "Register" tap).
+  const { language, yatra } = getContext();
   const resp = await fetch(`${BASE}/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-API-Key": KEY },
     body: JSON.stringify({
-      user_id, conversation_id,
+      user_id, conversation_id, language, yatra,
       message: { content: [{ type: "text", text: { value: text } }] },
     }),
   });
