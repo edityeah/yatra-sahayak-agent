@@ -11,21 +11,17 @@ import { getContext } from "../lib/swiftchat.js";
 // States: idle | connecting | connected | ended | error | unavailable.
 export default function CallPage() {
   const { language } = useLang();
-  const [state, setState] = useState("idle");
+  const [state, setState] = useState("connecting");
   const [muted, setMuted] = useState(false);
   const roomRef = useRef(null);
   const audioContainerRef = useRef(null);
+  const startedRef = useRef(false);
 
   const cleanupRoom = useCallback(() => {
     const room = roomRef.current;
     roomRef.current = null;
     if (room) room.disconnect();
   }, []);
-
-  useEffect(() => {
-    // Disconnect any live call when navigating away / unmounting.
-    return () => cleanupRoom();
-  }, [cleanupRoom]);
 
   const handleCall = useCallback(async () => {
     setState("connecting");
@@ -62,6 +58,17 @@ export default function CallPage() {
     }
   }, [cleanupRoom]);
 
+  // Auto-start the call as soon as the page mounts — landing here (a tap
+  // on the header phone icon) IS the "Call" action, so no second tap.
+  // Disconnect any live call when navigating away / unmounting.
+  useEffect(() => {
+    if (!startedRef.current) {
+      startedRef.current = true;
+      handleCall();
+    }
+    return () => cleanupRoom();
+  }, [handleCall, cleanupRoom]);
+
   const handleHangUp = useCallback(() => {
     cleanupRoom();
     setState("ended");
@@ -89,16 +96,7 @@ export default function CallPage() {
         <p className="text-[12.5px] text-muted">{tr(strings, "callMicNote", language)}</p>
 
         <div className="mt-4 flex flex-col items-center gap-4 w-full">
-          {!inCall ? (
-            <button
-              type="button"
-              onClick={handleCall}
-              disabled={busy}
-              className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-card disabled:opacity-60 transition hover:bg-primary-700"
-            >
-              <Phone size={26} />
-            </button>
-          ) : (
+          {inCall ? (
             <div className="flex flex-col items-center gap-4 w-full">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-bold bg-green-50 text-green-700 border border-green-200">
                 {tr(strings, "connected", language)}
@@ -122,6 +120,32 @@ export default function CallPage() {
                 </button>
               </div>
             </div>
+          ) : busy ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative flex items-center justify-center">
+                <span className="absolute w-16 h-16 rounded-full bg-primary/30 animate-ping" />
+                <span className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-card">
+                  <Phone size={26} />
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleHangUp}
+                className="w-14 h-14 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition"
+                aria-label={tr(strings, "hangUp", language)}
+              >
+                <PhoneOff size={22} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCall}
+              className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-card transition hover:bg-primary-700"
+              aria-label={tr(strings, "voice", language)}
+            >
+              <Phone size={26} />
+            </button>
           )}
 
           {busy ? <p className="text-[13px] text-muted">{tr(strings, "connecting", language)}</p> : null}
