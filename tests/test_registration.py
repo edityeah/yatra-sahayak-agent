@@ -38,12 +38,10 @@ def test_ekyc_never_asks_for_aadhaar_number():
     s = new_state("sess", "u2"); s["language"] = "en"; s["active_yatra"] = "kumbh"
     out = _turn(s, "register")
     body_lower = out["messages"][-1].content.lower()
-    # Simulated e-KYC must reassure that no real Aadhaar number is needed,
-    # and the phrase "aadhaar number" must appear only in that reassurance —
-    # never as an actual request for one.
-    assert "no aadhaar number needed" in body_lower
-    assert body_lower.count("aadhaar number") == 1
-    assert "enter your aadhaar" not in body_lower and "your aadhaar number" not in body_lower
+    # Simulated e-KYC: the intake must NEVER ask for an Aadhaar number at all
+    # (and we don't surface internal "simulated e-KYC" notes to the yatri).
+    assert "aadhaar" not in body_lower and "आधार" not in out["messages"][-1].content
+    assert "full name" in body_lower  # it still starts the intake by asking the name
 
 
 def test_sticky_router_stays_in_registration():

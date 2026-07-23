@@ -22,9 +22,9 @@ _IN_PROGRESS_STAGES = set(_NEXT) | {"confirm"}
 
 _PROMPTS = {
     "name": {
-        "mr": "चला, यात्रेसाठी नोंदणी करूया. तुमचे **पूर्ण नाव** काय आहे? (सिम्युलेटेड e-KYC — आधार क्रमांक नको)",
-        "hi": "आइए यात्रा के लिए पंजीकरण करें। आपका **पूरा नाम** क्या है? (सिम्युलेटेड e-KYC — आधार संख्या की ज़रूरत नहीं)",
-        "en": "Let's register you for the yatra. What's your **full name**? (simulated e-KYC — no Aadhaar number needed)",
+        "mr": "चला, यात्रेसाठी नोंदणी करूया. तुमचे **पूर्ण नाव** काय आहे?",
+        "hi": "आइए यात्रा के लिए पंजीकरण करें। आपका **पूरा नाम** क्या है?",
+        "en": "Let's register you for the yatra. What's your **full name**?",
     },
     "phone": {"mr": "तुमचा **मोबाइल क्रमांक**?", "hi": "आपका **मोबाइल नंबर**?", "en": "Your **mobile number**?"},
     "group": {"mr": "तुम्ही कोणत्या **दिंडी/गटा**सोबत आहात? (एकटे असल्यास 'none')",
