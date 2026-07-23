@@ -429,3 +429,86 @@ a {
   color: var(--text-muted);
   font-size: 0.8rem;
 }
+
+/* Voice call page */
+
+.call-card {
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.call-hint {
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0 0 0.4rem;
+}
+
+.call-mic-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 1.25rem;
+}
+
+.call-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.call-button {
+  background: var(--saffron);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  width: 140px;
+  height: 140px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(224, 123, 0, 0.35);
+}
+
+.call-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.call-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.call-buttons-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.call-mute-btn,
+.call-hangup-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.call-mute-btn {
+  background: var(--surface);
+  color: var(--indigo);
+  border: 1px solid var(--border);
+}
+
+.call-hangup-btn {
+  background: var(--danger);
+  color: #fff;
+}
+
+.call-status {
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+}

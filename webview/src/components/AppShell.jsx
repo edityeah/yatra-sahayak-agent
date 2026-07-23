@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { to: "/yatri/logistics", key: "logistics" },
   { to: "/yatri/drills", key: "drills" },
   { to: "/yatri/advisories", key: "advisories" },
+  { to: "/voice", key: "voice" },
 ];
 
 export function LangProvider({ children }) {

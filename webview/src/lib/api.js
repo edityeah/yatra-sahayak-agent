@@ -43,3 +43,17 @@ export async function streamChat({ user_id, conversation_id, text }, onDelta) {
   }
   return full;
 }
+
+// Fetch a LiveKit room token for the browser voice call. Returns 503 (thrown
+// as an Error with .code = 503) when voice isn't configured on this
+// deployment — callers should show a friendly "unavailable" state, not crash.
+export async function getVoiceToken({ user_id, yatra, language }) {
+  const r = await fetch(`${BASE}/api/voice/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-API-Key": KEY },
+    body: JSON.stringify({ user_id, yatra, language }),
+  });
+  if (r.status === 503) { const e = new Error("voice-not-configured"); e.code = 503; throw e; }
+  if (!r.ok) throw new Error(`voice token -> ${r.status}`);
+  return r.json(); // { url, token, room }
+}

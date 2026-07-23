@@ -6,6 +6,7 @@ import MapPage from "./yatri/MapPage.jsx";
 import LogisticsPage from "./yatri/LogisticsPage.jsx";
 import DrillsPage from "./yatri/DrillsPage.jsx";
 import AdvisoriesPage from "./yatri/AdvisoriesPage.jsx";
+import CallPage from "./voice/CallPage.jsx";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/yatri/logistics" element={<LogisticsPage />} />
           <Route path="/yatri/drills" element={<DrillsPage />} />
           <Route path="/yatri/advisories" element={<AdvisoriesPage />} />
+          <Route path="/voice" element={<CallPage />} />
         </Routes>
       </AppShell>
     </LangProvider>
