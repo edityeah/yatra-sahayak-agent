@@ -25,7 +25,7 @@ async def logistics(state: YatraState) -> YatraState:
     entries = load("logistics_rates").get(yatra, [])
     lines = [_HEADER[lang], ""]
     for entry in entries:
-        line = f"- {t(entry['service'], lang)}: {entry['rate']} / {t(entry['unit'], lang)}"
+        line = f"- {t(entry['service'], lang)}: {t(entry['rate'], lang)} / {t(entry['unit'], lang)}"
         if entry.get("note"):
             line += f" — {t(entry['note'], lang)}"
         lines.append(line)

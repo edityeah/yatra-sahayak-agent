@@ -49,9 +49,12 @@ async def yatra_context(state: YatraState) -> YatraState:
     last_user = next((m for m in reversed(messages) if isinstance(m, HumanMessage)), None)
     last_text = str(last_user.content) if last_user else ""
 
-    # Explicit mention in the latest turn always wins (covers switching).
+    # Explicit mention in the latest turn wins (covers switching) — UNLESS a
+    # registration intake is active, where a yatra-shaped word in an answer
+    # (e.g. a Dindi/group name like "Alandi ... Dindi") must not flip the yatra.
+    reg_active = bool(state.get("reg_stage")) and state.get("reg_stage") != "done"
     mentioned = detect_yatra(last_text)
-    if mentioned:
+    if mentioned and not reg_active:
         return {**state, "current_node": "yatra_context", "active_yatra": mentioned}  # type: ignore[typeddict-item]
 
     # Honour a yatra already resolved for this conversation (injected by the

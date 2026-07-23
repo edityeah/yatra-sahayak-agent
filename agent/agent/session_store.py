@@ -1,12 +1,13 @@
-"""In-memory per-conversation store for the resolved language + active yatra.
+"""In-memory per-conversation store: the transcript + any in-progress
+registration intake (reg_stage / reg_fields). Conversation-scoped (keyed by
+conversation_id) so a new chat never inherits another conversation's intake.
 
-POC-only: survives within a single running process, NOT across restarts or
-multiple instances. It exists because the webhook strips internal markers
-before streaming, so the chosen language/yatra can't ride back in the client
-history. Not concurrency-safe for simultaneous requests on the same
-conversation_id (last write wins) — fine for turn-taking chat. The transcript
-grows unbounded per conversation (no TTL/cap) — acceptable for short demos.
-Plan 2 replaces this with DB-backed `user_state` for durability.
+Language and active_yatra are deliberately USER-scoped and live in the
+persistence layer, not here.
+
+POC-only: single process, not concurrency-safe for simultaneous requests on
+the same conversation_id (last write wins), transcript grows unbounded (no
+TTL/cap). Plans 3–4 move durable state to the DB.
 """
 from __future__ import annotations
 from typing import Any
@@ -22,16 +23,16 @@ def save(
     conversation_id: str,
     *,
     messages: list | None = None,
-    language: str | None = None,
-    active_yatra: str | None = None,
+    reg_stage: str | None = None,
+    reg_fields: dict | None = None,
 ) -> None:
     cur = _STORE.setdefault(conversation_id, {})
     if messages is not None:
         cur["messages"] = messages
-    if language is not None:
-        cur["language"] = language
-    if active_yatra is not None:
-        cur["active_yatra"] = active_yatra
+    if reg_stage is not None:
+        cur["reg_stage"] = reg_stage
+    if reg_fields is not None:
+        cur["reg_fields"] = reg_fields
 
 
 def clear(conversation_id: str) -> None:

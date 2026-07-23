@@ -50,7 +50,9 @@ def test_logistics_includes_all_services_and_notes():
     entries = load("logistics_rates")["pandharpur"]
     for entry in entries:
         assert entry["service"]["en"] in body
-        assert entry["rate"] in body
+        # rate may be a plain string ("₹20-50") or a trilingual dict ("Free")
+        rate = entry["rate"]["en"] if isinstance(entry["rate"], dict) else entry["rate"]
+        assert rate in body
         if "note" in entry:
             assert entry["note"]["en"] in body
 

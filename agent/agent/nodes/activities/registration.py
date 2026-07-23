@@ -16,6 +16,10 @@ from agent import persistence
 _NEXT = {"name": "phone", "phone": "group", "group": "emergency",
          "emergency": "medical", "medical": "confirm"}
 
+# Stages that mean "an intake is in progress". Anything else (None, "done",
+# a cancelled/unknown value) means we should start a fresh registration.
+_IN_PROGRESS_STAGES = set(_NEXT) | {"confirm"}
+
 _PROMPTS = {
     "name": {
         "mr": "चला, यात्रेसाठी नोंदणी करूया. तुमचे **पूर्ण नाव** काय आहे? (सिम्युलेटेड e-KYC — आधार क्रमांक नको)",
@@ -72,9 +76,11 @@ async def registration(state: YatraState) -> YatraState:
         return {**state, "current_node": "registration", "reg_stage": reg_stage,
                 "reg_fields": reg_fields, "messages": messages + [AIMessage(content=reply)]}
 
-    # Start intake — ask for the name (do not consume the "register" trigger turn).
-    if not stage:
-        return _emit(_PROMPTS["name"][lang], reg_stage="name", reg_fields=fields)
+    # Start (or restart) intake — ask for the name (do not consume the
+    # "register" trigger turn). A prior "done"/cancelled/unknown stage begins a
+    # clean registration with empty fields (avoids re-entry KeyError + stale data).
+    if stage not in _IN_PROGRESS_STAGES:
+        return _emit(_PROMPTS["name"][lang], reg_stage="name", reg_fields={})
 
     answer = _last_user(messages)
 

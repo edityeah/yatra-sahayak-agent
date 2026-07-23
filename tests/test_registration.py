@@ -5,6 +5,7 @@ from agent.state import new_state
 from agent import persistence
 from agent.nodes.activities.registration import registration
 from agent.nodes.intent_router import intent_router
+from agent.nodes.yatra_context import yatra_context
 
 
 def _turn(state, text):
@@ -50,3 +51,25 @@ def test_sticky_router_stays_in_registration():
     s["reg_stage"] = "phone"; s["messages"] = [HumanMessage(content="+919812345678")]
     out = asyncio.run(intent_router(s))
     assert out["intent"] == "registration"   # deterministic, no LLM
+
+
+def test_reentry_after_done_starts_fresh_without_crash():
+    # Regression: re-triggering registration after a prior intake finished
+    # ("done") must start a clean intake, not KeyError on _PROMPTS[None].
+    persistence.reset()
+    s = new_state("sess", "u4"); s["language"] = "en"; s["active_yatra"] = "pandharpur"
+    s["reg_stage"] = "done"; s["reg_fields"] = {"name": "Old Name"}
+    out = _turn(s, "register again")
+    assert out["reg_stage"] == "name"          # fresh restart
+    assert out["reg_fields"] == {}             # stale fields cleared
+    assert out["messages"][-1].content          # asked for the name, no crash
+
+
+def test_yatra_not_switched_during_active_registration():
+    # Regression: a Dindi/group answer containing a yatra keyword ("Alandi")
+    # must NOT flip the active yatra away from the one being registered.
+    s = new_state("sess", "u5"); s["language"] = "en"; s["active_yatra"] = "kumbh"
+    s["reg_stage"] = "group"
+    s["messages"] = [HumanMessage(content="Alandi Sant Dnyaneshwar Dindi 12")]
+    out = asyncio.run(yatra_context(s))
+    assert out["active_yatra"] == "kumbh"      # unchanged despite "Alandi"

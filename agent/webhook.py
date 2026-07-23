@@ -98,30 +98,34 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
         # First turn in this process — seed from any client-sent history.
         state["messages"] = _rebuild_messages(history, user_text)
 
-    # Language + yatra persist per-user via the persistence layer (DB when
-    # enabled, memory otherwise); the transcript stays in the session store.
+    # Registration intake is CONVERSATION-scoped (session store) so a new chat
+    # never inherits a stale intake. Language + yatra are USER-scoped and live
+    # in the persistence layer (DB when enabled, memory otherwise).
+    if sess.get("reg_stage"):
+        state["reg_stage"] = sess["reg_stage"]
+    if sess.get("reg_fields"):
+        state["reg_fields"] = sess["reg_fields"]
     ustate = await persistence.get_user_state(user_id)
     if ustate.get("language"):
         state["language"] = ustate["language"]
     if ustate.get("active_yatra"):
         state["active_yatra"] = ustate["active_yatra"]
-    if ustate.get("reg_stage"):
-        state["reg_stage"] = ustate["reg_stage"]
-    if ustate.get("reg_fields"):
-        state["reg_fields"] = ustate["reg_fields"]
 
     before = len(state["messages"])
     result = await yatra_graph.ainvoke(state)
     after_msgs = result.get("messages", [])
 
-    # Persist the updated transcript + any newly-resolved language / yatra.
-    session_store.save(conv_id, messages=after_msgs)
+    # Persist transcript + intake (conversation-scoped); language/yatra (user-scoped).
+    session_store.save(
+        conv_id,
+        messages=after_msgs,
+        reg_stage=result.get("reg_stage"),
+        reg_fields=result.get("reg_fields"),
+    )
     await persistence.set_user_state(
         user_id,
         language=result.get("language"),
         active_yatra=result.get("active_yatra"),
-        reg_stage=result.get("reg_stage"),
-        reg_fields=result.get("reg_fields"),
     )
 
     # New assistant text this turn = anything appended past `before`.
