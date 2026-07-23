@@ -49,21 +49,14 @@ services:
           type: web
           name: yatra-sahayak-agent
           envVarKey: OPENAI_API_KEY
+      # LiveKit: set directly on BOTH services (can't inherit — the source
+      # doesn't exist until you paste it, which would fail the blueprint sync).
       - key: LIVEKIT_URL
-        fromService:
-          type: web
-          name: yatra-sahayak-agent
-          envVarKey: LIVEKIT_URL
+        sync: false
       - key: LIVEKIT_API_KEY
-        fromService:
-          type: web
-          name: yatra-sahayak-agent
-          envVarKey: LIVEKIT_API_KEY
+        sync: false
       - key: LIVEKIT_API_SECRET
-        fromService:
-          type: web
-          name: yatra-sahayak-agent
-          envVarKey: LIVEKIT_API_SECRET
+        sync: false
       - key: AGENT_NAME
         value: yatra-sahayak-voice
       - key: AGENT_API_HOST
