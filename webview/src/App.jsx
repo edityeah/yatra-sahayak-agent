@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom";
-import AppShell, { LangProvider } from "./components/AppShell.jsx";
+import { LangProvider } from "./components/AppShell.jsx";
 import ChatPage from "./chat/ChatPage.jsx";
 import PassPage from "./yatri/PassPage.jsx";
 import MapPage from "./yatri/MapPage.jsx";
@@ -13,17 +13,18 @@ export default function App() {
     <LangProvider>
       <Routes>
         {/* New Pravasi-Setu-style chat landing — owns its own full-page
-            header/composer chrome, so it skips the old AppShell wrapper. */}
+            header/composer chrome. */}
         <Route path="/" element={<ChatPage />} />
 
-        {/* Inner yatri + voice pages keep the old AppShell (header + nav)
-            until they're re-skinned in a separate task. */}
-        <Route path="/yatri/pass" element={<AppShell><PassPage /></AppShell>} />
-        <Route path="/yatri/map" element={<AppShell><MapPage /></AppShell>} />
-        <Route path="/yatri/logistics" element={<AppShell><LogisticsPage /></AppShell>} />
-        <Route path="/yatri/drills" element={<AppShell><DrillsPage /></AppShell>} />
-        <Route path="/yatri/advisories" element={<AppShell><AdvisoriesPage /></AppShell>} />
-        <Route path="/voice" element={<AppShell><CallPage /></AppShell>} />
+        {/* Inner yatri + voice pages now bring their own PageShell (same
+            blue-avatar header, back arrow, MenuDrawer) so every route
+            feels like one product. */}
+        <Route path="/yatri/pass" element={<PassPage />} />
+        <Route path="/yatri/map" element={<MapPage />} />
+        <Route path="/yatri/logistics" element={<LogisticsPage />} />
+        <Route path="/yatri/drills" element={<DrillsPage />} />
+        <Route path="/yatri/advisories" element={<AdvisoriesPage />} />
+        <Route path="/voice" element={<CallPage />} />
       </Routes>
     </LangProvider>
   );
