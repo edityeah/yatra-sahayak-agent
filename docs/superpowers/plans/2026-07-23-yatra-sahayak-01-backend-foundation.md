@@ -602,7 +602,7 @@ _BLOCK_TRIPWIRE = re.compile(
 _SOS_TRIPWIRE = re.compile(
     r"\b(sos|emergency|help\s*me|stampede|drowning|accident|heart\s*attack|"
     r"unconscious|missing\s*(?:person|child)|lost\s*(?:child|my\s*child))\b"
-    r"|मदत|आपत्कालीन|चेंगराचेंगरी|अपघात|हरवल|"        # Marathi
+    r"|मदत|आपत्कालीन|चेंगराचेंगरी|अपघात|हरवल"        # Marathi (no trailing | — avoids empty-alternative bug)
     r"|मदद|आपातकाल|भगदड़|दुर्घटना|खो\s*गया",           # Hindi
     re.IGNORECASE,
 )
