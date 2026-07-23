@@ -53,12 +53,17 @@ async def get_user_state(user_id: str) -> dict:
     return dict(_USER_STATE.get(user_id, {}))
 
 
-async def set_user_state(user_id: str, *, language: str | None = None, active_yatra: str | None = None) -> None:
+async def set_user_state(user_id: str, *, language: str | None = None, active_yatra: str | None = None,
+                        reg_stage: str | None = None, reg_fields: dict | None = None) -> None:
     state = await get_user_state(user_id)
     if language is not None:
         state["language"] = language
     if active_yatra is not None:
         state["active_yatra"] = active_yatra
+    if reg_stage is not None:
+        state["reg_stage"] = reg_stage
+    if reg_fields is not None:
+        state["reg_fields"] = reg_fields
     pool = await _pool()
     if pool:
         async with pool.connection() as conn:

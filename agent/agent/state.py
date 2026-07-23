@@ -51,6 +51,10 @@ class YatraState(TypedDict, total=False):
     # ── Webview deep-link context (decoded from ?ctx=… by the webhook) ─
     context_from_webview: dict[str, Any] | None
 
+    # ── Registration intake (multi-turn) ──────────────────────────────
+    reg_stage: str | None      # None | name | phone | group | emergency | medical | confirm | done
+    reg_fields: dict           # collected fields so far
+
 
 def new_state(session_id: str, user_id: str) -> YatraState:
     return {
@@ -65,4 +69,6 @@ def new_state(session_id: str, user_id: str) -> YatraState:
         "active_yatra": None,
         "intent": "browse",
         "context_from_webview": None,
+        "reg_stage": None,
+        "reg_fields": {},
     }

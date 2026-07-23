@@ -105,6 +105,10 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
         state["language"] = ustate["language"]
     if ustate.get("active_yatra"):
         state["active_yatra"] = ustate["active_yatra"]
+    if ustate.get("reg_stage"):
+        state["reg_stage"] = ustate["reg_stage"]
+    if ustate.get("reg_fields"):
+        state["reg_fields"] = ustate["reg_fields"]
 
     before = len(state["messages"])
     result = await yatra_graph.ainvoke(state)
@@ -116,6 +120,8 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
         user_id,
         language=result.get("language"),
         active_yatra=result.get("active_yatra"),
+        reg_stage=result.get("reg_stage"),
+        reg_fields=result.get("reg_fields"),
     )
 
     # New assistant text this turn = anything appended past `before`.
