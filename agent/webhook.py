@@ -24,6 +24,7 @@ from agent.state import new_state
 from agent.graph import yatra_graph
 from agent import db
 from agent import session_store
+from agent import persistence
 
 load_dotenv()
 settings = get_settings()
@@ -85,10 +86,10 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     state = new_state(session_id=conv_id, user_id=user_id)
     state["context_from_webview"] = body.get("context_from_webview")
 
-    # Restore this conversation's transcript + resolved language/yatra from the
-    # in-process session store. SwiftChat's webhook doesn't resend prior turns
-    # and markers are stripped before streaming, so this store is the POC
-    # stand-in for the reference's DB-backed history + user_state.
+    # Restore this conversation's transcript from the in-process session
+    # store. SwiftChat's webhook doesn't resend prior turns and markers are
+    # stripped before streaming, so this store is the POC stand-in for the
+    # reference's DB-backed history.
     sess = session_store.load(conv_id)
     prior = sess.get("messages")
     if prior is not None:
@@ -96,19 +97,33 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     else:
         # First turn in this process — seed from any client-sent history.
         state["messages"] = _rebuild_messages(history, user_text)
-    if sess.get("language"):
-        state["language"] = sess["language"]
-    if sess.get("active_yatra"):
-        state["active_yatra"] = sess["active_yatra"]
+
+    # Registration intake is CONVERSATION-scoped (session store) so a new chat
+    # never inherits a stale intake. Language + yatra are USER-scoped and live
+    # in the persistence layer (DB when enabled, memory otherwise).
+    if sess.get("reg_stage"):
+        state["reg_stage"] = sess["reg_stage"]
+    if sess.get("reg_fields"):
+        state["reg_fields"] = sess["reg_fields"]
+    ustate = await persistence.get_user_state(user_id)
+    if ustate.get("language"):
+        state["language"] = ustate["language"]
+    if ustate.get("active_yatra"):
+        state["active_yatra"] = ustate["active_yatra"]
 
     before = len(state["messages"])
     result = await yatra_graph.ainvoke(state)
     after_msgs = result.get("messages", [])
 
-    # Persist the updated transcript + any newly-resolved language / yatra.
+    # Persist transcript + intake (conversation-scoped); language/yatra (user-scoped).
     session_store.save(
         conv_id,
         messages=after_msgs,
+        reg_stage=result.get("reg_stage"),
+        reg_fields=result.get("reg_fields"),
+    )
+    await persistence.set_user_state(
+        user_id,
         language=result.get("language"),
         active_yatra=result.get("active_yatra"),
     )

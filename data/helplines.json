@@ -1,0 +1,66 @@
+{
+  "pandharpur": [
+    {
+      "label": {"mr": "आपत्कालीन सेवा (पोलीस/अग्निशमन/वैद्यकीय)", "hi": "आपातकालीन सेवा (पुलिस/फायर/मेडिकल)", "en": "Emergency services (police/fire/medical)"},
+      "number": "112",
+      "dial": "112"
+    },
+    {
+      "label": {"mr": "रुग्णवाहिका सेवा", "hi": "एम्बुलेंस सेवा", "en": "Ambulance service"},
+      "number": "108",
+      "dial": "108"
+    },
+    {
+      "label": {"mr": "वारी नियंत्रण कक्ष (पुणे जिल्हा प्रशासन)", "hi": "वारी नियंत्रण कक्ष (पुणे जिला प्रशासन)", "en": "Wari control room (Pune District Administration)"},
+      "number": "020-2612-4040",
+      "dial": "02026124040"
+    },
+    {
+      "label": {"mr": "श्री विठ्ठल-रुक्मिणी मंदिर समिती हेल्पलाईन", "hi": "श्री विठ्ठल-रुक्मिणी मंदिर समिति हेल्पलाइन", "en": "Shri Vitthal-Rukmini Temple Committee helpline"},
+      "number": "0217-231-2620",
+      "dial": "02172312620"
+    },
+    {
+      "label": {"mr": "महिला हेल्पलाईन", "hi": "महिला हेल्पलाइन", "en": "Women's helpline"},
+      "number": "1091",
+      "dial": "1091"
+    },
+    {
+      "label": {"mr": "राज्य आपत्ती नियंत्रण कक्ष", "hi": "राज्य आपदा नियंत्रण कक्ष", "en": "State disaster control room"},
+      "number": "1077",
+      "dial": "1077"
+    }
+  ],
+  "kumbh": [
+    {
+      "label": {"mr": "आपत्कालीन सेवा (पोलीस/अग्निशमन/वैद्यकीय)", "hi": "आपातकालीन सेवा (पुलिस/फायर/मेडिकल)", "en": "Emergency services (police/fire/medical)"},
+      "number": "112",
+      "dial": "112"
+    },
+    {
+      "label": {"mr": "रुग्णवाहिका सेवा", "hi": "एम्बुलेंस सेवा", "en": "Ambulance service"},
+      "number": "108",
+      "dial": "108"
+    },
+    {
+      "label": {"mr": "कुंभमेळा नियंत्रण कक्ष (नाशिक जिल्हा प्रशासन)", "hi": "कुंभ मेला नियंत्रण कक्ष (नासिक जिला प्रशासन)", "en": "Kumbh Mela control room (Nashik District Administration)"},
+      "number": "0253-2317151",
+      "dial": "02532317151"
+    },
+    {
+      "label": {"mr": "श्री त्र्यंबकेश्वर देवस्थान ट्रस्ट हेल्पलाईन", "hi": "श्री त्र्यंबकेश्वर देवस्थान ट्रस्ट हेल्पलाइन", "en": "Shri Trimbakeshwar Devasthan Trust helpline"},
+      "number": "02594-233-1120",
+      "dial": "025942331120"
+    },
+    {
+      "label": {"mr": "हरवलेली व्यक्ती शोध केंद्र (मेळा परिसर)", "hi": "खोया-पाया केंद्र (मेला परिसर)", "en": "Lost-and-found / missing person center (mela grounds)"},
+      "number": "0253-2317152",
+      "dial": "02532317152"
+    },
+    {
+      "label": {"mr": "राज्य आपत्ती नियंत्रण कक्ष", "hi": "राज्य आपदा नियंत्रण कक्ष", "en": "State disaster control room"},
+      "number": "1077",
+      "dial": "1077"
+    }
+  ]
+}

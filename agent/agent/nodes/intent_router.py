@@ -54,6 +54,10 @@ async def intent_router(state: YatraState) -> YatraState:
     if state.get("sos"):
         return {**state, "current_node": "intent_router", "intent": "drills_sos"}  # type: ignore[typeddict-item]
 
+    # Sticky: stay in a registration intake until it completes.
+    if state.get("reg_stage") and state.get("reg_stage") != "done":
+        return {**state, "current_node": "intent_router", "intent": "registration"}  # type: ignore[typeddict-item]
+
     try:
         result = await get_main_llm().with_structured_output(RouteDecision).ainvoke([
             SystemMessage(content=_system(lang, yatra)),

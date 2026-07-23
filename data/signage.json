@@ -1,0 +1,70 @@
+{
+  "pandharpur": [
+    {
+      "at": {"mr": "सासवड प्रवेशद्वार", "hi": "सासवड़ प्रवेश द्वार", "en": "Saswad entry point"},
+      "guidance": {
+        "mr": "सासवड येथे उजवीकडे वळून मुक्कामाच्या मैदानाकडे जा; डावीकडील रस्ता वाहनतळाकडे जातो.",
+        "hi": "सासवड़ में दाईं ओर मुड़कर पड़ाव मैदान की ओर जाएँ; बाईं ओर की सड़क वाहन पार्किंग की ओर जाती है।",
+        "en": "At Saswad, turn right toward the halt grounds; the left road leads to vehicle parking."
+      }
+    },
+    {
+      "at": {"mr": "जेजुरी घाट रस्ता", "hi": "जेजुरी घाट मार्ग", "en": "Jejuri ghat road"},
+      "guidance": {
+        "mr": "जेजुरी घाट रस्त्यावर चढाव असल्याने वृद्ध व लहान मुलांनी सावकाश चालावे; पाणी केंद्र उजव्या बाजूला आहे.",
+        "hi": "जेजुरी घाट मार्ग पर चढ़ाई होने के कारण बुजुर्ग व बच्चे धीरे चलें; पानी केंद्र दाईं ओर है।",
+        "en": "The Jejuri ghat road has an uphill stretch — elders and children should proceed slowly; the water point is on the right."
+      }
+    },
+    {
+      "at": {"mr": "वाखरी मुख्य चौक", "hi": "वाखरी मुख्य चौक", "en": "Wakhari main junction"},
+      "guidance": {
+        "mr": "वाखरी येथे डावीकडे राहून दर्शन रांगेच्या दिशेने जा; उजवीकडील मार्ग वैद्यकीय शिबिराकडे जातो.",
+        "hi": "वाखरी में बाईं ओर रहते हुए दर्शन कतार की दिशा में जाएँ; दाईं ओर का मार्ग चिकित्सा शिविर की ओर जाता है।",
+        "en": "At Wakhari, keep left for the darshan queue direction; the right-hand path leads to the medical camp."
+      }
+    },
+    {
+      "at": {"mr": "पंढरपूर शहर प्रवेश (मुख्य द्वार)", "hi": "पंढरपुर शहर प्रवेश (मुख्य द्वार)", "en": "Pandharpur town entry (main gate)"},
+      "guidance": {
+        "mr": "मुख्य द्वारातून आत गेल्यावर सरळ जाऊन मंदिर रांग व्यवस्थापन कक्षाकडे नोंदणी करावी.",
+        "hi": "मुख्य द्वार से अंदर जाने के बाद सीधे जाकर मंदिर कतार प्रबंधन कक्ष में पंजीकरण करें।",
+        "en": "After entering the main gate, proceed straight to the temple queue-management desk to register."
+      }
+    }
+  ],
+  "kumbh": [
+    {
+      "at": {"mr": "नाशिक रेल्वे स्थानक बाहेर", "hi": "नासिक रेलवे स्टेशन के बाहर", "en": "Outside Nashik railway station"},
+      "guidance": {
+        "mr": "स्थानकाबाहेर उजवीकडे शेअर वाहन थांबा आहे; रामकुंड घाटासाठी तेथून वाहन घ्या.",
+        "hi": "स्टेशन के बाहर दाईं ओर शेयर वाहन स्टैंड है; रामकुंड घाट के लिए वहाँ से वाहन लें।",
+        "en": "The shared-vehicle stand is to the right outside the station; take a vehicle from there toward Ramkund Ghat."
+      }
+    },
+    {
+      "at": {"mr": "रामकुंड घाट प्रवेश", "hi": "रामकुंड घाट प्रवेश", "en": "Ramkund Ghat entry"},
+      "guidance": {
+        "mr": "रामकुंड घाटावर स्नानासाठी रांगेत डावीकडून प्रवेश करा; कपडे बदलण्याची खोली उजवीकडे आहे.",
+        "hi": "रामकुंड घाट पर स्नान के लिए बाईं ओर से कतार में प्रवेश करें; कपड़े बदलने का कक्ष दाईं ओर है।",
+        "en": "Enter the bathing queue at Ramkund Ghat from the left side; the changing room is on the right."
+      }
+    },
+    {
+      "at": {"mr": "त्र्यंबकेश्वर बस स्थानक", "hi": "त्र्यंबकेश्वर बस स्टैंड", "en": "Trimbakeshwar bus stand"},
+      "guidance": {
+        "mr": "बस स्थानकातून बाहेर पडून सरळ चालत गेल्यास कुशावर्त घाट व मंदिर १० मिनिटांच्या अंतरावर आहे.",
+        "hi": "बस स्टैंड से बाहर निकलकर सीधे चलने पर कुशावर्त घाट व मंदिर 10 मिनट की दूरी पर है।",
+        "en": "Walking straight out from the bus stand, Kushavarta Ghat and the temple are about 10 minutes away."
+      }
+    },
+    {
+      "at": {"mr": "साधुग्राम मुख्य प्रवेशद्वार", "hi": "साधुग्राम मुख्य प्रवेश द्वार", "en": "Sadhugram main entrance"},
+      "guidance": {
+        "mr": "साधुग्राम प्रवेशद्वारातून आत गेल्यावर उजवीकडे माहिती कक्ष व हरवलेली व्यक्ती शोध केंद्र आहे.",
+        "hi": "साधुग्राम प्रवेश द्वार से अंदर जाने पर दाईं ओर सूचना कक्ष व खोया-पाया केंद्र है।",
+        "en": "Just inside the Sadhugram entrance, the information desk and lost-and-found center are on the right."
+      }
+    }
+  ]
+}

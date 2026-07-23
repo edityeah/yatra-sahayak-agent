@@ -1,0 +1,86 @@
+{
+  "pandharpur": [
+    {
+      "title": {"mr": "अतिवृष्टीचा इशारा — पालखी मार्ग", "hi": "भारी वर्षा की चेतावनी — पालकी मार्ग", "en": "Heavy-rain warning — palkhi route"},
+      "body": {
+        "mr": "पुढील २४ तासांत पुणे-सोलापूर पट्ट्यात मध्यम ते जोरदार पावसाचा अंदाज. निसरड्या रस्त्यांपासून सावध रहा, शक्य असल्यास पावसाळी आच्छादन सोबत ठेवा.",
+        "hi": "अगले 24 घंटों में पुणे-सोलापुर क्षेत्र में मध्यम से तेज़ बारिश की संभावना। फिसलन भरी सड़कों से सावधान रहें, संभव हो तो रेनकोट/छाता साथ रखें।",
+        "en": "Moderate to heavy rain is forecast across the Pune-Solapur belt in the next 24 hours. Watch for slippery roads and carry rain protection if possible."
+      },
+      "severity": "warning",
+      "issued_by": "District Administration"
+    },
+    {
+      "title": {"mr": "गर्दी नियंत्रण सूचना — वाखरी मुक्काम", "hi": "भीड़ नियंत्रण सूचना — वाखरी पड़ाव", "en": "Crowd-control advisory — Wakhari halt"},
+      "body": {
+        "mr": "वाखरी येथे सर्व दिंड्या एकत्र येत असल्याने गर्दी अत्यंत जास्त राहील. नियुक्त मार्गानेच चालावे, स्वयंसेवक व पोलिसांच्या सूचनांचे पालन करावे.",
+        "hi": "वाखरी में सभी दिंडियाँ एक साथ आने से भीड़ अत्यधिक रहेगी। निर्धारित मार्ग से ही चलें और स्वयंसेवकों/पुलिस के निर्देशों का पालन करें।",
+        "en": "Crowds will be very dense at Wakhari as all dindis converge. Stay on the designated route and follow volunteer/police instructions."
+      },
+      "severity": "warning",
+      "issued_by": "District Administration"
+    },
+    {
+      "title": {"mr": "तात्पुरता मार्ग बदल — जेजुरी टप्पा", "hi": "अस्थायी मार्ग परिवर्तन — जेजुरी चरण", "en": "Temporary route diversion — Jejuri stage"},
+      "body": {
+        "mr": "पुलाच्या दुरुस्तीकामामुळे जेजुरी टप्प्यात पर्यायी मार्गाचा वापर केला जाईल. सूचना फलक व स्वयंसेवकांचे मार्गदर्शन पाळावे.",
+        "hi": "पुल की मरम्मत के कारण जेजुरी चरण में वैकल्पिक मार्ग का उपयोग किया जाएगा। सूचना बोर्ड व स्वयंसेवकों के मार्गदर्शन का पालन करें।",
+        "en": "An alternate route will be used at the Jejuri stage due to bridge repair work. Follow signage boards and volunteer guidance."
+      },
+      "severity": "info",
+      "issued_by": "District Administration"
+    },
+    {
+      "title": {"mr": "अतिगंभीर — चेंगराचेंगरीचा धोका, वाखरी-पंढरपूर टप्पा", "hi": "अति गंभीर — भगदड़ का खतरा, वाखरी-पंढरपुर चरण", "en": "Critical — stampede risk, Wakhari-Pandharpur stretch"},
+      "body": {
+        "mr": "एकादशीच्या दिवशी वाखरी-पंढरपूर टप्प्यात अतिशय दाट गर्दी अपेक्षित आहे. लहान मुले व वृद्धांना सोबत ठेवा, घाई टाळा, बॅरिकेड्स ओलांडू नका, आपत्कालीन स्थितीत १०८/११२ वर संपर्क करा.",
+        "hi": "एकादशी के दिन वाखरी-पंढरपुर चरण में अत्यंत घनी भीड़ की आशंका है। बच्चों और बुजुर्गों का विशेष ध्यान रखें, जल्दबाज़ी न करें, बैरिकेड न लांघें, आपात स्थिति में 108/112 पर संपर्क करें।",
+        "en": "Extremely dense crowding is expected on the Wakhari-Pandharpur stretch on Ekadashi day. Keep children and elders close, avoid rushing, do not cross barricades, and call 108/112 in an emergency."
+      },
+      "severity": "critical",
+      "issued_by": "District Administration"
+    }
+  ],
+  "kumbh": [
+    {
+      "title": {"mr": "गोदावरी पाणी पातळी वाढ — सतर्कतेचा इशारा", "hi": "गोदावरी जल स्तर वृद्धि — सतर्कता चेतावनी", "en": "Godavari water-level rise — alert"},
+      "body": {
+        "mr": "धरणातून पाणी सोडल्यामुळे घाटांवरील पाण्याची पातळी वाढू शकते. खोल पाण्यात जाणे टाळावे, सूचना फलकांचे पालन करावे.",
+        "hi": "बांध से पानी छोड़े जाने के कारण घाटों पर जल स्तर बढ़ सकता है। गहरे पानी में जाने से बचें और सूचना बोर्डों का पालन करें।",
+        "en": "Water levels at the ghats may rise due to dam releases upstream. Avoid entering deep water and follow posted signage."
+      },
+      "severity": "warning",
+      "issued_by": "District Administration"
+    },
+    {
+      "title": {"mr": "शाही स्नान दिवस — वाहतूक नियोजन माहिती", "hi": "शाही स्नान दिवस — यातायात योजना जानकारी", "en": "Shahi Snan day — traffic planning information"},
+      "body": {
+        "mr": "शाही स्नानाच्या दिवशी नाशिक शहरात मुख्य रस्ते वाहनांसाठी बंद राहतील; पायी व शेअर वाहतुकीचा वापर करावा.",
+        "hi": "शाही स्नान के दिन नासिक शहर में मुख्य सड़कें वाहनों के लिए बंद रहेंगी; पैदल व शेयर परिवहन का उपयोग करें।",
+        "en": "Main roads in Nashik city will be closed to vehicles on Shahi Snan day; use walking routes or shared transport."
+      },
+      "severity": "info",
+      "issued_by": "District Administration"
+    },
+    {
+      "title": {"mr": "पिण्याच्या पाण्याची तात्पुरती टंचाई — साधुग्राम परिसर", "hi": "पेयजल की अस्थायी कमी — साधुग्राम परिसर", "en": "Temporary drinking-water shortage — Sadhugram area"},
+      "body": {
+        "mr": "पाईपलाईन दुरुस्तीमुळे साधुग्राम परिसरात काही तास पाणीपुरवठा विस्कळीत राहील; टँकरद्वारे पर्यायी पुरवठा सुरू आहे.",
+        "hi": "पाइपलाइन मरम्मत के कारण साधुग्राम क्षेत्र में कुछ घंटों तक जलापूर्ति बाधित रहेगी; टैंकर से वैकल्पिक आपूर्ति जारी है।",
+        "en": "Water supply in the Sadhugram area will be disrupted for a few hours due to pipeline repairs; alternate tanker supply is in place."
+      },
+      "severity": "info",
+      "issued_by": "District Administration"
+    },
+    {
+      "title": {"mr": "अतिगंभीर — प्रचंड गर्दी, रामकुंड घाट शाही स्नान वेळ", "hi": "अति गंभीर — भारी भीड़, रामकुंड घाट शाही स्नान समय", "en": "Critical — extreme crowding, Ramkund Ghat during Shahi Snan"},
+      "body": {
+        "mr": "शाही स्नानाच्या मुख्य वेळेत रामकुंड घाटावर अत्यंत दाट गर्दी राहील. गर्दीच्या दिशेविरुद्ध ढकलू नका, बॅरिकेड्सचे पालन करा, कुटुंबातील सदस्यांना एकत्र ठेवा, आपत्कालीन स्थितीत ११२ वर संपर्क करा.",
+        "hi": "शाही स्नान के मुख्य समय पर रामकुंड घाट पर अत्यंत घनी भीड़ रहेगी। भीड़ की विपरीत दिशा में धक्का न दें, बैरिकेड का पालन करें, परिवार के सदस्यों को साथ रखें, आपातस्थिति में 112 पर संपर्क करें।",
+        "en": "Extreme crowding is expected at Ramkund Ghat during the main Shahi Snan window. Do not push against the crowd flow, respect barricades, keep family members together, and call 112 in an emergency."
+      },
+      "severity": "critical",
+      "issued_by": "District Administration"
+    }
+  ]
+}
