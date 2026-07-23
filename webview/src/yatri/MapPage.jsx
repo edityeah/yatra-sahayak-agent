@@ -4,17 +4,17 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
-import { Loading, ErrorNote } from "../components/ui.jsx";
+import PageShell from "../components/PageShell.jsx";
 import { apiGet } from "../lib/api.js";
 import { getContext } from "../lib/swiftchat.js";
 import { t } from "../lib/i18n.js";
 
 // Route/POI marker colors by kind — matches the legend below.
 const KIND_COLORS = {
-  night_halt: "#4f46e5",
+  night_halt: "#2563EB",
   ghat: "#0d9488",
   medical: "#dc2626",
-  water: "#2563eb",
+  water: "#0891b2",
   toilet: "#6b7280",
 };
 
@@ -35,7 +35,7 @@ const EMPTY_TEXT = {
 // Small colored-dot icon per kind — avoids the well-known broken default
 // Leaflet marker icon issue under bundlers (no external image assets).
 function dotIcon(kind) {
-  const c = KIND_COLORS[kind] || "#4f46e5";
+  const c = KIND_COLORS[kind] || "#2563EB";
   return L.divIcon({
     className: "",
     html: `<div style="width:16px;height:16px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 0 0 1px ${c}"></div>`,
@@ -44,43 +44,15 @@ function dotIcon(kind) {
   });
 }
 
-const legendWrapStyle = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "0.5rem 1rem",
-  marginTop: "0.75rem",
-  padding: "0.6rem 0.8rem",
-  background: "#fff",
-  border: "1px solid #e3ddd0",
-  borderRadius: "10px",
-  fontSize: "0.85rem",
-};
-
-const legendItemStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "0.4rem",
-};
-
-function legendDotStyle(color) {
-  return {
-    width: "12px",
-    height: "12px",
-    borderRadius: "50%",
-    background: color,
-    border: "2px solid #fff",
-    boxShadow: `0 0 0 1px ${color}`,
-    display: "inline-block",
-    flex: "0 0 auto",
-  };
-}
-
 function Legend({ language }) {
   return (
-    <div style={legendWrapStyle}>
+    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 rounded-2xl border border-bdr bg-surface shadow-card px-4 py-3 text-[12.5px] text-ink">
       {Object.keys(KIND_COLORS).map((kind) => (
-        <span style={legendItemStyle} key={kind}>
-          <span style={legendDotStyle(KIND_COLORS[kind])} />
+        <span key={kind} className="inline-flex items-center gap-1.5">
+          <span
+            className="inline-block w-3 h-3 rounded-full flex-shrink-0 border-2 border-white"
+            style={{ background: KIND_COLORS[kind], boxShadow: `0 0 0 1px ${KIND_COLORS[kind]}` }}
+          />
           {t(KIND_LABELS[kind], language)}
         </span>
       ))}
@@ -131,19 +103,25 @@ export default function MapPage() {
   }, [points]);
 
   return (
-    <div>
-      <h1>{tr(strings, "map", language)}</h1>
-
-      {loading ? <Loading text={tr(strings, "loading", language)} /> : null}
-      {!loading && error ? <ErrorNote>{error}</ErrorNote> : null}
+    <PageShell title={tr(strings, "map", language)}>
+      {loading ? (
+        <div className="text-[13.5px] text-muted px-1 py-3">{tr(strings, "loading", language)}</div>
+      ) : null}
+      {!loading && error ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">
+          {error}
+        </div>
+      ) : null}
 
       {!loading && !error && points.length === 0 ? (
-        <div className="card">{EMPTY_TEXT[language] || EMPTY_TEXT.en}</div>
+        <div className="rounded-2xl border border-bdr bg-surface shadow-card p-4 text-[13.5px] text-ink">
+          {EMPTY_TEXT[language] || EMPTY_TEXT.en}
+        </div>
       ) : null}
 
       {!loading && !error && points.length > 0 ? (
         <>
-          <div style={{ width: "100%", maxWidth: "100%", overflow: "hidden", borderRadius: "10px", border: "1px solid #e3ddd0" }}>
+          <div className="w-full max-w-full overflow-hidden rounded-2xl border border-bdr shadow-card">
             <MapContainer
               key={yatra}
               bounds={bounds}
@@ -179,6 +157,6 @@ export default function MapPage() {
           <Legend language={language} />
         </>
       ) : null}
-    </div>
+    </PageShell>
   );
 }

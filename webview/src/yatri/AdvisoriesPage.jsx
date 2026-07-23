@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
-import { Card, Badge, Loading, ErrorNote } from "../components/ui.jsx";
+import PageShell from "../components/PageShell.jsx";
 import { apiGet } from "../lib/api.js";
 import { getContext } from "../lib/swiftchat.js";
 import { t } from "../lib/i18n.js";
@@ -10,7 +10,11 @@ import { t } from "../lib/i18n.js";
 const EMPTY = { mr: "सध्या कोणत्याही सूचना नाहीत.", hi: "फ़िलहाल कोई सूचना नहीं है।", en: "No advisories right now." };
 
 const SEVERITY_ORDER = { critical: 0, warning: 1, info: 2 };
-const SEVERITY_TONE = { critical: "danger", warning: "warn", info: "default" };
+const SEVERITY_STYLE = {
+  critical: "bg-red-50 text-red-700 border-red-200",
+  warning: "bg-amber-50 text-amber-800 border-amber-200",
+  info: "bg-primary-50 text-primary border-primary-200",
+};
 const SEVERITY_LABEL = {
   critical: { mr: "गंभीर", hi: "गंभीर", en: "Critical" },
   warning: { mr: "इशारा", hi: "चेतावनी", en: "Warning" },
@@ -54,34 +58,46 @@ export default function AdvisoriesPage() {
     : null;
 
   return (
-    <div>
-      <h1>{tr(strings, "advisories", language)}</h1>
-
-      {loading ? <Loading text={tr(strings, "loading", language)} /> : null}
-      {!loading && error ? <ErrorNote>{error}</ErrorNote> : null}
-
-      {!loading && !error && sorted && sorted.length === 0 ? (
-        <Card>{EMPTY[language] || EMPTY.en}</Card>
+    <PageShell title={tr(strings, "advisories", language)}>
+      {loading ? (
+        <div className="text-[13.5px] text-muted px-1 py-3">{tr(strings, "loading", language)}</div>
+      ) : null}
+      {!loading && error ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">
+          {error}
+        </div>
       ) : null}
 
-      {!loading && !error && sorted
-        ? sorted.map((a, i) => (
-            <Card key={i} className="advisory-card">
-              <div className="advisory-head">
-                <Badge tone={SEVERITY_TONE[a.severity] || "default"}>
+      {!loading && !error && sorted && sorted.length === 0 ? (
+        <div className="rounded-2xl border border-bdr bg-surface shadow-card p-4 text-[13.5px] text-ink">
+          {EMPTY[language] || EMPTY.en}
+        </div>
+      ) : null}
+
+      {!loading && !error && sorted ? (
+        <div className="space-y-3">
+          {sorted.map((a, i) => (
+            <div key={i} className="rounded-2xl border border-bdr bg-surface shadow-card p-4">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold border ${
+                    SEVERITY_STYLE[a.severity] || SEVERITY_STYLE.info
+                  }`}
+                >
                   {t(SEVERITY_LABEL[a.severity], language) || a.severity}
-                </Badge>
-                <strong className="advisory-title">{t(a.title, language)}</strong>
+                </span>
+                <strong className="text-[13.5px] font-bold text-ink">{t(a.title, language)}</strong>
               </div>
-              <p className="advisory-body">{t(a.body, language)}</p>
+              <p className="text-[13px] text-ink leading-relaxed">{t(a.body, language)}</p>
               {a.issued_by ? (
-                <div className="advisory-issuer">
+                <div className="mt-2 text-[12px] text-muted">
                   {ISSUED_BY[language] || ISSUED_BY.en}: {a.issued_by}
                 </div>
               ) : null}
-            </Card>
-          ))
-        : null}
-    </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </PageShell>
   );
 }

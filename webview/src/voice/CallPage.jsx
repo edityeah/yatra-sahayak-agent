@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Room, RoomEvent, Track } from "livekit-client";
+import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
-import { Card, ErrorNote, Pill } from "../components/ui.jsx";
+import PageShell from "../components/PageShell.jsx";
 import { getVoiceToken } from "../lib/api.js";
 import { getContext } from "../lib/swiftchat.js";
 
@@ -82,45 +83,67 @@ export default function CallPage() {
   const inCall = state === "connected";
 
   return (
-    <div>
-      <h1>{tr(strings, "voice", language)}</h1>
+    <PageShell title={tr(strings, "voice", language)}>
+      <div className="rounded-2xl border border-bdr bg-surface shadow-card p-6 flex flex-col items-center text-center gap-2">
+        <p className="text-[13.5px] text-ink font-semibold">{tr(strings, "callHint", language)}</p>
+        <p className="text-[12.5px] text-muted">{tr(strings, "callMicNote", language)}</p>
 
-      <Card className="call-card">
-        <p className="call-hint">{tr(strings, "callHint", language)}</p>
-        <p className="call-mic-note">{tr(strings, "callMicNote", language)}</p>
-
-        <div className="call-stage">
+        <div className="mt-4 flex flex-col items-center gap-4 w-full">
           {!inCall ? (
             <button
               type="button"
-              className="call-button"
               onClick={handleCall}
               disabled={busy}
+              className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-card disabled:opacity-60 transition hover:bg-primary-700"
             >
-              {busy ? tr(strings, "connecting", language) : tr(strings, "call", language)}
+              <Phone size={26} />
             </button>
           ) : (
-            <div className="call-controls">
-              <Pill tone="ok">{tr(strings, "connected", language)}</Pill>
-              <div className="call-buttons-row">
-                <button type="button" className="call-mute-btn" onClick={handleToggleMute}>
-                  {muted ? tr(strings, "unmute", language) : tr(strings, "mute", language)}
+            <div className="flex flex-col items-center gap-4 w-full">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-bold bg-green-50 text-green-700 border border-green-200">
+                {tr(strings, "connected", language)}
+              </span>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={handleToggleMute}
+                  className="w-12 h-12 rounded-full border border-bdr bg-surface-2 text-ink flex items-center justify-center hover:border-primary transition"
+                  aria-label={muted ? tr(strings, "unmute", language) : tr(strings, "mute", language)}
+                >
+                  {muted ? <MicOff size={18} /> : <Mic size={18} />}
                 </button>
-                <button type="button" className="call-hangup-btn" onClick={handleHangUp}>
-                  {tr(strings, "hangUp", language)}
+                <button
+                  type="button"
+                  onClick={handleHangUp}
+                  className="w-14 h-14 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition"
+                  aria-label={tr(strings, "hangUp", language)}
+                >
+                  <PhoneOff size={22} />
                 </button>
               </div>
             </div>
           )}
+
+          {busy ? <p className="text-[13px] text-muted">{tr(strings, "connecting", language)}</p> : null}
         </div>
 
-        {state === "ended" ? <p className="call-status">{tr(strings, "callEnded", language)}</p> : null}
-        {state === "unavailable" ? <ErrorNote>{tr(strings, "voiceUnavailable", language)}</ErrorNote> : null}
-        {state === "error" ? <ErrorNote>{tr(strings, "callError", language)}</ErrorNote> : null}
+        {state === "ended" ? (
+          <p className="mt-3 text-[13px] text-muted">{tr(strings, "callEnded", language)}</p>
+        ) : null}
+        {state === "unavailable" ? (
+          <div className="mt-3 w-full rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">
+            {tr(strings, "voiceUnavailable", language)}
+          </div>
+        ) : null}
+        {state === "error" ? (
+          <div className="mt-3 w-full rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">
+            {tr(strings, "callError", language)}
+          </div>
+        ) : null}
 
         {/* Subscribed remote audio tracks are attached here (hidden). */}
         <div ref={audioContainerRef} style={{ display: "none" }} />
-      </Card>
-    </div>
+      </div>
+    </PageShell>
   );
 }

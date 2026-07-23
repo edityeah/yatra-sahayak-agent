@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
-import { Card, Loading, ErrorNote } from "../components/ui.jsx";
+import PageShell from "../components/PageShell.jsx";
 import { apiGet } from "../lib/api.js";
 import { getContext } from "../lib/swiftchat.js";
 import { t } from "../lib/i18n.js";
@@ -47,35 +47,41 @@ export default function LogisticsPage() {
   }, [yatra]);
 
   return (
-    <div>
-      <h1>{tr(strings, "logistics", language)}</h1>
-
-      {loading ? <Loading text={tr(strings, "loading", language)} /> : null}
-      {!loading && error ? <ErrorNote>{error}</ErrorNote> : null}
+    <PageShell title={tr(strings, "logistics", language)}>
+      {loading ? (
+        <div className="text-[13.5px] text-muted px-1 py-3">{tr(strings, "loading", language)}</div>
+      ) : null}
+      {!loading && error ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">
+          {error}
+        </div>
+      ) : null}
 
       {!loading && !error && items && items.length === 0 ? (
-        <Card>{EMPTY[language] || EMPTY.en}</Card>
+        <div className="rounded-2xl border border-bdr bg-surface shadow-card p-4 text-[13.5px] text-ink">
+          {EMPTY[language] || EMPTY.en}
+        </div>
       ) : null}
 
       {!loading && !error && items && items.length > 0 ? (
-        <div className="table-wrap">
-          <table className="rate-table">
+        <div className="rounded-2xl border border-bdr bg-surface shadow-card overflow-x-auto">
+          <table className="w-full text-[13px] border-collapse min-w-[420px]">
             <thead>
-              <tr>
-                <th>{HEAD_SERVICE[language] || HEAD_SERVICE.en}</th>
-                <th>{HEAD_RATE[language] || HEAD_RATE.en}</th>
-                <th>{HEAD_NOTE[language] || HEAD_NOTE.en}</th>
+              <tr className="bg-surface-2 text-left">
+                <th className="px-4 py-2.5 font-bold text-ink border-b border-bdr">{HEAD_SERVICE[language] || HEAD_SERVICE.en}</th>
+                <th className="px-4 py-2.5 font-bold text-ink border-b border-bdr">{HEAD_RATE[language] || HEAD_RATE.en}</th>
+                <th className="px-4 py-2.5 font-bold text-ink border-b border-bdr">{HEAD_NOTE[language] || HEAD_NOTE.en}</th>
               </tr>
             </thead>
             <tbody>
               {items.map((row, i) => (
-                <tr key={i}>
-                  <td>{t(row.service, language)}</td>
-                  <td>
+                <tr key={i} className="border-b border-bdr last:border-b-0">
+                  <td className="px-4 py-2.5 text-ink font-semibold align-top">{t(row.service, language)}</td>
+                  <td className="px-4 py-2.5 text-ink align-top">
                     {t(row.rate, language)}
-                    {row.unit ? <span className="rate-unit"> / {t(row.unit, language)}</span> : null}
+                    {row.unit ? <span className="text-muted"> / {t(row.unit, language)}</span> : null}
                   </td>
-                  <td>{row.note ? t(row.note, language) : "—"}</td>
+                  <td className="px-4 py-2.5 text-muted align-top">{row.note ? t(row.note, language) : "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -83,7 +89,7 @@ export default function LogisticsPage() {
         </div>
       ) : null}
 
-      <p className="page-footer-note">{FOOTER[language] || FOOTER.en}</p>
-    </div>
+      <p className="mt-4 text-[12.5px] text-muted leading-relaxed">{FOOTER[language] || FOOTER.en}</p>
+    </PageShell>
   );
 }

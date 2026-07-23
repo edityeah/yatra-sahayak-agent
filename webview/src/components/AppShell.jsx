@@ -1,25 +1,16 @@
 import { createContext, useContext, useMemo, useState, useCallback } from "react";
-import { NavLink, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { getContext } from "../lib/swiftchat.js";
-import { strings, tr } from "../strings.js";
 
+// Language context shared by every page (chat + inner yatri/voice pages).
+// The old nav-bar AppShell component that used to live here has been
+// replaced by the new Pravasi-Setu-style PageShell/Header — see
+// src/components/PageShell.jsx and src/components/chat/Header.jsx.
 export const LangContext = createContext({ language: "mr", setLanguage: () => {} });
 
 export function useLang() {
   return useContext(LangContext);
 }
-
-const LANGS = ["mr", "hi", "en"];
-
-const NAV_ITEMS = [
-  { to: "/", key: "chat", end: true },
-  { to: "/yatri/pass", key: "pass" },
-  { to: "/yatri/map", key: "map" },
-  { to: "/yatri/logistics", key: "logistics" },
-  { to: "/yatri/drills", key: "drills" },
-  { to: "/yatri/advisories", key: "advisories" },
-  { to: "/voice", key: "voice" },
-];
 
 export function LangProvider({ children }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,55 +33,4 @@ export function LangProvider({ children }) {
   );
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
-}
-
-function LanguageSwitcher() {
-  const { language, setLanguage } = useLang();
-  return (
-    <div className="lang-switcher">
-      {LANGS.map((l) => (
-        <button
-          key={l}
-          type="button"
-          className={`lang-btn${l === language ? " active" : ""}`}
-          onClick={() => setLanguage(l)}
-        >
-          {l.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export default function AppShell({ children }) {
-  const { language, yatra } = useLang();
-
-  return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div className="app-header-inner">
-          <div className="app-brand">
-            <span className="app-brand-name">{tr(strings, "appName", language)}</span>
-            {yatra ? <span className="app-brand-yatra">· {yatra}</span> : null}
-          </div>
-          <LanguageSwitcher />
-        </div>
-      </header>
-      <nav className="app-nav">
-        <div className="app-nav-inner">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={{ pathname: item.to, search: `?lang=${language}` }}
-              end={item.end}
-              className={({ isActive }) => (isActive ? "active" : "")}
-            >
-              {tr(strings, item.key, language)}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
-      <main className="app-main">{children}</main>
-    </div>
-  );
 }
