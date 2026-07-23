@@ -1,0 +1,13 @@
+# Office temp/lock files
+~$*
+.DS_Store
+
+# Env
+.env
+.env.local
+
+# Deps / build
+node_modules/
+dist/
+__pycache__/
+.venv/
