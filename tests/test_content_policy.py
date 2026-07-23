@@ -2,7 +2,7 @@ import sys, os, asyncio
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
 from langchain_core.messages import HumanMessage
 from agent.state import new_state
-from agent.nodes.content_policy import content_policy, _tripwire_category, _sos_tripwire
+from agent.nodes.content_policy import content_policy, _tripwire_category, _sos_tripwire, _refusal
 
 
 def _state_with(text):
@@ -38,3 +38,13 @@ def test_sos_sets_flag_and_allows():
     out = asyncio.run(content_policy(_state_with("emergency help stampede")))
     assert out["sos"] is True
     assert out["policy_result"] == "allowed"  # SOS is allowed — it fast-paths, not blocks
+
+
+def test_self_harm_refusal_is_supportive():
+    msg = _refusal("self_harm")
+    assert "1800-599-0019" in msg          # KIRAN crisis helpline surfaced
+    assert not msg.startswith("I can't help")  # NOT the flat refusal opener
+
+
+def test_other_categories_use_generic_refusal():
+    assert _refusal("terrorism_or_violence").startswith("I can't help")

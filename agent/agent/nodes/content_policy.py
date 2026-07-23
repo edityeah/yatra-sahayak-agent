@@ -7,23 +7,12 @@
 3. LLM classifier for softer judgement calls.
 """
 from __future__ import annotations
-import os
 import re
 from pydantic import BaseModel, Field
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from agent.state import YatraState
-
-_llm = ChatOpenAI(
-    model=os.environ.get("LLM_MAIN_MODEL", "gpt-4o-mini"),
-    temperature=0,
-    # Falls back to a placeholder so the client can construct at import time
-    # when no key is configured (offline/dev/test); never called on the
-    # deterministic tripwire/SOS short-circuit paths, so this key is never
-    # actually used unless OPENAI_API_KEY is set for real.
-    api_key=os.environ.get("OPENAI_API_KEY") or "sk-local-placeholder",
-)
+from agent.llm import get_main_llm
 
 
 class PolicyDecision(BaseModel):
@@ -82,6 +71,13 @@ def _sos_tripwire(text: str) -> bool:
 
 
 def _refusal(category: str) -> str:
+    if category == "self_harm":
+        # Warm, supportive copy for self-harm — NOT a flat refusal. KIRAN is
+        # India's free, 24x7, multilingual mental-health helpline.
+        return ("I'm really sorry you're feeling this way, and I'm glad you reached out. "
+                "Please talk to someone right now — call KIRAN, India's free 24x7 "
+                "mental-health helpline, on 1800-599-0019, or 112 if you're in immediate "
+                "danger. You don't have to go through this alone.")
     if category == "prompt_injection":
         return ("I'm the Maharashtra Yatra Sahayak — I help yatris with weather, routes, "
                 "transport, helplines, safety, and registration. Ask me one of those.")
@@ -120,13 +116,14 @@ async def content_policy(state: YatraState) -> YatraState:
 
     # Layer 2: LLM classifier (fail open).
     try:
-        result = await _llm.with_structured_output(PolicyDecision).ainvoke([
+        result = await get_main_llm().with_structured_output(PolicyDecision).ainvoke([
             SystemMessage(content=_SYSTEM),
             HumanMessage(content=text),
         ])
         allowed = bool(result.allowed)
         reason = result.reason or ""
-    except Exception:
+    except Exception as e:
+        print(f"[content_policy] LLM error, failing open: {e}", flush=True)
         allowed, reason = True, ""
 
     if not allowed:
