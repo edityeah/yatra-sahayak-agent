@@ -188,6 +188,55 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     yield {"event": "done", "data": "[DONE]"}
 
 
+@app.post("/api/voice/token")
+async def api_voice_token(request: Request, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    if not settings.VOICE_ENABLED:
+        raise HTTPException(status_code=503, detail="voice not configured")
+    body = await request.json()
+    user_id = body.get("user_id", "web-tester")
+    yatra = body.get("yatra")
+    language = body.get("language")
+    room = f"yatra-voice-{user_id}-{uuid.uuid4().hex[:8]}"
+    from livekit import api  # lazy — keeps module import + 503/sos paths creds-free
+    token = (
+        api.AccessToken(settings.LIVEKIT_API_KEY, settings.LIVEKIT_API_SECRET)
+        .with_identity(user_id)
+        .with_grants(api.VideoGrants(room_join=True, room=room))
+        .to_jwt()
+    )
+    # Explicit dispatch so our agent_name worker joins THIS room. Best-effort:
+    # if the worker/dispatch service isn't reachable, still return the token
+    # (client can connect; worker joins when it comes up).
+    try:
+        lkapi = api.LiveKitAPI(settings.LIVEKIT_URL, settings.LIVEKIT_API_KEY, settings.LIVEKIT_API_SECRET)
+        await lkapi.agent_dispatch.create_dispatch(
+            api.CreateAgentDispatchRequest(
+                agent_name=settings.AGENT_NAME,
+                room=room,
+                metadata=json.dumps({"user_id": user_id, "yatra": yatra, "language": language}),
+            )
+        )
+        await lkapi.aclose()
+    except Exception as e:
+        print(f"[voice] dispatch failed (returning token anyway): {e}", flush=True)
+    return {"url": settings.LIVEKIT_URL, "token": token, "room": room}
+
+
+@app.post("/api/voice/sos")
+async def api_voice_sos(request: Request, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    body = await request.json()
+    sos_id = await persistence.create_sos(
+        body.get("user_id", "voice-caller"),
+        yatra=body.get("yatra"),
+        yatra_id=body.get("yatra_id"),
+        location=body.get("location"),
+        nature=body.get("nature"),
+    )
+    return {"sos_id": sos_id}
+
+
 @app.post("/messages")
 async def messages(request: Request, x_api_key: str | None = Header(default=None)):
     if x_api_key != settings.INTERNAL_API_KEY:

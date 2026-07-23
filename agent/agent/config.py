@@ -43,6 +43,15 @@ class Settings:
         os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data")),
     )
 
+    # LiveKit voice (Plan 5). Empty ⇒ voice disabled (503 from /api/voice/token).
+    LIVEKIT_URL:        str = os.environ.get("LIVEKIT_URL", "").strip()
+    LIVEKIT_API_KEY:    str = os.environ.get("LIVEKIT_API_KEY", "").strip()
+    LIVEKIT_API_SECRET: str = os.environ.get("LIVEKIT_API_SECRET", "").strip()
+    AGENT_NAME:         str = os.environ.get("AGENT_NAME", "yatra-sahayak-voice")
+    VOICE_ENABLED:      bool = bool(os.environ.get("LIVEKIT_URL", "").strip()
+                                    and os.environ.get("LIVEKIT_API_KEY", "").strip()
+                                    and os.environ.get("LIVEKIT_API_SECRET", "").strip())
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
