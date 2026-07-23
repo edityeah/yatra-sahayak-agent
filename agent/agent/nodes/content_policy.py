@@ -114,6 +114,14 @@ async def content_policy(state: YatraState) -> YatraState:
     if sos:
         return {**state, "current_node": "content_policy", "policy_result": "allowed", "sos": True, "block_reason": ""}
 
+    # Mid-registration answers (a bare phone number, an OTP, "none", an
+    # emergency contact) look off-topic in isolation and the LLM classifier
+    # would wrongly block them. The hard tripwire above still runs; skip only
+    # the soft classifier while an intake is in progress.
+    reg_stage = state.get("reg_stage")
+    if reg_stage and reg_stage != "done":
+        return {**state, "current_node": "content_policy", "policy_result": "allowed", "sos": False, "block_reason": ""}
+
     # Layer 2: LLM classifier (fail open).
     try:
         result = await get_main_llm().with_structured_output(PolicyDecision).ainvoke([

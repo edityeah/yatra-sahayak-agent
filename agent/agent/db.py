@@ -32,11 +32,21 @@ CREATE TABLE IF NOT EXISTS registrations (
   yatra          TEXT NOT NULL,
   name           TEXT,
   phone          TEXT,
+  age            TEXT,
+  id_type        TEXT,
   group_name     TEXT,
+  group_size     INTEGER DEFAULT 1,
   emergency_contact TEXT,
   medical_flags  TEXT,
+  mobile_verified BOOLEAN DEFAULT FALSE,
+  ekyc_verified  BOOLEAN DEFAULT FALSE,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS age TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS id_type TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS group_size INTEGER DEFAULT 1;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS mobile_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS ekyc_verified BOOLEAN DEFAULT FALSE;
 CREATE TABLE IF NOT EXISTS sos_events (
   id             TEXT PRIMARY KEY,
   user_id        TEXT NOT NULL,

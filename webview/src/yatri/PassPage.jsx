@@ -5,6 +5,8 @@ import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
 import PageShell from "../components/PageShell.jsx";
 import { apiGet } from "../lib/api.js";
+import { t } from "../lib/i18n.js";
+import { YATRA_NAMES } from "../data/yatraNames.js";
 
 const CAPTION = {
   mr: "चेकपॉइंटवर हा QR दाखवा — यामुळे हजेरी नोंदते आणि तुमच्या आणीबाणी माहितीशी जोडले जाते.",
@@ -27,9 +29,19 @@ const NOT_FOUND = {
 const LABELS = {
   yatra: { mr: "यात्रा", hi: "यात्रा", en: "Yatra" },
   holder: { mr: "यात्रेकरूचे नाव", hi: "यात्री का नाम", en: "Holder Name" },
+  age: { mr: "वय", hi: "उम्र", en: "Age" },
   group: { mr: "गट / दिंडी", hi: "समूह / दिंडी", en: "Group / Dindi" },
+  emergency: { mr: "आपत्कालीन संपर्क", hi: "आपातकालीन संपर्क", en: "Emergency contact" },
+  medical: { mr: "वैद्यकीय नोंद", hi: "चिकित्सीय जानकारी", en: "Medical notes" },
   yatraId: { mr: "यात्रा आयडी", hi: "यात्रा आईडी", en: "Yatra ID" },
 };
+
+const VERIFIED = {
+  mobile: { mr: "मोबाइल पडताळला", hi: "मोबाइल सत्यापित", en: "Mobile verified" },
+  ekyc: { mr: "e-KYC पडताळली", hi: "e-KYC सत्यापित", en: "e-KYC verified" },
+};
+
+const RFID = { mr: "RFID यात्रा पास", hi: "RFID यात्रा पास", en: "RFID Yatra Pass" };
 
 export default function PassPage() {
   const { language } = useLang();
@@ -99,18 +111,49 @@ export default function PassPage() {
 
       {pass && !loading && !error && !notFound ? (
         <div className="rounded-2xl border border-bdr bg-surface shadow-card overflow-hidden">
-          <div className="bg-primary text-white px-5 py-3">
-            <div className="text-[13px] font-bold tracking-wide">{pass.yatra}</div>
+          <div className="bg-primary text-white px-5 py-3 flex items-center justify-between gap-2">
+            <div className="text-[13px] font-bold tracking-wide uppercase">
+              {YATRA_NAMES[pass.yatra] ? t(YATRA_NAMES[pass.yatra], language) : pass.yatra}
+            </div>
+            <div className="text-[11px] font-bold bg-white/20 rounded-full px-2.5 py-0.5">{RFID[language] || RFID.en}</div>
           </div>
           <div className="p-5 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-            <div className="w-[180px] h-[180px] flex-shrink-0 rounded-xl border border-bdr bg-white flex items-center justify-center overflow-hidden">
-              {qrDataUrl ? <img src={qrDataUrl} alt="Yatra QR" width={180} height={180} /> : null}
+            <div className="flex flex-col items-center gap-2 flex-shrink-0">
+              <div className="w-[180px] h-[180px] rounded-xl border border-bdr bg-white flex items-center justify-center overflow-hidden">
+                {qrDataUrl ? <img src={qrDataUrl} alt="Yatra QR" width={180} height={180} /> : null}
+              </div>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {pass.mobile_verified ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                    ✓ {VERIFIED.mobile[language] || VERIFIED.mobile.en}
+                  </span>
+                ) : null}
+                {pass.ekyc_verified ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                    ✓ {VERIFIED.ekyc[language] || VERIFIED.ekyc.en}
+                  </span>
+                ) : null}
+              </div>
             </div>
             <dl className="flex-1 min-w-0 w-full grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-[13.5px]">
               <dt className="text-muted font-semibold">{LABELS.holder[language] || LABELS.holder.en}</dt>
               <dd className="text-ink font-bold text-right sm:text-left">{pass.name}</dd>
+              {pass.age ? (<>
+                <dt className="text-muted font-semibold">{LABELS.age[language] || LABELS.age.en}</dt>
+                <dd className="text-ink font-bold text-right sm:text-left">{pass.age}</dd>
+              </>) : null}
               <dt className="text-muted font-semibold">{LABELS.group[language] || LABELS.group.en}</dt>
-              <dd className="text-ink font-bold text-right sm:text-left">{pass.group_name || "—"}</dd>
+              <dd className="text-ink font-bold text-right sm:text-left">
+                {pass.group_name || "—"}{pass.group_size ? ` · ${pass.group_size}` : ""}
+              </dd>
+              {pass.emergency_contact ? (<>
+                <dt className="text-muted font-semibold">{LABELS.emergency[language] || LABELS.emergency.en}</dt>
+                <dd className="text-ink font-bold text-right sm:text-left break-words">{pass.emergency_contact}</dd>
+              </>) : null}
+              {pass.medical_flags && pass.medical_flags !== "none" ? (<>
+                <dt className="text-muted font-semibold">{LABELS.medical[language] || LABELS.medical.en}</dt>
+                <dd className="text-ink font-bold text-right sm:text-left break-words">{pass.medical_flags}</dd>
+              </>) : null}
               <dt className="text-muted font-semibold">{LABELS.yatraId[language] || LABELS.yatraId.en}</dt>
               <dd className="text-ink font-mono font-bold text-right sm:text-left break-all">{pass.yatra_id}</dd>
             </dl>
