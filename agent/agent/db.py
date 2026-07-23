@@ -26,6 +26,27 @@ CREATE TABLE IF NOT EXISTS user_state (
   state       JSONB NOT NULL DEFAULT '{}'::jsonb,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE TABLE IF NOT EXISTS registrations (
+  yatra_id       TEXT PRIMARY KEY,
+  user_id        TEXT NOT NULL,
+  yatra          TEXT NOT NULL,
+  name           TEXT,
+  phone          TEXT,
+  group_name     TEXT,
+  emergency_contact TEXT,
+  medical_flags  TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS sos_events (
+  id             TEXT PRIMARY KEY,
+  user_id        TEXT NOT NULL,
+  yatra          TEXT,
+  yatra_id       TEXT,
+  location       TEXT,
+  nature         TEXT,
+  status         TEXT NOT NULL DEFAULT 'open',
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 """
 
 
