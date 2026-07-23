@@ -1,0 +1,52 @@
+{
+  "pandharpur": {
+    "name": {
+      "mr": "पंढरपूर वारी (आषाढी/कार्तिकी)",
+      "hi": "पंढरपुर वारी (आषाढ़ी/कार्तिकी)",
+      "en": "Pandharpur Wari (Ashadhi/Kartiki)"
+    },
+    "description": {
+      "mr": "देहू व आळंदीहून निघणाऱ्या पालख्यांसह लाखो वारकरी सुमारे २१ दिवस चालत पंढरपूरच्या विठ्ठल-रुक्मिणी मंदिरापर्यंत जातात.",
+      "hi": "देहू और आलंदी से निकलने वाली पालकियों के साथ लाखों वारकरी लगभग 21 दिनों तक पैदल चलकर पंढरपुर के विठ्ठल-रुक्मिणी मंदिर तक पहुँचते हैं।",
+      "en": "A roughly 21-day walking pilgrimage in which lakhs of Warkaris accompany palkhis from Dehu and Alandi to the Vitthal-Rukmini temple in Pandharpur."
+    },
+    "control_room": "020-2612-4040",
+    "state_control_room": "1077",
+    "districts": ["Pune", "Solapur", "Satara", "Sangli"],
+    "season": {
+      "mr": "आषाढी एकादशी (जून-जुलै) व कार्तिकी एकादशी (ऑक्टोबर-नोव्हेंबर)",
+      "hi": "आषाढ़ी एकादशी (जून-जुलाई) और कार्तिकी एकादशी (अक्टूबर-नवंबर)",
+      "en": "Ashadhi Ekadashi (June-July) and Kartiki Ekadashi (October-November)"
+    },
+    "deity": {
+      "mr": "श्री विठ्ठल-रुक्मिणी",
+      "hi": "श्री विठ्ठल-रुक्मिणी",
+      "en": "Shri Vitthal-Rukmini"
+    }
+  },
+  "kumbh": {
+    "name": {
+      "mr": "सिंहस्थ कुंभमेळा (नाशिक-त्र्यंबकेश्वर)",
+      "hi": "सिंहस्थ कुंभ मेला (नासिक-त्र्यंबकेश्वर)",
+      "en": "Simhastha Kumbh Mela (Nashik-Trimbakeshwar)"
+    },
+    "description": {
+      "mr": "दर बारा वर्षांनी गोदावरी नदीच्या काठी नाशिक व त्र्यंबकेश्वर येथे भरणारा महाकुंभ मेळा, ज्यात लाखो भाविक व साधू पवित्र स्नानासाठी (शाही स्नान) एकत्र येतात.",
+      "hi": "हर बारह वर्षों में गोदावरी नदी के तट पर नासिक और त्र्यंबकेश्वर में लगने वाला महाकुंभ मेला, जिसमें लाखों श्रद्धालु और साधु पवित्र स्नान (शाही स्नान) के लिए एकत्र होते हैं।",
+      "en": "A mega gathering held once every twelve years on the banks of the Godavari at Nashik and Trimbakeshwar, where lakhs of pilgrims and sadhus assemble for the sacred Shahi Snan (royal bath)."
+    },
+    "control_room": "0253-2317151",
+    "state_control_room": "1077",
+    "districts": ["Nashik"],
+    "season": {
+      "mr": "सिंह राशीत गुरु असताना (सुमारे १ महिना, प्रमुख शाही स्नान दिवस)",
+      "hi": "जब बृहस्पति सिंह राशि में होता है (लगभग 1 माह, प्रमुख शाही स्नान दिवस)",
+      "en": "During Jupiter's transit through Leo (about one month, with marquee Shahi Snan dates)"
+    },
+    "deity": {
+      "mr": "श्री त्र्यंबकेश्वर (ज्योतिर्लिंग) व गोदावरी माता",
+      "hi": "श्री त्र्यंबकेश्वर (ज्योतिर्लिंग) और गोदावरी माता",
+      "en": "Shri Trimbakeshwar (Jyotirlinga) and Mother Godavari"
+    }
+  }
+}

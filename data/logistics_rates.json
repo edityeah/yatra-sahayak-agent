@@ -1,0 +1,78 @@
+{
+  "pandharpur": [
+    {
+      "service": {"mr": "बैलगाडी (पालखी सोबत, प्रति दिवस)", "hi": "बैलगाड़ी (पालकी के साथ, प्रति दिन)", "en": "Bullock cart (with palkhi, per day)"},
+      "rate": "₹300-500",
+      "unit": {"mr": "प्रति दिवस", "hi": "प्रति दिन", "en": "per day"},
+      "note": {"mr": "जिल्हा प्रशासनाने सुचवलेला अंदाजे दर; हंगामानुसार बदलू शकतो.", "hi": "जिला प्रशासन द्वारा सुझाया गया अनुमानित दर; मौसम के अनुसार बदल सकता है।", "en": "Indicative government-notified rate; may vary by season."}
+    },
+    {
+      "service": {"mr": "सामान वाहतूक हमाल (प्रति बॅग)", "hi": "सामान ढुलाई हम्माल (प्रति बैग)", "en": "Luggage porter (per bag)"},
+      "rate": "₹50-100",
+      "unit": {"mr": "प्रति बॅग", "hi": "प्रति बैग", "en": "per bag"},
+      "note": {"mr": "अंतरानुसार दर बदलतो; आधी दर ठरवून घ्या.", "hi": "दूरी के अनुसार दर बदलता है; पहले दर तय कर लें।", "en": "Rate varies with distance; agree on the rate before hiring."}
+    },
+    {
+      "service": {"mr": "शेअर जीप/टेम्पो (पालखी मार्गावर)", "hi": "शेयर जीप/टेम्पो (पालकी मार्ग पर)", "en": "Shared jeep/tempo (along palkhi route)"},
+      "rate": "₹30-80",
+      "unit": {"mr": "प्रति व्यक्ती प्रति टप्पा", "hi": "प्रति व्यक्ति प्रति चरण", "en": "per person per stage"},
+      "note": {"mr": "आरटीओ सुचवलेले सूचक दर; पावती मागा.", "hi": "आरटीओ द्वारा सुझाए गए सांकेतिक दर; रसीद माँगें।", "en": "Indicative RTO-notified rate; ask for a receipt."}
+    },
+    {
+      "service": {"mr": "तंबू/निवारा भाडे (रात्र मुक्काम)", "hi": "तंबू/आश्रय किराया (रात्रि विश्राम)", "en": "Tent/shelter rental (night halt)"},
+      "rate": "₹50-150",
+      "unit": {"mr": "प्रति व्यक्ती प्रति रात्र", "hi": "प्रति व्यक्ति प्रति रात", "en": "per person per night"},
+      "note": {"mr": "अनेक ठिकाणी प्रशासन व स्वयंसेवी संस्थांतर्फे मोफत निवारा उपलब्ध.", "hi": "कई स्थानों पर प्रशासन और स्वयंसेवी संस्थाओं द्वारा निःशुल्क आश्रय उपलब्ध।", "en": "Free shelter is available at many halts via administration/NGO camps."}
+    },
+    {
+      "service": {"mr": "सायकल रिक्षा (गावांतर्गत)", "hi": "साइकिल रिक्शा (गाँव के भीतर)", "en": "Cycle rickshaw (within town)"},
+      "rate": "₹20-50",
+      "unit": {"mr": "प्रति फेरी", "hi": "प्रति सवारी", "en": "per ride"},
+      "note": {"mr": "स्थानिक वाहतूक संघटनेने सुचवलेला दर.", "hi": "स्थानीय परिवहन संघ द्वारा सुझाया गया दर।", "en": "Rate suggested by the local transport union."}
+    },
+    {
+      "service": {"mr": "वैद्यकीय स्ट्रेचर/व्हीलचेअर सेवा", "hi": "चिकित्सा स्ट्रेचर/व्हीलचेयर सेवा", "en": "Medical stretcher/wheelchair service"},
+      "rate": "मोफत",
+      "unit": {"mr": "आरोग्य शिबिरात", "hi": "स्वास्थ्य शिविर में", "en": "at health camps"},
+      "note": {"mr": "आरोग्य विभागाच्या शिबिरांमध्ये विनामूल्य उपलब्ध.", "hi": "स्वास्थ्य विभाग के शिविरों में निःशुल्क उपलब्ध।", "en": "Free of charge at Health Department camps along the route."}
+    }
+  ],
+  "kumbh": [
+    {
+      "service": {"mr": "शेअर ऑटो/वाहन (रेल्वे स्टेशन ते घाट)", "hi": "शेयर ऑटो/वाहन (रेलवे स्टेशन से घाट)", "en": "Shared auto/vehicle (railway station to ghat)"},
+      "rate": "₹20-50",
+      "unit": {"mr": "प्रति व्यक्ती", "hi": "प्रति व्यक्ति", "en": "per person"},
+      "note": {"mr": "आरटीओ सूचक दर; गर्दीच्या वेळी दर वाढू शकतो, आधी विचारा.", "hi": "आरटीओ सांकेतिक दर; भीड़ के समय दर बढ़ सकता है, पहले पूछें।", "en": "Indicative RTO rate; may rise during peak crowd hours — confirm before boarding."}
+    },
+    {
+      "service": {"mr": "सामान वाहतूक हमाल", "hi": "सामान ढुलाई हम्माल", "en": "Luggage porter"},
+      "rate": "₹50-120",
+      "unit": {"mr": "प्रति बॅग", "hi": "प्रति बैग", "en": "per bag"},
+      "note": {"mr": "नोंदणीकृत हमालांचा गणवेश व ओळखपत्र तपासा.", "hi": "पंजीकृत हम्मालों की वर्दी और पहचान पत्र जाँचें।", "en": "Check for a registered porter's uniform and ID badge."}
+    },
+    {
+      "service": {"mr": "गोदावरी घाट बोट सेवा", "hi": "गोदावरी घाट नाव सेवा", "en": "Godavari ghat boat service"},
+      "rate": "₹30-60",
+      "unit": {"mr": "प्रति व्यक्ती प्रति फेरी", "hi": "प्रति व्यक्ति प्रति सवारी", "en": "per person per ride"},
+      "note": {"mr": "फक्त प्रशासन-अधिकृत नोंदणीकृत बोटींचाच वापर करा; लाईफ जॅकेट अनिवार्य.", "hi": "केवल प्रशासन-अधिकृत पंजीकृत नावों का उपयोग करें; लाइफ जैकेट अनिवार्य।", "en": "Use only administration-licensed registered boats; life jackets are mandatory."}
+    },
+    {
+      "service": {"mr": "कपडे बदलण्याची खोली/लॉकर (घाटावर)", "hi": "कपड़े बदलने का कक्ष/लॉकर (घाट पर)", "en": "Changing room/locker (at ghat)"},
+      "rate": "₹20-50",
+      "unit": {"mr": "प्रति वापर", "hi": "प्रति उपयोग", "en": "per use"},
+      "note": {"mr": "अनेक घाटांवर मोफत सुविधाही उपलब्ध.", "hi": "कई घाटों पर निःशुल्क सुविधा भी उपलब्ध।", "en": "Free facilities are also available at several ghats."}
+    },
+    {
+      "service": {"mr": "शेअर बस (नाशिक शहर ते त्र्यंबकेश्वर)", "hi": "शेयर बस (नासिक शहर से त्र्यंबकेश्वर)", "en": "Shared bus (Nashik city to Trimbakeshwar)"},
+      "rate": "₹40-70",
+      "unit": {"mr": "प्रति व्यक्ती", "hi": "प्रति व्यक्ति", "en": "per person"},
+      "note": {"mr": "एसटी महामंडळाचा सूचक दर; शाही स्नानाच्या दिवशी विशेष फेऱ्या.", "hi": "एसटी निगम का सांकेतिक दर; शाही स्नान के दिन विशेष फेरे।", "en": "Indicative ST Corporation fare; special services run on Shahi Snan days."}
+    },
+    {
+      "service": {"mr": "वैद्यकीय प्रथमोपचार व रुग्णवाहिका", "hi": "चिकित्सा प्राथमिक उपचार व एम्बुलेंस", "en": "First-aid and ambulance service"},
+      "rate": "मोफत",
+      "unit": {"mr": "मेळा आरोग्य शिबिरात", "hi": "मेला स्वास्थ्य शिविर में", "en": "at mela health posts"},
+      "note": {"mr": "सर्व नोंदणीकृत आरोग्य शिबिरांत विनामूल्य.", "hi": "सभी पंजीकृत स्वास्थ्य शिविरों में निःशुल्क।", "en": "Free at all registered mela health posts."}
+    }
+  ]
+}

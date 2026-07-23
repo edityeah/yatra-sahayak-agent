@@ -1,0 +1,26 @@
+{
+  "pandharpur": {
+    "summary": {
+      "mr": "ढगाळ वातावरण, तुरळक सरींची शक्यता; पालखी मार्गावर दुपारनंतर पावसाची शक्यता जास्त.",
+      "hi": "बादल छाए रहेंगे, हल्की बारिश की संभावना; पालकी मार्ग पर दोपहर बाद बारिश की संभावना अधिक है।",
+      "en": "Cloudy skies with a chance of scattered showers; rain likelihood is higher along the palkhi route after afternoon."
+    },
+    "temp_c": 28,
+    "rain_alert": {
+      "mr": "मध्यम पावसाचा इशारा — पुणे व सोलापूर जिल्हा",
+      "hi": "मध्यम वर्षा की चेतावनी — पुणे व सोलापुर जिला",
+      "en": "Moderate rain alert — Pune and Solapur districts"
+    },
+    "updated": "cached"
+  },
+  "kumbh": {
+    "summary": {
+      "mr": "स्वच्छ ते अंशतः ढगाळ आकाश; सकाळी गोदावरी काठावर धुके राहण्याची शक्यता.",
+      "hi": "साफ से आंशिक बादल छाए आकाश; सुबह गोदावरी तट पर कोहरे की संभावना।",
+      "en": "Clear to partly cloudy skies; morning fog is possible along the Godavari banks."
+    },
+    "temp_c": 26,
+    "rain_alert": null,
+    "updated": "cached"
+  }
+}

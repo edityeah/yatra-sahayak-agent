@@ -1,0 +1,47 @@
+[
+  {
+    "id": "stampede",
+    "title": {"mr": "चेंगराचेंगरी टाळण्यासाठी तयारी", "hi": "भगदड़ से बचाव की तैयारी", "en": "Stampede-avoidance preparedness"},
+    "body": {
+      "mr": "दाट गर्दीत नेहमी उभे राहा, कधीही खाली वाकून वस्तू उचलू नका. गर्दीच्या प्रवाहासोबत चला, विरुद्ध दिशेने ढकलू नका. कुटुंबातील सदस्यांचे हात धरून ठेवा व एकत्र रहा. जर पडलात तर लगेच गुडघ्यावर उठून उभे राहण्याचा प्रयत्न करा व दोन्ही हातांनी डोके झाकून घ्या. बॅरिकेड्स व स्वयंसेवकांच्या सूचनांचे काटेकोर पालन करा.",
+      "hi": "घनी भीड़ में हमेशा खड़े रहें, कभी भी झुककर सामान न उठाएँ। भीड़ के प्रवाह के साथ चलें, विपरीत दिशा में धक्का न दें। परिवार के सदस्यों का हाथ पकड़े रखें और साथ रहें। यदि गिर जाएँ तो तुरंत घुटनों के बल उठने का प्रयास करें और दोनों हाथों से सिर ढक लें। बैरिकेड और स्वयंसेवकों के निर्देशों का सख्ती से पालन करें।",
+      "en": "Stay on your feet in dense crowds and never bend down to pick up dropped items. Move with the flow of the crowd, never against it. Hold onto family members and stay together. If you fall, try to get up onto your knees immediately and cover your head with both arms. Strictly follow barricades and volunteer/police instructions."
+    }
+  },
+  {
+    "id": "ghat_safety",
+    "title": {"mr": "घाट व नदीकाठ सुरक्षा", "hi": "घाट व नदी तट सुरक्षा", "en": "Ghat and riverbank safety"},
+    "body": {
+      "mr": "फक्त चिन्हांकित व उथळ स्नान क्षेत्रातच स्नान करा, दोरखंड/कठड्याबाहेर जाऊ नका. लहान मुले व पोहता न येणाऱ्यांनी एकटे पाण्यात उतरू नये. निसरड्या पायऱ्यांवर सावधगिरी बाळगा. प्रवाह वाढल्याचा इशारा दिल्यास तात्काळ घाट सोडा व सूचना फलक/नियंत्रण कक्षाच्या सूचनांचे पालन करा.",
+      "hi": "केवल चिन्हित व उथले स्नान क्षेत्र में ही स्नान करें, रस्सी/रेलिंग के बाहर न जाएँ। बच्चों व तैरना न जानने वालों को अकेले पानी में न उतरने दें। फिसलन भरी सीढ़ियों पर सावधानी बरतें। जल स्तर बढ़ने की चेतावनी मिलने पर तुरंत घाट छोड़ें और सूचना बोर्ड/नियंत्रण कक्ष के निर्देशों का पालन करें।",
+      "en": "Bathe only in marked, shallow zones and never go beyond ropes or railings. Children and non-swimmers should not enter the water unaccompanied. Be careful on slippery steps. If a rising-water alert is issued, leave the ghat immediately and follow signage/control-room instructions."
+    }
+  },
+  {
+    "id": "first_aid",
+    "title": {"mr": "प्राथमिक प्रथमोपचार माहिती", "hi": "प्राथमिक चिकित्सा जानकारी", "en": "Basic first-aid guidance"},
+    "body": {
+      "mr": "किरकोळ जखम झाल्यास स्वच्छ कापडाने दाब देऊन रक्तस्राव थांबवा. उष्माघाताची लक्षणे (चक्कर, मळमळ, जास्त घाम) दिसल्यास सावलीत बसवा व पाणी/ओआरएस द्या. गंभीर दुखापत, बेशुद्धी किंवा श्वास घेण्यास त्रास असल्यास त्वरित जवळच्या आरोग्य शिबिरात न्या किंवा १०८ वर कॉल करा.",
+      "hi": "मामूली चोट लगने पर साफ कपड़े से दबाव देकर रक्तस्राव रोकें। लू लगने के लक्षण (चक्कर, मतली, अधिक पसीना) दिखने पर छाया में बिठाएँ और पानी/ओआरएस दें। गंभीर चोट, बेहोशी या साँस लेने में तकलीफ होने पर तुरंत निकटतम स्वास्थ्य शिविर ले जाएँ या 108 पर कॉल करें।",
+      "en": "For minor cuts, apply pressure with a clean cloth to stop bleeding. If heat-exhaustion symptoms appear (dizziness, nausea, heavy sweating), move the person to shade and give water/ORS. For serious injury, unconsciousness, or breathing difficulty, get to the nearest health camp immediately or call 108."
+    }
+  },
+  {
+    "id": "heat",
+    "title": {"mr": "उष्णता व निर्जलीकरणापासून बचाव", "hi": "गर्मी व निर्जलीकरण से बचाव", "en": "Heat and dehydration precautions"},
+    "body": {
+      "mr": "दिवसा भर उन्हात कमीत कमी चालण्याचा प्रयत्न करा, डोक्यावर टोपी/कापड ठेवा. दर तासाला थोडे थोडे पाणी प्या, तहान लागण्याची वाट पाहू नका. हलक्या रंगाचे सैल कपडे घाला. चक्कर येणे, मळमळ किंवा अति थकवा जाणवल्यास लगेच सावलीत विश्रांती घ्या व जवळच्या आरोग्य शिबिरास कळवा.",
+      "hi": "दिन के समय धूप में कम से कम चलने का प्रयास करें, सिर पर टोपी/कपड़ा रखें। हर घंटे थोड़ा-थोड़ा पानी पिएँ, प्यास लगने का इंतज़ार न करें। हल्के रंग के ढीले कपड़े पहनें। चक्कर आना, मतली या अत्यधिक थकान महसूस होने पर तुरंत छाया में विश्राम करें और निकटतम स्वास्थ्य शिविर को सूचित करें।",
+      "en": "Minimize walking in direct sun during peak hours and cover your head. Sip water every hour rather than waiting until thirsty. Wear light-colored, loose clothing. If you feel dizzy, nauseous, or overly fatigued, rest in shade immediately and alert the nearest health camp."
+    }
+  },
+  {
+    "id": "missing_person",
+    "title": {"mr": "हरवलेली व्यक्ती — काय करावे", "hi": "व्यक्ति खो जाने पर — क्या करें", "en": "Missing person — what to do"},
+    "body": {
+      "mr": "गर्दीत कोणी हरवल्यास घाबरून जाऊ नका. जवळच्या स्वयंसेवक/पोलीस बूथ किंवा घोषणा केंद्रावर तात्काळ माहिती द्या. लहान मुलांच्या खिशात नाव, पालकांचा मोबाईल क्रमांक व मुक्कामाचा तपशील असलेली चिठ्ठी/ओळखपत्र ठेवा. एकत्र भेटण्याची जागा आधीच ठरवून ठेवा. आवश्यक असल्यास ११२ वर संपर्क करा.",
+      "hi": "भीड़ में कोई खो जाए तो घबराएँ नहीं। निकटतम स्वयंसेवक/पुलिस बूथ या उद्घोषणा केंद्र पर तुरंत सूचना दें। बच्चों की जेब में नाम, माता-पिता का मोबाइल नंबर व पड़ाव विवरण वाली पर्ची/पहचान पत्र रखें। पहले से मिलने का स्थान तय कर लें। आवश्यकता होने पर 112 पर संपर्क करें।",
+      "en": "If someone goes missing in a crowd, stay calm. Report immediately at the nearest volunteer/police booth or announcement center. Keep a note or ID with the child's name, a parent's mobile number, and halt details in their pocket. Agree on a meeting point in advance. Call 112 if needed."
+    }
+  }
+]
