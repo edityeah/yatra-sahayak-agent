@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import { LangProvider } from "./components/AppShell.jsx";
 import ChatPage from "./chat/ChatPage.jsx";
+import QuickActivitiesPage from "./quick/QuickActivitiesPage.jsx";
 import PassPage from "./yatri/PassPage.jsx";
 import MapPage from "./yatri/MapPage.jsx";
 import LogisticsPage from "./yatri/LogisticsPage.jsx";
@@ -15,6 +16,7 @@ export default function App() {
         {/* New Pravasi-Setu-style chat landing — owns its own full-page
             header/composer chrome. */}
         <Route path="/" element={<ChatPage />} />
+        <Route path="/quick-activities" element={<QuickActivitiesPage />} />
 
         {/* Inner yatri + voice pages now bring their own PageShell (same
             blue-avatar header, back arrow, MenuDrawer) so every route

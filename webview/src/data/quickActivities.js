@@ -1,5 +1,5 @@
 // Yatra Quick Activities — shown as chips above the composer and as the
-// full list in the QuickActivitiesSheet drawer. `action.type` is either
+// full-page colored grid at /quick-activities. `action.type` is either
 // "send" (feeds `text` into the chat as a user turn) or "route" (navigates
 // to an in-app page).
 export const QUICK_ACTIVITIES = [

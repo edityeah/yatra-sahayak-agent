@@ -1,8 +1,8 @@
 import { Landmark, Menu } from "lucide-react";
 
 // Sticky top header — round primary-100 avatar with a Landmark glyph, bold
-// title, active-yatra subtitle, and a hamburger that opens the MenuDrawer.
-// Matches the Pravasi Setu Assistant reference header.
+// title, active-yatra subtitle, and a hamburger that opens the ThreadsDrawer
+// (Chats/Settings). Matches the Pravasi Setu Assistant reference header.
 export default function Header({ subtitle, onMenu }) {
   return (
     <header className="h-14 px-3 sm:px-4 flex items-center gap-2 border-b border-bdr bg-surface flex-shrink-0 sticky top-0 z-30">

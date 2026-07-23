@@ -11,8 +11,8 @@ const PLACEHOLDER = {
 };
 
 // Composer strip at the bottom — [+] [ input ] [mic / send]. The + button
-// opens the QuickActivitiesSheet. Mic and Send swap based on whether
-// there's text in the input.
+// opens the PersistentMenuDrawer (Camera/Gallery/Document/Quick Activities).
+// Mic and Send swap based on whether there's text in the input.
 export default function Composer({ disabled, onSend, onPlus }) {
   const { language } = useLang();
   const navigate = useNavigate();

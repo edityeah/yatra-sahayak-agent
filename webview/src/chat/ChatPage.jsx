@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Landmark } from "lucide-react";
 import { useLang } from "../components/AppShell.jsx";
 import { ErrorNote } from "../components/ui.jsx";
@@ -9,11 +9,19 @@ import { t } from "../lib/i18n.js";
 import Header from "../components/chat/Header.jsx";
 import EmptyState from "../components/chat/EmptyState.jsx";
 import QuickActivities from "../components/chat/QuickActivities.jsx";
-import QuickActivitiesSheet from "../components/chat/QuickActivitiesSheet.jsx";
 import Composer from "../components/chat/Composer.jsx";
-import MenuDrawer from "../components/chat/MenuDrawer.jsx";
+import PersistentMenuDrawer from "../components/chat/PersistentMenuDrawer.jsx";
+import ThreadsDrawer from "../components/chat/ThreadsDrawer.jsx";
 import { QUICK_ACTIVITIES } from "../data/quickActivities.js";
 import { YATRA_NAMES } from "../data/yatraNames.js";
+import {
+  loadThreads,
+  loadActiveId,
+  saveActiveId,
+  createThread,
+  appendMessage,
+  subscribe,
+} from "../store/threads.js";
 
 const TYPING = { mr: "टाइप करत आहे…", hi: "टाइप कर रहा है…", en: "typing…" };
 
@@ -105,72 +113,102 @@ async function warmUpAgent() {
   }
 }
 
-function newConversationId() {
-  return "web-" + Date.now();
-}
-
 export default function ChatPage() {
   const { language } = useLang();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const ctx = useRef(getContext()).current;
 
-  const conversationIdRef = useRef(null);
-  if (conversationIdRef.current === null) {
-    conversationIdRef.current = newConversationId();
-  }
+  const [threads, setThreads] = useState(() => loadThreads());
+  const [activeId, setActiveId] = useState(() => loadActiveId());
 
-  const [messages, setMessages] = useState([]); // {id, role: 'user'|'bot', text}
   const [busy, setBusy] = useState(false);
   const [waitingFirstDelta, setWaitingFirstDelta] = useState(false);
+  const [streamText, setStreamText] = useState(null); // null = not streaming
   const [error, setError] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [qaOpen, setQaOpen] = useState(false);
+  const [threadsOpen, setThreadsOpen] = useState(false);
   const scrollRef = useRef(null);
-  const nextId = useRef(1);
+  const seededRef = useRef(false);
 
   useEffect(() => {
     warmUpAgent();
   }, []);
 
+  // Keep local state in sync with the localStorage-backed thread store
+  // (covers updates made from the ThreadsDrawer — delete, pick, etc.).
+  useEffect(() => {
+    return subscribe(() => {
+      setThreads(loadThreads());
+      setActiveId(loadActiveId());
+    });
+  }, []);
+
+  const activeThread = activeId ? threads[activeId] : null;
+  const messages = activeThread?.messages || [];
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, streamText]);
 
   const send = useCallback(
     async (text) => {
       const clean = String(text || "").trim();
       if (!clean || busy) return;
       setError(null);
-      const userMsgId = nextId.current++;
-      const botMsgId = nextId.current++;
-      setMessages((prev) => [...prev, { id: userMsgId, role: "user", text: clean }]);
+
+      let id = activeId;
+      if (!id) {
+        const th = createThread({});
+        id = th.id;
+        setActiveId(id);
+      }
+
+      appendMessage(id, { role: "user", text: clean });
+      setThreads(loadThreads());
+
       setBusy(true);
       setWaitingFirstDelta(true);
-      setMessages((prev) => [...prev, { id: botMsgId, role: "bot", text: "" }]);
+      setStreamText("");
 
       try {
-        await streamChat(
-          { user_id: ctx.user_id, conversation_id: conversationIdRef.current, text: clean },
+        const full = await streamChat(
+          { user_id: ctx.user_id, conversation_id: id, text: clean },
           (chunk) => {
             setWaitingFirstDelta(false);
-            setMessages((prev) => prev.map((m) => (m.id === botMsgId ? { ...m, text: m.text + chunk } : m)));
+            setStreamText((prev) => (prev || "") + chunk);
           }
         );
+        appendMessage(id, { role: "bot", text: full });
+        setThreads(loadThreads());
       } catch (e) {
-        setMessages((prev) => prev.filter((m) => m.id !== botMsgId));
         setError(e?.message || String(e));
       } finally {
         setBusy(false);
         setWaitingFirstDelta(false);
+        setStreamText(null);
       }
     },
-    [busy, ctx.user_id]
+    [activeId, busy, ctx.user_id]
   );
 
+  // Consume a ?q=<text> deep link (handoff from the full-page Quick
+  // Activities view) once, then strip it from the URL.
+  useEffect(() => {
+    if (seededRef.current) return;
+    const q = searchParams.get("q");
+    if (!q) return;
+    seededRef.current = true;
+    const next = new URLSearchParams(searchParams);
+    next.delete("q");
+    setSearchParams(next, { replace: true });
+    send(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   function handleQuickActivity(a) {
-    setQaOpen(false);
     if (a.action?.type === "route") {
       navigate(a.action.href);
       return;
@@ -178,27 +216,45 @@ export default function ChatPage() {
     send(a.action?.text || t(a.label, language));
   }
 
-  function handleNewChat() {
-    conversationIdRef.current = newConversationId();
-    setMessages([]);
+  function handlePickThread(id) {
+    saveActiveId(id);
+    setActiveId(id);
     setError(null);
+    setThreadsOpen(false);
+  }
+
+  function handleNewChat() {
+    const th = createThread({});
+    setThreads(loadThreads());
+    setActiveId(th.id);
+    setError(null);
+    setThreadsOpen(false);
   }
 
   const subtitle = t(YATRA_NAMES[ctx.yatra], language) || ctx.yatra;
+  const isEmpty = messages.length === 0 && streamText === null;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden font-sans bg-surface text-ink">
-      <Header subtitle={subtitle} onMenu={() => setMenuOpen(true)} />
+      <Header subtitle={subtitle} onMenu={() => setThreadsOpen(true)} />
 
       <div className="flex-1 min-h-0 overflow-y-auto" ref={scrollRef}>
         <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 pt-4 pb-4">
-          {messages.length === 0 ? (
+          {isEmpty ? (
             <EmptyState />
           ) : (
             <div className="pt-2 space-y-3">
-              {messages.map((m) => (
-                <MessageBubble key={m.id} m={m} waitingFirstDelta={waitingFirstDelta} language={language} />
+              {messages.map((m, i) => (
+                <MessageBubble key={i} m={m} waitingFirstDelta={false} language={language} />
               ))}
+              {streamText !== null && (
+                <MessageBubble
+                  key="streaming"
+                  m={{ role: "bot", text: streamText }}
+                  waitingFirstDelta={waitingFirstDelta}
+                  language={language}
+                />
+              )}
             </div>
           )}
           {error ? (
@@ -209,18 +265,31 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {messages.length === 0 && (
-        <QuickActivities activities={QUICK_ACTIVITIES} onPick={handleQuickActivity} onSeeAll={() => setQaOpen(true)} />
+      {isEmpty && (
+        <QuickActivities
+          activities={QUICK_ACTIVITIES}
+          onPick={handleQuickActivity}
+          onSeeAll={() => navigate("/quick-activities")}
+        />
       )}
 
-      <Composer disabled={busy} onSend={send} onPlus={() => setQaOpen(true)} />
+      <Composer disabled={busy} onSend={send} onPlus={() => setMenuOpen(true)} />
 
-      <MenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} onNewChat={handleNewChat} />
-      <QuickActivitiesSheet
-        open={qaOpen}
-        onClose={() => setQaOpen(false)}
-        activities={QUICK_ACTIVITIES}
-        onPick={handleQuickActivity}
+      <PersistentMenuDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onQuickActivities={() => {
+          setMenuOpen(false);
+          navigate("/quick-activities");
+        }}
+      />
+      <ThreadsDrawer
+        open={threadsOpen}
+        onClose={() => setThreadsOpen(false)}
+        threads={threads}
+        activeId={activeId}
+        onPick={handlePickThread}
+        onNewChat={handleNewChat}
       />
     </div>
   );
