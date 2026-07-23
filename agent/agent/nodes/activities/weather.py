@@ -19,9 +19,9 @@ _TEMP_LABEL = {
 
 _SOURCE_LABEL = {
     "live": {
-        "mr": "स्रोत: थेट IMD अद्यतन",
-        "hi": "स्रोत: लाइव IMD अपडेट",
-        "en": "Source: live IMD update",
+        "mr": "स्रोत: थेट हवामान अद्यतन",
+        "hi": "स्रोत: लाइव मौसम अपडेट",
+        "en": "Source: live weather update",
     },
     "cached": {
         "mr": "स्रोत: कॅश केलेली माहिती — शेवटचे ज्ञात अद्ययावत (थेट सेवा अनुपलब्ध)",

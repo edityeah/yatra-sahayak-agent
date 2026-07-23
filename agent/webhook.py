@@ -99,6 +99,24 @@ def _clean(text: str) -> str:
     return _MARKER_RE.sub("", text or "").strip()
 
 
+_DEVANAGARI_RE = re.compile(r"[ऀ-ॿ]")
+
+
+def _reply_language(text: str, selected: str | None) -> str:
+    """Reply in the language the user actually WROTE in: Latin script → English;
+    Devanagari → the user's selected mr/hi (mr vs hi can't be told from script
+    alone, so use `selected`, default mr). `selected` is the webview switcher /
+    stored preference and acts as the tie-breaker for mixed/empty input."""
+    t = text or ""
+    has_dev = bool(_DEVANAGARI_RE.search(t))
+    has_latin = bool(re.search(r"[A-Za-z]", t))
+    if has_latin and not has_dev:
+        return "en"
+    if has_dev and not has_latin:
+        return selected if selected in ("mr", "hi") else "mr"
+    return selected if selected in ("mr", "hi", "en") else "mr"
+
+
 def _extract_user_text(message: dict) -> str:
     for block in message.get("content", []):
         if block.get("type") == "text":
@@ -149,19 +167,21 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     if sess.get("reg_fields"):
         state["reg_fields"] = sess["reg_fields"]
     ustate = await persistence.get_user_state(user_id)
-    if ustate.get("language"):
-        state["language"] = ustate["language"]
     if ustate.get("active_yatra"):
         state["active_yatra"] = ustate["active_yatra"]
 
-    # The webview (which has its own language switcher + a yatra in the header)
-    # may send `language`/`yatra` hints so the agent skips the in-chat language
-    # and yatra prompts — e.g. tapping a "Register" quick-activity should go
-    # straight to the intake. These override any stored value for this turn.
-    if body.get("language") in ("mr", "hi", "en"):
-        state["language"] = body["language"]
+    # The webview sends a `yatra` hint (header) so the agent skips the yatra ask.
     if body.get("yatra") in ("pandharpur", "kumbh"):
         state["active_yatra"] = body["yatra"]
+
+    # Language: reply in the language the user actually WROTE in (typed English
+    # → English), using their selected/stored language (webview switcher hint,
+    # or persisted) only as the tie-breaker for Devanagari input. When NO
+    # language is known at all (a fresh SwiftChat thread with no hint), leave it
+    # unset so language_gate can ask.
+    selected = body.get("language") if body.get("language") in ("mr", "hi", "en") else ustate.get("language")
+    if selected:
+        state["language"] = _reply_language(user_text, selected)
 
     before = len(state["messages"])
     result = await yatra_graph.ainvoke(state)
@@ -174,9 +194,11 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
         reg_stage=result.get("reg_stage"),
         reg_fields=result.get("reg_fields"),
     )
+    # Persist the SELECTED language (switcher/ask-flow result), not the
+    # per-message detected reply language, so the user's preference is stable.
     await persistence.set_user_state(
         user_id,
-        language=result.get("language"),
+        language=(selected or result.get("language")),
         active_yatra=result.get("active_yatra"),
     )
 
