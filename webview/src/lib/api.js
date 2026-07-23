@@ -25,7 +25,9 @@ export async function streamChat({ user_id, conversation_id, text }, onDelta) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
-    const frames = buffer.split("\n\n");
+    // Frames are blank-line separated; the server (sse-starlette) emits
+    // "\r\n\r\n", not "\n\n", so match either line-ending style.
+    const frames = buffer.split(/\r?\n\r?\n/);
     buffer = frames.pop() || "";
     for (const frame of frames) {
       const lines = frame.split("\n");

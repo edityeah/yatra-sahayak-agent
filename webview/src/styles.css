@@ -174,3 +174,258 @@ a {
   padding: 0.75rem 1rem;
   margin: 0.5rem 0;
 }
+
+/* Chat page */
+
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 160px);
+  min-height: 420px;
+}
+
+.chat-hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+}
+
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  margin: auto;
+  text-align: center;
+  padding: 1rem;
+}
+
+.chat-bubble-row {
+  display: flex;
+}
+
+.chat-bubble-row.user {
+  justify-content: flex-end;
+}
+
+.chat-bubble-row.bot {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-bubble.user {
+  background: var(--saffron);
+  color: #1c1c1c;
+  border-bottom-right-radius: 3px;
+}
+
+.chat-bubble.bot {
+  background: #eef2f6;
+  color: var(--text);
+  border-bottom-left-radius: 3px;
+}
+
+.chat-typing {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.chat-composer {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.chat-composer textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.chat-composer button {
+  background: var(--indigo);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat-composer button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Pass page */
+
+.pass-card {
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.pass-card-yatra {
+  color: var(--indigo);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.pass-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pass-qr img {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: #fff;
+}
+
+.pass-details {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+.pass-details dt {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-top: 0.5rem;
+}
+
+.pass-details dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pass-yatra-id {
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  letter-spacing: 0.03em;
+}
+
+.pass-card-caption {
+  margin-top: 0.9rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Logistics table */
+
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.rate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.rate-table th,
+.rate-table td {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.rate-table th {
+  color: var(--indigo);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rate-table tr:last-child td {
+  border-bottom: none;
+}
+
+.rate-unit {
+  color: var(--text-muted);
+}
+
+.page-footer-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+/* Drills page */
+
+.drill-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 1rem;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.drill-caret {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.drill-body {
+  margin: 0.6rem 0 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Advisories page */
+
+.advisory-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.advisory-title {
+  font-size: 1rem;
+}
+
+.advisory-body {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.advisory-issuer {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
