@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: yatra-sahayak-agent
+    runtime: python
+    plan: free
+    rootDir: agent
+    branch: main
+    autoDeploy: true
+    buildCommand: pip install --upgrade pip && pip install .
+    startCommand: uvicorn webhook:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: INTERNAL_API_KEY
+        generateValue: true
+      - key: LLM_MAIN_MODEL
+        value: gpt-4o-mini
+      - key: PUBLIC_WEBVIEW_BASE
+        sync: false

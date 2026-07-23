@@ -1,0 +1,34 @@
+[project]
+name = "yatra-sahayak-agent"
+version = "0.1.0"
+description = "Maharashtra Yatra Sahayak — conversational pilgrim-safety agent on SwiftChat. Mirrors the swift-learning-agent (Pravasi Setu) FastAPI + LangGraph pattern."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "langgraph>=0.2.50",
+  "langchain>=0.3.7",
+  "langchain-openai>=0.2.9",
+  "langchain-core>=0.3.20",
+  "openai>=1.54.0",
+  "pydantic>=2.9.0",
+  "python-dotenv>=1.0.1",
+  "psycopg[binary,pool]>=3.2.3",
+  "sse-starlette>=2.1.3",
+  "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3.0", "pytest-asyncio>=0.24.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["../tests"]
