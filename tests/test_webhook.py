@@ -26,6 +26,47 @@ def test_messages_language_ask_streams(client):
     assert "event: done" in body
 
 
+def test_reply_language_returns_none_for_ambiguous_input():
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
+    from webhook import _reply_language
+    assert _reply_language("hello", "mr") == "en"      # Latin → English
+    assert _reply_language("नमस्कार", "hi") == "hi"     # Devanagari → selected
+    assert _reply_language("1", "mr") is None           # bare digit → no signal
+    assert _reply_language("9619334832", "mr") is None  # phone → no signal
+    assert _reply_language("", "en") is None             # empty → no signal
+
+
+def test_language_sticky_across_ambiguous_turn(client):
+    """Regression: typing English (while the webview still sends its Marathi
+    default hint) must keep replies in English even when the next answer is a
+    bare '1' with no script signal — no mid-flow flip to Marathi."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
+    from agent import session_store, persistence
+
+    conv = "sticky-lang-1"
+    session_store.clear(conv); persistence.reset()
+
+    def post(text):
+        return client.post(
+            "/messages",
+            headers={"X-API-Key": "local-dev-key"},
+            json={"user_id": "u-sticky", "conversation_id": conv, "language": "mr",
+                  "message": {"content": [{"type": "text", "text": {"value": text}}]}},
+        ).text
+
+    try:
+        # Turn 1: English text (despite the 'mr' hint) → English yatra ask.
+        r1 = post("I want to register")
+        assert "Which yatra" in r1 and "कोणत्या" not in r1
+        # Turn 2: a bare '1' (no script signal) must STAY English, not flip to mr.
+        r2 = post("1")
+        assert "कोणत्या" not in r2 and "पूर्ण नाव" not in r2
+    finally:
+        session_store.clear(conv); persistence.reset()
+
+
 def test_multi_turn_persists_language_and_reaches_activity(client):
     """Regression: a real multi-turn conversation must remember the chosen
     language + yatra across turns and reach an activity node — not get stuck

@@ -102,11 +102,12 @@ def _clean(text: str) -> str:
 _DEVANAGARI_RE = re.compile(r"[ऀ-ॿ]")
 
 
-def _reply_language(text: str, selected: str | None) -> str:
-    """Reply in the language the user actually WROTE in: Latin script → English;
+def _reply_language(text: str, selected: str | None) -> str | None:
+    """Detect the language the user WROTE in from script: Latin → English;
     Devanagari → the user's selected mr/hi (mr vs hi can't be told from script
-    alone, so use `selected`, default mr). `selected` is the webview switcher /
-    stored preference and acts as the tie-breaker for mixed/empty input."""
+    alone, so use `selected`, default mr). Returns None for ambiguous input
+    (digits, punctuation, "1", a bare phone number) so the caller can keep the
+    conversation's existing (sticky) language instead of resetting it."""
     t = text or ""
     has_dev = bool(_DEVANAGARI_RE.search(t))
     has_latin = bool(re.search(r"[A-Za-z]", t))
@@ -114,7 +115,7 @@ def _reply_language(text: str, selected: str | None) -> str:
         return "en"
     if has_dev and not has_latin:
         return selected if selected in ("mr", "hi") else "mr"
-    return selected if selected in ("mr", "hi", "en") else "mr"
+    return None  # ambiguous — no script signal this turn
 
 
 def _extract_user_text(message: dict) -> str:
@@ -175,13 +176,24 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
         state["active_yatra"] = body["yatra"]
 
     # Language: reply in the language the user actually WROTE in (typed English
-    # → English), using their selected/stored language (webview switcher hint,
-    # or persisted) only as the tie-breaker for Devanagari input. When NO
-    # language is known at all (a fresh SwiftChat thread with no hint), leave it
-    # unset so language_gate can ask.
+    # → English). For a turn with no script signal (a bare "1", a phone number),
+    # keep the conversation's STICKY language so we never flip mid-flow; fall
+    # back to the selected/stored preference only when there's no sticky value.
+    # When NO language is known at all (fresh SwiftChat thread, no hint), leave
+    # it unset so language_gate can ask.
     selected = body.get("language") if body.get("language") in ("mr", "hi", "en") else ustate.get("language")
-    if selected:
-        state["language"] = _reply_language(user_text, selected)
+    sticky = sess.get("reply_language")
+    detected = _reply_language(user_text, selected)
+    # Only resolve a reply language once the conversation HAS a language context
+    # (an explicit hint, or a sticky value from a prior turn). A truly fresh
+    # thread with no hint is left unset so language_gate can ask. Within a
+    # context, the script the user WROTE in wins; an ambiguous turn (a bare
+    # "1"/phone number) keeps the sticky language rather than resetting it.
+    reply_language = None
+    if selected or sticky:
+        reply_language = detected or sticky or selected
+        if reply_language:
+            state["language"] = reply_language
 
     before = len(state["messages"])
     result = await yatra_graph.ainvoke(state)
@@ -193,6 +205,7 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
         messages=after_msgs,
         reg_stage=result.get("reg_stage"),
         reg_fields=result.get("reg_fields"),
+        reply_language=reply_language or result.get("language"),
     )
     # Persist the SELECTED language (switcher/ask-flow result), not the
     # per-message detected reply language, so the user's preference is stable.

@@ -25,6 +25,7 @@ def save(
     messages: list | None = None,
     reg_stage: str | None = None,
     reg_fields: dict | None = None,
+    reply_language: str | None = None,
 ) -> None:
     cur = _STORE.setdefault(conversation_id, {})
     if messages is not None:
@@ -33,6 +34,8 @@ def save(
         cur["reg_stage"] = reg_stage
     if reg_fields is not None:
         cur["reg_fields"] = reg_fields
+    if reply_language is not None:
+        cur["reply_language"] = reply_language
 
 
 def clear(conversation_id: str) -> None:
