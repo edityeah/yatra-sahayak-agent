@@ -35,8 +35,10 @@ The browser **Call** button (`/voice`) + a LiveKit voice worker. It degrades gra
 
 **Prerequisites:** a LiveKit Cloud project (ConveGenius's is fine) — `LIVEKIT_URL` / `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET`; an `OPENAI_API_KEY` with **Realtime (`gpt-realtime`) access**; and a Render **paid** plan for the worker (the free plan has no workers).
 
-1. **Render — web service** (`yatra-sahayak-agent`): add `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` (it mints join tokens + dispatches the worker). `AGENT_NAME` is already set to `yatra-sahayak-voice`.
-2. **Render — worker service** (`yatra-sahayak-voice`, defined in `render.yaml`): set `OPENAI_API_KEY` (Realtime-enabled), `LIVEKIT_URL/API_KEY/API_SECRET`, `AGENT_API_HOST` = the web service URL (e.g. `https://yatra-sahayak-agent.onrender.com`), `AGENT_API_KEY` = the web service's `INTERNAL_API_KEY`. `AGENT_NAME` is preset. Deploy it (it registers under `AGENT_NAME` and waits for dispatches).
+`render.yaml` now wires the worker to **inherit** the shared secrets from the web service (`fromService`), and bakes in `PUBLIC_WEBVIEW_BASE` (the Vercel URL) and the worker's `AGENT_API_HOST`/`AGENT_API_KEY`. So you only set secrets in ONE place:
+
+1. **Render — web service** (`yatra-sahayak-agent`) → Environment: set `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and make sure `OPENAI_API_KEY` has Realtime access. That's it — the worker inherits all of these automatically.
+2. **Render — create the worker** (`yatra-sahayak-voice`): it's defined in `render.yaml` but was added after the initial Blueprint import, so open the project's **Blueprint** in Render and **approve/sync** so the worker service gets created (it's a `starter`/paid plan). Once created it registers under `AGENT_NAME` and waits for dispatches — no env vars to type (all inherited/baked).
 3. **Vercel — webview:** no new env needed (the Call button uses the existing `VITE_AGENT_URL`/`VITE_AGENT_KEY`).
 
 **Live-test checklist:** open `<vercel-url>/voice` → tap **Call** → grant mic → you should hear Setu's greeting → say "there's a stampede, help" → Setu calls `raise_sos`, which creates a `sos_event` on the web service and tells you the control room is alerted + call 112. (The same store the text SOS uses — the future control-room dashboard will read both.)
