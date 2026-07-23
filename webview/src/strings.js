@@ -19,6 +19,17 @@ export const strings = {
   connecting: { mr: "जोडत आहे…", hi: "जोड़ा जा रहा है…", en: "Connecting…" },
   connected: { mr: "जोडले गेले", hi: "जुड़ गया", en: "Connected" },
   callEnded: { mr: "कॉल संपला", hi: "कॉल समाप्त हुई", en: "Call ended" },
+  callAgain: { mr: "पुन्हा कॉल करा", hi: "फिर से कॉल करें", en: "Call again" },
+  backToChat: { mr: "गप्पांकडे परत", hi: "चैट पर वापस", en: "Back to chat" },
+  // Calling screen — white prefix + gold callee name, then subtitle.
+  calling: { mr: "कॉल करत आहे", hi: "कॉल हो रहा है", en: "Calling" },
+  calleeName: { mr: "यात्रा सहाय्यक", hi: "यात्रा सहायक", en: "Yatra Sahayak" },
+  gettingReady: {
+    mr: "बोलण्यासाठी तयार होत आहे",
+    hi: "बात करने के लिए तैयार हो रहे हैं",
+    en: "Getting ready to talk",
+  },
+  listening: { mr: "ऐकत आहे …", hi: "सुन रहे हैं …", en: "Listening …" },
   voiceUnavailable: {
     mr: "या डिप्लॉयमेंटवर व्हॉइस सुविधा सक्षम केलेली नाही — ॲडमिनला LiveKit की सेट करण्यास सांगा.",
     hi: "इस डिप्लॉयमेंट पर वॉइस सुविधा सक्षम नहीं है — एडमिन से LiveKit कीज़ सेट करने को कहें।",

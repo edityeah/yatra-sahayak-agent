@@ -1,16 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Room, RoomEvent, Track } from "livekit-client";
-import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
+import {
+  Phone,
+  PhoneOff,
+  Mic,
+  MicOff,
+  VideoOff,
+  MoreVertical,
+  Captions,
+  Landmark,
+  Sparkles,
+} from "lucide-react";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
-import PageShell from "../components/PageShell.jsx";
 import { getVoiceToken } from "../lib/api.js";
 import { getContext } from "../lib/swiftchat.js";
 
-// Voice call page — browser "Call" button using the LiveKit JS client.
-// States: idle | connecting | connected | ended | error | unavailable.
+// Full-screen voice call surface — replicates the Pravasi Setu Assistant
+// call screens: a blue "Calling…" screen while connecting and a light
+// "Listening…" screen with a bottom control bar once connected.
+// States: connecting | connected | ended | error | unavailable.
 export default function CallPage() {
   const { language } = useLang();
+  const navigate = useNavigate();
   const [state, setState] = useState("connecting");
   const [muted, setMuted] = useState(false);
   const roomRef = useRef(null);
@@ -58,9 +71,9 @@ export default function CallPage() {
     }
   }, [cleanupRoom]);
 
-  // Auto-start the call as soon as the page mounts — landing here (a tap
-  // on the header phone icon) IS the "Call" action, so no second tap.
-  // Disconnect any live call when navigating away / unmounting.
+  // Auto-start the call on mount — landing here (a tap on the phone icon)
+  // IS the "Call" action, so there is no second tap. Also disconnect any
+  // live call when navigating away / unmounting.
   useEffect(() => {
     if (!startedRef.current) {
       startedRef.current = true;
@@ -71,8 +84,8 @@ export default function CallPage() {
 
   const handleHangUp = useCallback(() => {
     cleanupRoom();
-    setState("ended");
-  }, [cleanupRoom]);
+    navigate("/");
+  }, [cleanupRoom, navigate]);
 
   const handleToggleMute = useCallback(async () => {
     const room = roomRef.current;
@@ -86,88 +99,132 @@ export default function CallPage() {
     }
   }, [muted]);
 
-  const busy = state === "connecting";
-  const inCall = state === "connected";
+  // Assistant avatar — round, with the brand glyph and the yellow "AI" chip.
+  const Avatar = ({ chip }) => (
+    <div className="relative">
+      <div className="w-32 h-32 rounded-full bg-[#E5E7EB] border-4 border-white/70 shadow-card flex items-center justify-center">
+        <Landmark size={54} className="text-primary/70" />
+      </div>
+      <span
+        className={`absolute -top-2 -right-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[13px] font-extrabold border-2 border-ai-ring text-ai-ring ${chip}`}
+      >
+        <Sparkles size={13} /> AI
+      </span>
+    </div>
+  );
 
-  return (
-    <PageShell title={tr(strings, "voice", language)}>
-      <div className="rounded-2xl border border-bdr bg-surface shadow-card p-6 flex flex-col items-center text-center gap-2">
-        <p className="text-[13.5px] text-ink font-semibold">{tr(strings, "callHint", language)}</p>
-        <p className="text-[12.5px] text-muted">{tr(strings, "callMicNote", language)}</p>
+  // ---- Connected: "Listening…" screen (light background + control bar) ----
+  if (state === "connected") {
+    return (
+      <div className="fixed inset-0 z-50 bg-lavender-50 flex flex-col items-center justify-center font-sans">
+        <button
+          type="button"
+          className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white shadow-card flex items-center justify-center text-primary"
+          aria-label="Captions"
+        >
+          <Captions size={18} />
+        </button>
 
-        <div className="mt-4 flex flex-col items-center gap-4 w-full">
-          {inCall ? (
-            <div className="flex flex-col items-center gap-4 w-full">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-bold bg-green-50 text-green-700 border border-green-200">
-                {tr(strings, "connected", language)}
-              </span>
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={handleToggleMute}
-                  className="w-12 h-12 rounded-full border border-bdr bg-surface-2 text-ink flex items-center justify-center hover:border-primary transition"
-                  aria-label={muted ? tr(strings, "unmute", language) : tr(strings, "mute", language)}
-                >
-                  {muted ? <MicOff size={18} /> : <Mic size={18} />}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleHangUp}
-                  className="w-14 h-14 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition"
-                  aria-label={tr(strings, "hangUp", language)}
-                >
-                  <PhoneOff size={22} />
-                </button>
-              </div>
-            </div>
-          ) : busy ? (
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative flex items-center justify-center">
-                <span className="absolute w-16 h-16 rounded-full bg-primary/30 animate-ping" />
-                <span className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-card">
-                  <Phone size={26} />
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleHangUp}
-                className="w-14 h-14 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition"
-                aria-label={tr(strings, "hangUp", language)}
-              >
-                <PhoneOff size={22} />
-              </button>
-            </div>
-          ) : (
+        <div className="flex flex-col items-center gap-5 -mt-10">
+          <Avatar chip="bg-primary" />
+          <div className="bg-white rounded-full px-6 py-3.5 shadow-card flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+            <span className="text-[16px] font-bold text-ink">{tr(strings, "listening", language)}</span>
+          </div>
+        </div>
+
+        <div className="absolute bottom-6 inset-x-0 px-4 flex items-center justify-center gap-3">
+          <div className="w-14 h-14 rounded-full bg-white shadow-card flex items-center justify-center text-primary flex-shrink-0">
+            <VideoOff size={22} />
+          </div>
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            className="flex-1 max-w-md h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-card hover:bg-primary-700 transition"
+            aria-label={muted ? tr(strings, "unmute", language) : tr(strings, "mute", language)}
+          >
+            {muted ? <MicOff size={22} /> : <Mic size={22} />}
+          </button>
+          <div className="w-14 h-14 rounded-full bg-white shadow-card flex items-center justify-center text-muted flex-shrink-0">
+            <MoreVertical size={22} />
+          </div>
+          <button
+            type="button"
+            onClick={handleHangUp}
+            className="w-14 h-14 rounded-full bg-red-500 text-white flex items-center justify-center shadow-card hover:bg-red-600 transition flex-shrink-0"
+            aria-label={tr(strings, "hangUp", language)}
+          >
+            <PhoneOff size={22} />
+          </button>
+        </div>
+
+        <div ref={audioContainerRef} style={{ display: "none" }} />
+      </div>
+    );
+  }
+
+  // ---- Ended / error / unavailable: status screen (blue background) ----
+  if (state === "ended" || state === "error" || state === "unavailable") {
+    const message =
+      state === "unavailable"
+        ? tr(strings, "voiceUnavailable", language)
+        : state === "error"
+        ? tr(strings, "callError", language)
+        : tr(strings, "callEnded", language);
+    return (
+      <div className="fixed inset-0 z-50 bg-primary text-white flex flex-col items-center justify-center font-sans px-6">
+        <Avatar chip="" />
+        <p className="mt-8 text-center text-[16px] text-white/90 max-w-sm leading-relaxed">{message}</p>
+        <div className="mt-8 flex flex-col items-center gap-3 w-full max-w-xs">
+          {state !== "unavailable" ? (
             <button
               type="button"
               onClick={handleCall}
-              className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center shadow-card transition hover:bg-primary-700"
-              aria-label={tr(strings, "voice", language)}
+              className="w-full h-12 rounded-full bg-white text-primary font-extrabold flex items-center justify-center gap-2 hover:bg-white/90 transition"
             >
-              <Phone size={26} />
+              <Phone size={18} /> {tr(strings, "callAgain", language)}
             </button>
-          )}
-
-          {busy ? <p className="text-[13px] text-muted">{tr(strings, "connecting", language)}</p> : null}
+          ) : null}
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="w-full h-12 rounded-full border border-white/50 text-white font-bold flex items-center justify-center hover:bg-white/10 transition"
+          >
+            {tr(strings, "backToChat", language)}
+          </button>
         </div>
-
-        {state === "ended" ? (
-          <p className="mt-3 text-[13px] text-muted">{tr(strings, "callEnded", language)}</p>
-        ) : null}
-        {state === "unavailable" ? (
-          <div className="mt-3 w-full rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">
-            {tr(strings, "voiceUnavailable", language)}
-          </div>
-        ) : null}
-        {state === "error" ? (
-          <div className="mt-3 w-full rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">
-            {tr(strings, "callError", language)}
-          </div>
-        ) : null}
-
-        {/* Subscribed remote audio tracks are attached here (hidden). */}
         <div ref={audioContainerRef} style={{ display: "none" }} />
       </div>
-    </PageShell>
+    );
+  }
+
+  // ---- Connecting: "Calling…" screen (blue background + pulsing avatar) ----
+  return (
+    <div className="fixed inset-0 z-50 bg-primary text-white flex flex-col items-center justify-center font-sans">
+      <div className="relative flex items-center justify-center">
+        <span className="absolute w-52 h-52 rounded-full bg-white/10 animate-ping" />
+        <span className="absolute w-44 h-44 rounded-full bg-white/15" />
+        <Avatar chip="" />
+      </div>
+
+      <div className="mt-10 text-center px-6">
+        <div className="text-[26px] sm:text-[28px] font-extrabold leading-tight">
+          <span className="text-white">{tr(strings, "calling", language)} </span>
+          <span className="text-ai-ring">{tr(strings, "calleeName", language)}…</span>
+        </div>
+        <div className="mt-2 text-[17px] text-white/85">{tr(strings, "gettingReady", language)}</div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleHangUp}
+        className="mt-10 w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center shadow-card hover:bg-red-600 transition"
+        aria-label={tr(strings, "hangUp", language)}
+      >
+        <PhoneOff size={24} />
+      </button>
+
+      <div ref={audioContainerRef} style={{ display: "none" }} />
+    </div>
   );
 }
