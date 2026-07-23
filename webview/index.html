@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yatra Sahayak</title>
+    <meta name="description" content="Maharashtra Yatra Sahayak — yatri assistant: chat, QR pass, route map, logistics, drills, advisories." />
+    <!-- SwiftChat BotExtension SDK — only works when this webview is
+         embedded inside the SwiftChat host (iframe / Android
+         WebviewChannel). It provides getPayload, close, sendMessageToBot,
+         etc. When loaded standalone (plain website / local dev) this
+         script may fail to load or leave BotExtension undefined; the app
+         must keep working via the dev fallback in src/lib/swiftchat.js. -->
+    <script src="https://cdn.convegenius.ai/public/bot_extension/sdk-v4.js"></script>
+    <script>
+      // Some SDK builds expose a classic-script const, not window.*; bridge it.
+      try { if (typeof BotExtension !== "undefined") window.BotExtension = BotExtension; } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

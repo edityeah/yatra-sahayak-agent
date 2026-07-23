@@ -3,9 +3,15 @@
   "configurations": [
     {
       "name": "agent",
-      "runtimeExecutable": "uvicorn",
-      "runtimeArgs": ["webhook:app", "--port", "8000", "--reload"],
+      "runtimeExecutable": "agent/.venv/bin/uvicorn",
+      "runtimeArgs": ["webhook:app", "--app-dir", "agent", "--port", "8000", "--reload"],
       "port": 8000
+    },
+    {
+      "name": "webview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "webview", "run", "dev"],
+      "port": 5174
     }
   ]
 }

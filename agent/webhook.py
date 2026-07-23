@@ -25,6 +25,7 @@ from agent.graph import yatra_graph
 from agent import db
 from agent import session_store
 from agent import persistence
+from agent import seed
 
 load_dotenv()
 settings = get_settings()
@@ -46,6 +47,48 @@ async def _startup() -> None:
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok", "service": "yatra-sahayak-agent", "db": settings.DB_ENABLED}
+
+
+def _require_key(x_api_key: str | None) -> None:
+    if x_api_key != settings.INTERNAL_API_KEY:
+        raise HTTPException(status_code=401, detail="bad api key")
+
+
+@app.get("/api/drills")
+async def api_drills(x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    return seed.load("drills")
+
+
+@app.get("/api/yatra/{yatra}")
+async def api_yatra(yatra: str, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    data = seed.load("yatras").get(yatra)
+    if not data:
+        raise HTTPException(status_code=404, detail="unknown yatra")
+    return data
+
+
+@app.get("/api/yatra/{yatra}/{kind}")
+async def api_yatra_kind(yatra: str, kind: str, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    file_of = {"routes": "routes", "logistics": "logistics_rates", "advisories": "advisories"}
+    name = file_of.get(kind)
+    if not name:
+        raise HTTPException(status_code=404, detail="unknown kind")
+    data = seed.load(name).get(yatra)
+    if data is None:
+        raise HTTPException(status_code=404, detail="unknown yatra")
+    return data
+
+
+@app.get("/api/pass/{yatra_id}")
+async def api_pass(yatra_id: str, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    reg = await persistence.get_registration_by_id(yatra_id)
+    if not reg:
+        raise HTTPException(status_code=404, detail="pass not found")
+    return reg
 
 
 _MARKER_RE = re.compile(r"\[(?:lang:(?:mr|hi|en)|yatra:(?:pandharpur|kumbh)|yatra-ask)\]")

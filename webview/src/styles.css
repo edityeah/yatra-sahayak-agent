@@ -1,0 +1,431 @@
+:root {
+  --saffron: #ff9933;
+  --saffron-dark: #e07b00;
+  --indigo: #0b3d66;
+  --indigo-dark: #082a47;
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --text: #1c1c1c;
+  --text-muted: #5a5a5a;
+  --border: #e3ddd0;
+  --danger: #c0392b;
+  --ok: #1e7a3d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Noto Sans", "Noto Sans Devanagari", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--indigo);
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  background: var(--indigo);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.app-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.app-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.app-brand-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.01em;
+}
+
+.app-brand-yatra {
+  font-size: 0.85rem;
+  color: #ffd9a8;
+}
+
+.lang-switcher {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.lang-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.lang-btn.active {
+  background: var(--saffron);
+  border-color: var(--saffron-dark);
+  color: #1c1c1c;
+  font-weight: 600;
+}
+
+.app-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 52px;
+  z-index: 9;
+  overflow-x: auto;
+}
+
+.app-nav-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.4rem 0.5rem;
+}
+
+.app-nav a {
+  display: inline-block;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.app-nav a.active {
+  background: #fff3e0;
+  color: var(--saffron-dark);
+  font-weight: 600;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #eef2f6;
+  color: var(--indigo);
+}
+
+.pill-ok { background: #e6f4ea; color: var(--ok); }
+.pill-warn { background: #fff3e0; color: var(--saffron-dark); }
+.pill-danger { background: #fbeae8; color: var(--danger); }
+
+.loading {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 1rem 0;
+}
+
+.error-note {
+  background: #fbeae8;
+  border: 1px solid #f0c4bd;
+  color: var(--danger);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+}
+
+/* Chat page */
+
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 160px);
+  min-height: 420px;
+}
+
+.chat-hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+}
+
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  margin: auto;
+  text-align: center;
+  padding: 1rem;
+}
+
+.chat-bubble-row {
+  display: flex;
+}
+
+.chat-bubble-row.user {
+  justify-content: flex-end;
+}
+
+.chat-bubble-row.bot {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-bubble.user {
+  background: var(--saffron);
+  color: #1c1c1c;
+  border-bottom-right-radius: 3px;
+}
+
+.chat-bubble.bot {
+  background: #eef2f6;
+  color: var(--text);
+  border-bottom-left-radius: 3px;
+}
+
+.chat-typing {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.chat-composer {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.chat-composer textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.chat-composer button {
+  background: var(--indigo);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat-composer button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Pass page */
+
+.pass-card {
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.pass-card-yatra {
+  color: var(--indigo);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.pass-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pass-qr img {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: #fff;
+}
+
+.pass-details {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+.pass-details dt {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-top: 0.5rem;
+}
+
+.pass-details dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pass-yatra-id {
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  letter-spacing: 0.03em;
+}
+
+.pass-card-caption {
+  margin-top: 0.9rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Logistics table */
+
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.rate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.rate-table th,
+.rate-table td {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.rate-table th {
+  color: var(--indigo);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rate-table tr:last-child td {
+  border-bottom: none;
+}
+
+.rate-unit {
+  color: var(--text-muted);
+}
+
+.page-footer-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+/* Drills page */
+
+.drill-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 1rem;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.drill-caret {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.drill-body {
+  margin: 0.6rem 0 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Advisories page */
+
+.advisory-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.advisory-title {
+  font-size: 1rem;
+}
+
+.advisory-body {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.advisory-issuer {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}

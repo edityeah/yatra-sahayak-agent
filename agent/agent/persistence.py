@@ -117,6 +117,20 @@ async def get_registration_for_user(user_id: str) -> dict | None:
     return hits[-1] if hits else None
 
 
+async def get_registration_by_id(yatra_id: str) -> dict | None:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM registrations WHERE yatra_id=%s",
+                    (yatra_id,),
+                )
+                row = await cur.fetchone()
+                return dict(row) if row else None
+    return dict(_REGISTRATIONS[yatra_id]) if yatra_id in _REGISTRATIONS else None
+
+
 # ── sos_events ──────────────────────────────────────────────────────
 async def create_sos(user_id: str, *, yatra: str | None = None, yatra_id: str | None = None,
                      location: str | None = None, nature: str | None = None) -> str:
