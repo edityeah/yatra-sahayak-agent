@@ -6,8 +6,17 @@ Covers the six NDMA pilgrim-app features — weather, travel advisories, logisti
 
 ## Status
 
-**Plan 1 (this repo state): backend foundation & agent spine — complete.**
-A yatri bot that greets, selects language, selects yatra, and routes each turn through a LangGraph state machine (`content_policy → language_gate → yatra_context → intent_router → activity`). The seven activities are stubs; real behaviour, web apps, the officer war-room, and voice arrive in Plans 2–5.
+**Plans 1–2 complete: agent spine + real activities.**
+A yatri bot that greets, selects language, selects yatra, and routes each turn through a LangGraph state machine (`content_policy → language_gate → yatra_context → intent_router → activity`). All seven activities are now real:
+- **weather** — live IMD call (`IMD_API_URL`) with a cached fallback so the demo never dies
+- **advisory** — district advisories, severity-ordered, from seed data
+- **logistics** — indicative government-notified pony/transport rates
+- **helpline** — one-tap `tel:` links (112 / 108 / control room / temple trust)
+- **drills_sos** — preparedness drills, and a real SOS that records a `sos_event` and acknowledges calmly (trilingual even before a language is chosen); a first-turn SOS bypasses the language/yatra prompts
+- **signage** — turn-by-turn guidance + a link to the (Plan 3) route-map web app
+- **registration** — multi-turn simulated e-KYC (no real Aadhaar) issuing a Yatra ID + QR pass link
+
+Seed content and cross-turn state (language, yatra, registration intake) are held server-side (`persistence` — Postgres when `DATABASE_URL` is set, in-memory otherwise). Web apps, the officer war-room, and voice arrive in Plans 3–5.
 
 ## Run the agent
 

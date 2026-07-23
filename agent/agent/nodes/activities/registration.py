@@ -11,7 +11,6 @@ from langchain_core.messages import AIMessage, HumanMessage
 from agent.state import YatraState
 from agent.config import get_settings
 from agent import persistence
-from agent.seed import load, t
 
 # Ordered intake stages after the (implicit) start.
 _NEXT = {"name": "phone", "phone": "group", "group": "emergency",

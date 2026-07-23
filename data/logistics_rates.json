@@ -32,7 +32,7 @@
     },
     {
       "service": {"mr": "वैद्यकीय स्ट्रेचर/व्हीलचेअर सेवा", "hi": "चिकित्सा स्ट्रेचर/व्हीलचेयर सेवा", "en": "Medical stretcher/wheelchair service"},
-      "rate": "मोफत",
+      "rate": "Free",
       "unit": {"mr": "आरोग्य शिबिरात", "hi": "स्वास्थ्य शिविर में", "en": "at health camps"},
       "note": {"mr": "आरोग्य विभागाच्या शिबिरांमध्ये विनामूल्य उपलब्ध.", "hi": "स्वास्थ्य विभाग के शिविरों में निःशुल्क उपलब्ध।", "en": "Free of charge at Health Department camps along the route."}
     }
@@ -70,7 +70,7 @@
     },
     {
       "service": {"mr": "वैद्यकीय प्रथमोपचार व रुग्णवाहिका", "hi": "चिकित्सा प्राथमिक उपचार व एम्बुलेंस", "en": "First-aid and ambulance service"},
-      "rate": "मोफत",
+      "rate": "Free",
       "unit": {"mr": "मेळा आरोग्य शिबिरात", "hi": "मेला स्वास्थ्य शिविर में", "en": "at mela health posts"},
       "note": {"mr": "सर्व नोंदणीकृत आरोग्य शिबिरांत विनामूल्य.", "hi": "सभी पंजीकृत स्वास्थ्य शिविरों में निःशुल्क।", "en": "Free at all registered mela health posts."}
     }
