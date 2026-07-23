@@ -25,7 +25,9 @@ A React + Vite SPA (`webview/`) served as SwiftChat BotExtension activities, plu
 - **route map** (`/yatri/map?yatra=`) — Leaflet + OpenStreetMap with geo-tagged halts/ghats/medical/water/toilet pins
 - **logistics / drills / advisories** — live seed-backed lists, trilingual
 
-Deferred: officer war-room dashboard (later) and voice (Plan 5).
+**Plan 5 complete: voice.** A browser **Call** button (`/voice`) + a LiveKit + OpenAI Realtime voice worker (`agent/voice_agent.py`) — persona **Setu**, trilingual, SOS-first (a voice-raised emergency records a `sos_event` via `raise_sos`, same store as text SOS). Gated on LiveKit creds + a Realtime-enabled OpenAI key + a paid Render worker; see `docs/DEPLOY.md`. Degrades gracefully (503 → "voice not enabled") when unconfigured.
+
+Deferred: officer war-room dashboard (later).
 
 ## Run the web app + chat locally
 ```bash

@@ -30,6 +30,19 @@ Open the Vercel URL. The **in-browser chat** exercises the whole bot; the web ap
 ## 4. SwiftChat registration (later, ConveGenius platform-side)
 To run inside SwiftChat rather than a browser: register a bot whose webhook points at `https://<your-agent>.onrender.com/messages`, and register the web apps as BotExtension activities pointing at the Vercel routes. This is a ConveGenius platform step, out of scope for this repo. The browser flow above covers testing until then.
 
+## 5. Voice (optional — Plan 5)
+The browser **Call** button (`/voice`) + a LiveKit voice worker. It degrades gracefully: if LiveKit isn't configured, `/api/voice/token` returns 503 and the Call page shows "voice isn't enabled yet" — the rest of the app is unaffected. To enable it:
+
+**Prerequisites:** a LiveKit Cloud project (ConveGenius's is fine) — `LIVEKIT_URL` / `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET`; an `OPENAI_API_KEY` with **Realtime (`gpt-realtime`) access**; and a Render **paid** plan for the worker (the free plan has no workers).
+
+1. **Render — web service** (`yatra-sahayak-agent`): add `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` (it mints join tokens + dispatches the worker). `AGENT_NAME` is already set to `yatra-sahayak-voice`.
+2. **Render — worker service** (`yatra-sahayak-voice`, defined in `render.yaml`): set `OPENAI_API_KEY` (Realtime-enabled), `LIVEKIT_URL/API_KEY/API_SECRET`, `AGENT_API_HOST` = the web service URL (e.g. `https://yatra-sahayak-agent.onrender.com`), `AGENT_API_KEY` = the web service's `INTERNAL_API_KEY`. `AGENT_NAME` is preset. Deploy it (it registers under `AGENT_NAME` and waits for dispatches).
+3. **Vercel — webview:** no new env needed (the Call button uses the existing `VITE_AGENT_URL`/`VITE_AGENT_KEY`).
+
+**Live-test checklist:** open `<vercel-url>/voice` → tap **Call** → grant mic → you should hear Setu's greeting → say "there's a stampede, help" → Setu calls `raise_sos`, which creates a `sos_event` on the web service and tells you the control room is alerted + call 112. (The same store the text SOS uses — the future control-room dashboard will read both.)
+
+> Voice runs inside SwiftChat too (the phone icon) once the ConveGenius bot registration wires our `AGENT_NAME` — no code change needed; the browser Call button is just the standalone test path.
+
 ## Run locally (what the maintainer does)
 ```bash
 # agent
