@@ -104,7 +104,13 @@ async def get_pool() -> AsyncConnectionPool | None:
     _pool = AsyncConnectionPool(
         _sanitize_pg_url(settings.DATABASE_URL),
         min_size=1, max_size=5, timeout=5.0,
-        kwargs={"row_factory": dict_row},
+        # prepare_threshold=None disables psycopg's automatic prepared
+        # statements. REQUIRED for Supabase's transaction-mode pooler (port
+        # 6543 / pgbouncer): pooled connections are multiplexed, so a prepared
+        # statement created on one backend isn't visible on the next, causing
+        # intermittent "prepared statement does not exist" errors. Harmless on
+        # a direct/session connection.
+        kwargs={"row_factory": dict_row, "prepare_threshold": None},
         open=False,
     )
     await _pool.open()
