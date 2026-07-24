@@ -1,0 +1,182 @@
+{
+  "pandharpur": [
+    {
+      "name": {
+        "mr": "पालखी प्रस्थान — आळंदी",
+        "hi": "पालकी प्रस्थान — आळंदी",
+        "en": "Palkhi departure — Alandi"
+      },
+      "when": {
+        "mr": "आषाढ महिन्याची सुरुवात",
+        "hi": "आषाढ माह का आरंभ",
+        "en": "Start of Ashadh month"
+      },
+      "place": {
+        "mr": "आळंदी",
+        "hi": "आळंदी",
+        "en": "Alandi"
+      },
+      "note": {
+        "mr": "संत ज्ञानेश्वर महाराज पालखीचे पंढरपूरकडे प्रस्थान.",
+        "hi": "संत ज्ञानेश्वर महाराज पालकी का पंढरपुर हेतु प्रस्थान।",
+        "en": "Sant Dnyaneshwar Maharaj palkhi sets out for Pandharpur."
+      }
+    },
+    {
+      "name": {
+        "mr": "घोड्याचे रिंगण",
+        "hi": "घोड़े का रिंगण",
+        "en": "Ghodyache Ringan (horse ringan)"
+      },
+      "when": {
+        "mr": "मार्गातील ठराविक टप्प्यांवर",
+        "hi": "मार्ग के निश्चित पड़ावों पर",
+        "en": "At set points on the route"
+      },
+      "place": {
+        "mr": "वेळापूर / अन्य",
+        "hi": "वेळापूर / अन्य",
+        "en": "Velapur & others"
+      },
+      "note": {
+        "mr": "माऊलींच्या अश्वाचे पारंपरिक रिंगण सोहळे — लाखो वारकरी सहभागी.",
+        "hi": "मौली के अश्व का पारंपरिक रिंगण उत्सव — लाखों वारकरी शामिल।",
+        "en": "The traditional ringan with Mauli's horse — lakhs of warkaris take part."
+      }
+    },
+    {
+      "name": {
+        "mr": "आषाढी एकादशी महापूजा",
+        "hi": "आषाढी एकादशी महापूजा",
+        "en": "Ashadhi Ekadashi Mahapuja"
+      },
+      "when": {
+        "mr": "आषाढी एकादशी (जुलै)",
+        "hi": "आषाढी एकादशी (जुलाई)",
+        "en": "Ashadhi Ekadashi (July)"
+      },
+      "place": {
+        "mr": "श्री विठ्ठल मंदिर, पंढरपूर",
+        "hi": "श्री विट्ठल मंदिर, पंढरपुर",
+        "en": "Shri Vitthal Temple, Pandharpur"
+      },
+      "note": {
+        "mr": "वारीची सांगता; मुख्यमंत्र्यांच्या हस्ते शासकीय महापूजा, प्रचंड गर्दी.",
+        "hi": "वारी की परिणति; मुख्यमंत्री द्वारा शासकीय महापूजा, भारी भीड़।",
+        "en": "The Wari culminates; the state Mahapuja by the CM, huge crowds."
+      }
+    },
+    {
+      "name": {
+        "mr": "गोपाळकाला",
+        "hi": "गोपालकाला",
+        "en": "Gopalkala"
+      },
+      "when": {
+        "mr": "एकादशीनंतरचा दिवस",
+        "hi": "एकादशी के अगले दिन",
+        "en": "Day after Ekadashi"
+      },
+      "place": {
+        "mr": "गोपाळपूर, पंढरपूर",
+        "hi": "गोपालपुर, पंढरपुर",
+        "en": "Gopalpur, Pandharpur"
+      },
+      "note": {
+        "mr": "दहीहंडी व कीर्तन सोहळा; परतीच्या प्रवासाला सुरुवात.",
+        "hi": "दहीहंडी व कीर्तन उत्सव; वापसी यात्रा आरंभ।",
+        "en": "Dahi-handi and kirtan; the return journey begins."
+      }
+    }
+  ],
+  "kumbh": [
+    {
+      "name": {
+        "mr": "ध्वजारोहण",
+        "hi": "ध्वजारोहण",
+        "en": "Dhwajarohan (flag hoisting)"
+      },
+      "when": {
+        "mr": "सिंहस्थ प्रारंभ",
+        "hi": "सिंहस्थ आरंभ",
+        "en": "Start of Simhastha"
+      },
+      "place": {
+        "mr": "रामकुंड, नाशिक व त्र्यंबकेश्वर",
+        "hi": "रामकुंड, नासिक व त्र्यंबकेश्वर",
+        "en": "Ramkund, Nashik & Trimbakeshwar"
+      },
+      "note": {
+        "mr": "सिंहस्थ कुंभमेळ्याची औपचारिक सुरुवात.",
+        "hi": "सिंहस्थ कुंभ मेले का औपचारिक आरंभ।",
+        "en": "The formal start of the Simhastha Kumbh."
+      }
+    },
+    {
+      "name": {
+        "mr": "पहिले शाही स्नान",
+        "hi": "पहला शाही स्नान",
+        "en": "First Shahi Snan"
+      },
+      "when": {
+        "mr": "पहिली पर्वणी",
+        "hi": "पहली पर्वणी",
+        "en": "First Parvani"
+      },
+      "place": {
+        "mr": "रामकुंड, गोदावरी",
+        "hi": "रामकुंड, गोदावरी",
+        "en": "Ramkund, Godavari"
+      },
+      "note": {
+        "mr": "आखाड्यांची मिरवणूक व शाही स्नान — सर्वाधिक गर्दीचा दिवस.",
+        "hi": "अखाड़ों की शोभायात्रा व शाही स्नान — सर्वाधिक भीड़ का दिन।",
+        "en": "Akhada processions and the royal bath — the peak-crowd day."
+      }
+    },
+    {
+      "name": {
+        "mr": "दुसरे शाही स्नान",
+        "hi": "दूसरा शाही स्नान",
+        "en": "Second Shahi Snan"
+      },
+      "when": {
+        "mr": "दुसरी पर्वणी",
+        "hi": "दूसरी पर्वणी",
+        "en": "Second Parvani"
+      },
+      "place": {
+        "mr": "रामकुंड / कुशावर्त",
+        "hi": "रामकुंड / कुशावर्त",
+        "en": "Ramkund / Kushavarta"
+      },
+      "note": {
+        "mr": "त्र्यंबकेश्वर येथे कुशावर्त कुंडात प्रमुख स्नान.",
+        "hi": "त्र्यंबकेश्वर में कुशावर्त कुंड में प्रमुख स्नान।",
+        "en": "Major bath at the Kushavarta kund in Trimbakeshwar."
+      }
+    },
+    {
+      "name": {
+        "mr": "तिसरे शाही स्नान (सांगता)",
+        "hi": "तीसरा शाही स्नान (समापन)",
+        "en": "Third Shahi Snan (closing)"
+      },
+      "when": {
+        "mr": "अंतिम पर्वणी",
+        "hi": "अंतिम पर्वणी",
+        "en": "Final Parvani"
+      },
+      "place": {
+        "mr": "रामकुंड, गोदावरी",
+        "hi": "रामकुंड, गोदावरी",
+        "en": "Ramkund, Godavari"
+      },
+      "note": {
+        "mr": "मेळ्याची सांगता करणारे अंतिम शाही स्नान.",
+        "hi": "मेले का समापन करने वाला अंतिम शाही स्नान।",
+        "en": "The final royal bath that closes the mela."
+      }
+    }
+  ]
+}

@@ -21,7 +21,7 @@ export const strings = {
     hi: "मेरा यात्रा पास",
     en: "My Yatra Sahayak pass",
   },
-  map: { mr: "मार्ग नकाशा", hi: "मार्ग मानचित्र", en: "Route Map" },
+  map: { mr: "मार्ग व मार्गदर्शक", hi: "मार्ग व गाइड", en: "Route & Guide" },
   logistics: { mr: "सुविधा", hi: "सुविधाएं", en: "Logistics" },
   drills: { mr: "सराव", hi: "अभ्यास", en: "Drills" },
   advisories: { mr: "सूचना", hi: "सूचनाएं", en: "Advisories" },

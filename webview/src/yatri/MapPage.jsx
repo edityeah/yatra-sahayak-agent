@@ -1,41 +1,46 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
+import { Navigation, MessageCircle, CalendarDays } from "lucide-react";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
 import PageShell from "../components/PageShell.jsx";
 import { apiGet } from "../lib/api.js";
-import { getContext } from "../lib/swiftchat.js";
 import { t } from "../lib/i18n.js";
+import { YATRA_NAMES } from "../data/yatraNames.js";
 
-// Route/POI marker colors by kind — matches the legend below.
-const KIND_COLORS = {
-  night_halt: "#2563EB",
-  ghat: "#0d9488",
-  medical: "#dc2626",
-  water: "#0891b2",
-  toilet: "#6b7280",
+// POI kinds → color + trilingual label (matches the filter chips + legend).
+const KIND = {
+  night_halt: { color: "#2563EB", label: { mr: "मुक्काम", hi: "पड़ाव", en: "Night halt" } },
+  ghat: { color: "#0d9488", label: { mr: "घाट", hi: "घाट", en: "Ghat" } },
+  medical: { color: "#dc2626", label: { mr: "आरोग्य", hi: "स्वास्थ्य", en: "Medical" } },
+  water: { color: "#0891b2", label: { mr: "पिण्याचे पाणी", hi: "पेयजल", en: "Drinking water" } },
+  toilet: { color: "#6b7280", label: { mr: "शौचालय", hi: "शौचालय", en: "Toilet" } },
+  stay: { color: "#7c3aed", label: { mr: "निवास", hi: "आवास", en: "Stay" } },
+  hotel: { color: "#d97706", label: { mr: "हॉटेल", hi: "होटल", en: "Hotels" } },
 };
+const POI_KINDS = Object.keys(KIND);
 
-const KIND_LABELS = {
-  night_halt: { mr: "मुक्काम", hi: "पड़ाव", en: "Night halt" },
-  ghat: { mr: "घाट", hi: "घाट", en: "Ghat" },
-  medical: { mr: "आरोग्य केंद्र", hi: "स्वास्थ्य केंद्र", en: "Medical" },
-  water: { mr: "पिण्याचे पाणी", hi: "पेयजल", en: "Drinking water" },
-  toilet: { mr: "शौचालय", hi: "शौचालय", en: "Toilet" },
-};
-
+const ALL = { mr: "सर्व", hi: "सभी", en: "All" };
+const EVENTS = { mr: "कार्यक्रम", hi: "कार्यक्रम", en: "Events" };
+const EVENTS_TITLE = { mr: "कार्यक्रम व वेळापत्रक", hi: "कार्यक्रम व समय-सारणी", en: "Events & schedule" };
+const NAVIGATE = { mr: "दिशा", hi: "दिशा", en: "Navigate" };
+const ASK = { mr: "चॅटमध्ये विचारा", hi: "चैट में पूछें", en: "Ask in chat" };
 const EMPTY_TEXT = {
-  mr: "या यात्रेसाठी मार्ग माहिती उपलब्ध नाही.",
-  hi: "इस यात्रा के लिए मार्ग जानकारी उपलब्ध नहीं है।",
-  en: "No route information is available for this yatra.",
+  mr: "या यात्रेसाठी माहिती उपलब्ध नाही.",
+  hi: "इस यात्रा के लिए जानकारी उपलब्ध नहीं है।",
+  en: "No information is available for this yatra.",
 };
+// Quick prompts that hop back to the chat (the webview → SwiftChat bridge).
+const PROMPTS = [
+  { mr: "आजचा टप्पा नियोजित करा", hi: "आज का चरण प्लान करें", en: "Plan today's stage" },
+  { mr: "जवळचे आरोग्य केंद्र?", hi: "नज़दीकी स्वास्थ्य केंद्र?", en: "Nearest medical help?" },
+  { mr: "आज रात्री कुठे राहू?", hi: "आज रात कहाँ रुकें?", en: "Where can I stay tonight?" },
+];
 
-// Small colored-dot icon per kind — avoids the well-known broken default
-// Leaflet marker icon issue under bundlers (no external image assets).
 function dotIcon(kind) {
-  const c = KIND_COLORS[kind] || "#2563EB";
+  const c = KIND[kind]?.color || "#2563EB";
   return L.divIcon({
     className: "",
     html: `<div style="width:16px;height:16px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 0 0 1px ${c}"></div>`,
@@ -44,119 +49,173 @@ function dotIcon(kind) {
   });
 }
 
-function Legend({ language }) {
-  return (
-    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 rounded-2xl border border-bdr bg-surface shadow-card px-4 py-3 text-[12.5px] text-ink">
-      {Object.keys(KIND_COLORS).map((kind) => (
-        <span key={kind} className="inline-flex items-center gap-1.5">
-          <span
-            className="inline-block w-3 h-3 rounded-full flex-shrink-0 border-2 border-white"
-            style={{ background: KIND_COLORS[kind], boxShadow: `0 0 0 1px ${KIND_COLORS[kind]}` }}
-          />
-          {t(KIND_LABELS[kind], language)}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export default function MapPage() {
-  const { language } = useLang();
-  const [searchParams] = useSearchParams();
-  const ctx = getContext();
-  const yatra = searchParams.get("yatra") || ctx.yatra;
-
+  const { language, yatra } = useLang();
+  const navigate = useNavigate();
   const [entries, setEntries] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const yatraName = YATRA_NAMES[yatra] ? t(YATRA_NAMES[yatra], language) : yatra;
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    apiGet(`/api/yatra/${yatra}/routes`)
-      .then((data) => {
-        if (!cancelled) setEntries(data);
+    Promise.all([
+      apiGet(`/api/yatra/${yatra}/routes`).catch(() => []),
+      apiGet(`/api/yatra/${yatra}/events`).catch(() => []),
+    ])
+      .then(([routes, evs]) => {
+        if (cancelled) return;
+        setEntries(routes || []);
+        setEvents(evs || []);
       })
-      .catch((e) => {
-        if (!cancelled) setError(e?.message || String(e));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+      .catch((e) => !cancelled && setError(e?.message || String(e)))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
   }, [yatra]);
 
-  const points = useMemo(
-    () =>
-      (entries || []).filter(
-        (e) => typeof e.lat === "number" && typeof e.lng === "number"
-      ),
+  // POI kinds actually present for this yatra (drives which chips show).
+  const presentKinds = useMemo(
+    () => POI_KINDS.filter((k) => (entries || []).some((e) => e.kind === k)),
     [entries]
   );
 
-  const bounds = useMemo(() => {
-    if (points.length === 0) return null;
-    return points.map((p) => [p.lat, p.lng]);
-  }, [points]);
+  const pois = useMemo(
+    () => (entries || []).filter((e) => typeof e.lat === "number" && typeof e.lng === "number"),
+    [entries]
+  );
+  const shownPois = useMemo(
+    () => (filter === "all" || filter === "events" ? pois : pois.filter((e) => e.kind === filter)),
+    [pois, filter]
+  );
+  const bounds = useMemo(() => (pois.length ? pois.map((p) => [p.lat, p.lng]) : null), [pois]);
+
+  const askInChat = (question) => navigate(`/?q=${encodeURIComponent(question)}`);
+  const openDirections = (lat, lng) =>
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, "_blank", "noopener");
+
+  const listPois = filter === "events" ? [] : shownPois;
 
   return (
     <PageShell title={tr(strings, "map", language)}>
-      {loading ? (
-        <div className="text-[13.5px] text-muted px-1 py-3">{tr(strings, "loading", language)}</div>
-      ) : null}
+      {loading ? <div className="text-[13.5px] text-muted px-1 py-3">{tr(strings, "loading", language)}</div> : null}
       {!loading && error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">
-          {error}
-        </div>
+        <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">{error}</div>
       ) : null}
 
-      {!loading && !error && points.length === 0 ? (
+      {!loading && !error && pois.length === 0 && events.length === 0 ? (
         <div className="rounded-2xl border border-bdr bg-surface shadow-card p-4 text-[13.5px] text-ink">
           {EMPTY_TEXT[language] || EMPTY_TEXT.en}
         </div>
       ) : null}
 
-      {!loading && !error && points.length > 0 ? (
-        <>
-          <div className="w-full max-w-full overflow-hidden rounded-2xl border border-bdr shadow-card">
-            <MapContainer
-              key={yatra}
-              bounds={bounds}
-              boundsOptions={{ padding: [24, 24] }}
-              scrollWheelZoom={true}
-              style={{ height: "70vh", width: "100%" }}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-              {points.map((entry, i) => (
-                <Marker
-                  key={i}
-                  position={[entry.lat, entry.lng]}
-                  icon={dotIcon(entry.kind)}
-                >
-                  <Popup>
-                    <strong>{t(entry.name, language)}</strong>
-                    <br />
-                    {t(KIND_LABELS[entry.kind], language) || entry.kind}
-                    {entry.note ? (
-                      <>
-                        <br />
-                        {t(entry.note, language)}
-                      </>
-                    ) : null}
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+      {!loading && !error && (pois.length > 0 || events.length > 0) ? (
+        <div className="space-y-3">
+          {/* Category filter chips */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            <Chip active={filter === "all"} onClick={() => setFilter("all")} label={t(ALL, language)} />
+            {presentKinds.map((k) => (
+              <Chip key={k} active={filter === k} onClick={() => setFilter(k)}
+                label={t(KIND[k].label, language)} color={KIND[k].color} />
+            ))}
+            {events.length ? (
+              <Chip active={filter === "events"} onClick={() => setFilter("events")} label={t(EVENTS, language)} />
+            ) : null}
           </div>
-          <Legend language={language} />
-        </>
+
+          {/* Map */}
+          {shownPois.length > 0 ? (
+            <div className="w-full overflow-hidden rounded-2xl border border-bdr shadow-card">
+              <MapContainer key={`${yatra}-${filter}`} bounds={bounds} boundsOptions={{ padding: [24, 24] }}
+                scrollWheelZoom={true} style={{ height: "48vh", width: "100%" }}>
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
+                {shownPois.map((e, i) => (
+                  <Marker key={i} position={[e.lat, e.lng]} icon={dotIcon(e.kind)}>
+                    <Popup>
+                      <strong>{t(e.name, language)}</strong><br />
+                      {t(KIND[e.kind]?.label, language) || e.kind}
+                      {e.note ? <><br />{t(e.note, language)}</> : null}
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          ) : null}
+
+          {/* Ask-in-chat prompt chips (hop back to the bot) */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {PROMPTS.map((p, i) => (
+              <button key={i} onClick={() => askInChat(`${t(p, language)} (${yatraName})`)}
+                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary-50 text-primary text-[12.5px] font-bold px-3 py-1.5 hover:bg-primary-100 transition">
+                <MessageCircle size={13} /> {t(p, language)}
+              </button>
+            ))}
+          </div>
+
+          {/* Directory list (POIs) */}
+          {listPois.map((e, i) => (
+            <div key={i} className="rounded-2xl border border-bdr bg-surface shadow-card p-4">
+              <div className="flex items-start gap-2">
+                <span className="mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: KIND[e.kind]?.color }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[14.5px] font-extrabold text-ink">{t(e.name, language)}</div>
+                  <div className="text-[11.5px] font-bold text-muted uppercase tracking-wide">{t(KIND[e.kind]?.label, language)}</div>
+                  {e.note ? <p className="mt-1 text-[13px] text-ink leading-relaxed">{t(e.note, language)}</p> : null}
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    <button onClick={() => openDirections(e.lat, e.lng)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-bdr bg-surface-2 text-ink text-[12px] font-bold px-2.5 h-8 hover:border-primary transition">
+                      <Navigation size={13} /> {t(NAVIGATE, language)}
+                    </button>
+                    <button onClick={() => askInChat(`${t(e.name, language)} (${yatraName}) — ${t(KIND[e.kind]?.label, language)}?`)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary text-white text-[12px] font-bold px-2.5 h-8 hover:bg-primary-700 transition">
+                      <MessageCircle size={13} /> {t(ASK, language)}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Events / schedule */}
+          {filter === "events" && events.length ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-[14px] font-extrabold text-ink pt-1">
+                <CalendarDays size={16} className="text-primary" /> {t(EVENTS_TITLE, language)}
+              </div>
+              {events.map((ev, i) => (
+                <div key={i} className="rounded-2xl border border-bdr bg-surface shadow-card p-4">
+                  <div className="text-[14.5px] font-extrabold text-ink">{t(ev.name, language)}</div>
+                  <div className="mt-0.5 text-[12.5px] font-bold text-primary">
+                    {t(ev.when, language)}{ev.place ? ` · ${t(ev.place, language)}` : ""}
+                  </div>
+                  {ev.note ? <p className="mt-1 text-[13px] text-ink leading-relaxed">{t(ev.note, language)}</p> : null}
+                  <button onClick={() => askInChat(`${t(ev.name, language)} (${yatraName}) — ${t(EVENTS, language)}?`)}
+                    className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-primary text-white text-[12px] font-bold px-2.5 h-8 hover:bg-primary-700 transition">
+                    <MessageCircle size={13} /> {t(ASK, language)}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </PageShell>
+  );
+}
+
+function Chip({ active, onClick, label, color }) {
+  return (
+    <button onClick={onClick}
+      className={`flex-shrink-0 inline-flex items-center gap-1.5 rounded-full text-[12.5px] font-bold px-3 py-1.5 border transition ${
+        active ? "bg-primary text-white border-primary" : "bg-surface text-ink border-bdr hover:border-primary"
+      }`}>
+      {color ? <span className="w-2.5 h-2.5 rounded-full" style={{ background: active ? "#fff" : color }} /> : null}
+      {label}
+    </button>
   );
 }
