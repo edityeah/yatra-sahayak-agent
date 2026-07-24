@@ -54,8 +54,7 @@ def test_registrations_export_requires_admin_and_returns_rows(client):
     r = client.get("/api/registrations", headers={"X-API-Key": "local-dev-key"})
     assert r.status_code == 200
     data = r.json()
-    assert data["count"] == 2
-    assert data["pilgrims_incl_groups"] == 5          # 4 + 1
+    assert data["count"] == 2                          # one row per person
     assert data["by_yatra"] == {"pandharpur": 1, "kumbh": 1}
     assert any(row["name"] == "Asha Patil" for row in data["registrations"])
 
@@ -63,6 +62,26 @@ def test_registrations_export_requires_admin_and_returns_rows(client):
     rc = client.get("/api/registrations?format=csv", headers={"X-API-Key": "local-dev-key"})
     assert rc.status_code == 200 and "text/csv" in rc.headers["content-type"]
     assert "yatra_id,yatra,name" in rc.text and "Asha Patil" in rc.text
+    persistence.reset()
+
+
+def test_wallet_lists_all_passes_for_a_user(client):
+    import sys, os, asyncio
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
+    from agent import persistence
+    persistence.reset()
+    gid = persistence.new_group_id()
+    asyncio.run(persistence.create_registration("uW", yatra="pandharpur", name="A", phone="9812345678",
+        group_name="D", emergency_contact="x 9800000000", medical_flags="none", group_id=gid,
+        is_primary=True, group_size=2))
+    asyncio.run(persistence.create_registration("uW", yatra="pandharpur", name="B", phone="9812345678",
+        group_name="D", emergency_contact="x 9800000000", medical_flags="none", group_id=gid,
+        is_primary=False, group_size=2))
+    assert client.get("/api/passes?user_id=uW").status_code == 401     # key required
+    r = client.get("/api/passes?user_id=uW", headers={"X-API-Key": "local-dev-key"})
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data) == 2 and {d["name"] for d in data} == {"A", "B"}
     persistence.reset()
 
 

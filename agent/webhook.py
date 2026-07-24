@@ -91,18 +91,18 @@ async def api_registrations(format: str = "json", x_api_key: str | None = Header
             headers={"Content-Disposition": "attachment; filename=registrations.csv"},
         )
 
+    # Each person is now their own row (DigiYatra per-member model), so the
+    # pilgrim headcount is simply the row count — never sum group_size (that's
+    # a denormalized family-batch size, and summing it double-counts families).
     by_yatra: dict[str, int] = {}
-    pilgrims = 0
+    families = set()
     for r in regs:
-        y = r.get("yatra", "unknown")
-        by_yatra[y] = by_yatra.get(y, 0) + 1
-        try:
-            pilgrims += int(r.get("group_size") or 1)
-        except (TypeError, ValueError):
-            pilgrims += 1
+        by_yatra[r.get("yatra", "unknown")] = by_yatra.get(r.get("yatra", "unknown"), 0) + 1
+        if r.get("group_id"):
+            families.add(r["group_id"])
     return {
-        "count": len(regs),
-        "pilgrims_incl_groups": pilgrims,
+        "count": len(regs),          # total pilgrims (one row per person)
+        "families": len(families),   # distinct multi-member family batches
         "by_yatra": by_yatra,
         "registrations": regs,
     }
@@ -143,6 +143,13 @@ async def api_pass(yatra_id: str, x_api_key: str | None = Header(default=None)):
     if not reg:
         raise HTTPException(status_code=404, detail="pass not found")
     return reg
+
+
+@app.get("/api/passes")
+async def api_passes(user_id: str, x_api_key: str | None = Header(default=None)):
+    """The yatri's wallet — every pass registered from this device/account."""
+    _require_key(x_api_key)
+    return await persistence.list_registrations_for_user(user_id)
 
 
 _MARKER_RE = re.compile(r"\[(?:lang:(?:mr|hi|en)|yatra:(?:pandharpur|kumbh)|yatra-ask)\]")

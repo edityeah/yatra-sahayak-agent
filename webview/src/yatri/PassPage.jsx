@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import QRCode from "qrcode";
+import { Download, Share2 } from "lucide-react";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
 import PageShell from "../components/PageShell.jsx";
 import { apiGet } from "../lib/api.js";
 import { t } from "../lib/i18n.js";
 import { YATRA_NAMES } from "../data/yatraNames.js";
+import { downloadQr, whatsappUrl } from "../lib/passShare.js";
 
 const CAPTION = {
   mr: "चेकपॉइंटवर हा QR दाखवा — यामुळे हजेरी नोंदते आणि तुमच्या आणीबाणी माहितीशी जोडले जाते.",
@@ -64,7 +66,9 @@ export default function PassPage() {
       .then((data) => {
         if (cancelled) return;
         setPass(data);
-        return QRCode.toDataURL(data.yatra_id || id);
+        // Encode the pass URL (not the bare id) so scanning it opens the pass.
+        const passUrl = `${window.location.origin}/yatri/pass?id=${data.yatra_id || id}`;
+        return QRCode.toDataURL(passUrl, { width: 320, margin: 1 });
       })
       .then((url) => {
         if (!cancelled && url) setQrDataUrl(url);
@@ -133,6 +137,23 @@ export default function PassPage() {
                     ✓ {VERIFIED.ekyc[language] || VERIFIED.ekyc.en}
                   </span>
                 ) : null}
+              </div>
+              <div className="flex items-center gap-2 w-[180px]">
+                <button
+                  type="button"
+                  onClick={() => downloadQr(qrDataUrl, pass.yatra_id)}
+                  className="flex-1 h-9 rounded-xl border border-bdr bg-surface-2 text-ink text-[12px] font-bold flex items-center justify-center gap-1.5 hover:border-primary transition"
+                >
+                  <Download size={14} /> {tr(strings, "downloadQr", language)}
+                </button>
+                <a
+                  href={whatsappUrl(pass.yatra_id, tr(strings, "shareText", language))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 h-9 rounded-xl bg-[#25D366] text-white text-[12px] font-bold flex items-center justify-center gap-1.5 hover:opacity-90 transition"
+                >
+                  <Share2 size={14} /> WhatsApp
+                </a>
               </div>
             </div>
             <dl className="flex-1 min-w-0 w-full grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-[13.5px]">

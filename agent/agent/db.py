@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS registrations (
   id_type        TEXT,
   group_name     TEXT,
   group_size     INTEGER DEFAULT 1,
+  group_id       TEXT,
+  is_primary     BOOLEAN DEFAULT TRUE,
   emergency_contact TEXT,
   medical_flags  TEXT,
   mobile_verified BOOLEAN DEFAULT FALSE,
@@ -45,6 +47,8 @@ CREATE TABLE IF NOT EXISTS registrations (
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS age TEXT;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS id_type TEXT;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS group_size INTEGER DEFAULT 1;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS group_id TEXT;
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS is_primary BOOLEAN DEFAULT TRUE;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS mobile_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS ekyc_verified BOOLEAN DEFAULT FALSE;
 CREATE TABLE IF NOT EXISTS sos_events (

@@ -82,12 +82,14 @@ async def set_user_state(user_id: str, *, language: str | None = None, active_ya
 async def create_registration(user_id: str, *, yatra: str, name: str, phone: str,
                               group_name: str, emergency_contact: str, medical_flags: str,
                               age: str = "", id_type: str = "", group_size: int = 1,
+                              group_id: str = "", is_primary: bool = True,
                               mobile_verified: bool = False, ekyc_verified: bool = False) -> str:
     yatra_id = f"{_PREFIX.get(yatra, 'YATRA')}-{_today()}-{_next():04d}"
     row = {
         "yatra_id": yatra_id, "user_id": user_id, "yatra": yatra, "name": name,
         "phone": phone, "age": age, "id_type": id_type,
         "group_name": group_name, "group_size": group_size,
+        "group_id": group_id, "is_primary": is_primary,
         "emergency_contact": emergency_contact, "medical_flags": medical_flags,
         "mobile_verified": mobile_verified, "ekyc_verified": ekyc_verified,
     }
@@ -97,16 +99,39 @@ async def create_registration(user_id: str, *, yatra: str, name: str, phone: str
             async with conn.cursor() as cur:
                 await cur.execute(
                     "INSERT INTO registrations(yatra_id,user_id,yatra,name,phone,age,id_type,"
-                    "group_name,group_size,emergency_contact,medical_flags,mobile_verified,ekyc_verified) "
+                    "group_name,group_size,group_id,is_primary,emergency_contact,medical_flags,"
+                    "mobile_verified,ekyc_verified) "
                     "VALUES(%(yatra_id)s,%(user_id)s,%(yatra)s,%(name)s,%(phone)s,%(age)s,%(id_type)s,"
-                    "%(group_name)s,%(group_size)s,%(emergency_contact)s,%(medical_flags)s,"
-                    "%(mobile_verified)s,%(ekyc_verified)s)",
+                    "%(group_name)s,%(group_size)s,%(group_id)s,%(is_primary)s,%(emergency_contact)s,"
+                    "%(medical_flags)s,%(mobile_verified)s,%(ekyc_verified)s)",
                     row,
                 )
             await conn.commit()
     else:
         _REGISTRATIONS[yatra_id] = row
     return yatra_id
+
+
+def new_group_id() -> str:
+    """A short shared id linking one family's passes (a household batch)."""
+    return f"GRP-{_today()}-{_next():04d}"
+
+
+async def list_registrations_for_user(user_id: str) -> list[dict]:
+    """Every pass registered from this device/account — for the yatri wallet.
+    Newest first (primary passes sort ahead of members within a batch)."""
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM registrations WHERE user_id=%s "
+                    "ORDER BY created_at DESC, is_primary DESC",
+                    (user_id,),
+                )
+                return [dict(r) for r in await cur.fetchall()]
+    hits = [r for r in _REGISTRATIONS.values() if r["user_id"] == user_id]
+    return list(reversed(hits))
 
 
 async def get_registration_for_user(user_id: str) -> dict | None:

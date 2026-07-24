@@ -1,16 +1,16 @@
 """registration activity — multi-turn yatra-pass intake with simulated
 verification, modelled on the Char Dham Yatra registration (UTDB tourist-care
-portal) and the Amarnath Yatra permit (SASB).
+portal) and the Amarnath Yatra permit (SASB), issued in a DigiYatra-style
+per-member model.
 
-Flow: yatra → name → age (eligibility/health gate) → mobile → OTP verify
-(simulated) → identity e-KYC (simulated Aadhaar-alternative — ID *type* only,
-never a number) → Dindi/group + headcount → emergency contact → medical flags
-→ confirm → verification receipt → QR Yatra Pass.
+Flow: yatra → primary (name → age → mobile → OTP → e-KYC → Dindi → emergency →
+medical) → "add family member?" loop (name → age, repeats) → confirm →
+verification receipt → ONE pass per person, all linked by a shared group_id,
+viewable together in the device wallet.
 
-Simulated verification ONLY: the OTP accepts any digits and the e-KYC never
-asks for or stores a real Aadhaar number. On completion a Yatra ID is issued
-and a pass link (rendered as an RFID-style QR pass in the web app) is returned.
-The pass is the pilgrim's headcount token, SOS identity, and lost-and-found key.
+Simulated verification ONLY: OTP accepts any digits; e-KYC never asks for or
+stores a real Aadhaar number. Each person gets their own Yatra ID + QR pass
+(the headcount token, SOS identity, and lost-and-found key).
 """
 from __future__ import annotations
 import re
@@ -19,15 +19,15 @@ from agent.state import YatraState
 from agent.config import get_settings
 from agent import persistence
 
-# Ordered intake stages. "otp" and "ekyc" are verification steps (no stored
-# field of their own); every other pre-confirm stage stores one field.
+# Ordered intake stages for the PRIMARY registrant. "otp"/"ekyc" are verify
+# steps; "add_member" starts the family loop; "member_age" is a sub-stage.
 _ORDER = ["yatra", "name", "age", "phone", "otp", "ekyc",
-          "group", "emergency", "medical", "confirm"]
+          "group", "emergency", "medical", "add_member", "confirm"]
 _NEXT = {a: b for a, b in zip(_ORDER, _ORDER[1:])}
 
 # Stages that mean "an intake is in progress". Anything else (None, "done", a
 # cancelled/unknown value) means we should start a fresh registration.
-_IN_PROGRESS_STAGES = set(_ORDER)
+_IN_PROGRESS_STAGES = set(_ORDER) | {"member_age"}
 
 _YATRA_NAME = {
     "pandharpur": {"mr": "पंढरपूर वारी", "hi": "पंढरपुर वारी", "en": "Pandharpur Wari"},
@@ -56,9 +56,9 @@ _PROMPTS = {
         "en": "Your **10-digit mobile number**? (this is the number you'll carry on the yatra)",
     },
     "group": {
-        "mr": "तुम्ही कोणत्या **दिंडी/गटा**सोबत आहात आणि **किती जण**? (उदा. 'आळंदी दिंडी, ४' — एकटे असल्यास 'एकटा')",
-        "hi": "आप किस **दिंडी/समूह** के साथ हैं और **कितने लोग**? (जैसे 'आळंदी दिंडी, 4' — अकेले हों तो 'अकेला')",
-        "en": "Which **Dindi / group** are you with, and **how many people**? (e.g. 'Alandi Dindi, 4' — type 'solo' if alone)",
+        "mr": "तुम्ही कोणत्या **दिंडी/गटा**सोबत चालत आहात? नसल्यास 'काही नाही'.",
+        "hi": "आप किस **दिंडी/समूह** के साथ चल रहे हैं? न हो तो 'कुछ नहीं'.",
+        "en": "Which **Dindi / group** are you walking with? Type 'none' if not with one.",
     },
     "emergency": {
         "mr": "**आपत्कालीन संपर्क** — नाव आणि मोबाइल क्रमांक. (उदा. 'सुनील ९८XXXXXXXX')",
@@ -70,24 +70,38 @@ _PROMPTS = {
         "hi": "सुरक्षा के लिए कोई **चिकित्सीय जानकारी**? (जैसे मधुमेह, हृदय रोग, बुज़ुर्ग, गर्भवती) — न हो तो 'कुछ नहीं'.",
         "en": "Any **medical conditions** to note for your safety? (e.g. diabetes, heart condition, elderly, pregnancy) — type 'none' if not.",
     },
+    "add_member": {
+        "mr": "तुमच्यासोबत **कुटुंबातील कोणी** यात्रेला येत आहे का? त्यांचे **नाव** लिहा, किंवा पूर्ण करण्यासाठी **'पूर्ण'** लिहा.",
+        "hi": "क्या आपके साथ **परिवार का कोई सदस्य** यात्रा कर रहा है? उनका **नाम** लिखें, या पूरा करने के लिए **'पूर्ण'** लिखें।",
+        "en": "Is a **family member** travelling with you? Reply their **name**, or **'done'** to finish.",
+    },
 }
 
-# OTP prompt (asked when advancing INTO the otp stage — after the phone is
-# captured). {phone} is masked to the last 2 digits.
 _OTP_PROMPT = {
     "mr": "📲 **+91-••••••{tail}** वर एक OTP पाठवला आहे. **६-अंकी कोड** लिहा.\n(हे प्रात्यक्षिक आहे — कोणतेही ६ अंक चालतील.)",
     "hi": "📲 **+91-••••••{tail}** पर एक OTP भेजा गया है। **6-अंकों का कोड** लिखें।\n(यह डेमो है — कोई भी 6 अंक चलेंगे।)",
     "en": "📲 An OTP has been sent to **+91-••••••{tail}**. Enter the **6-digit code**.\n(This is a demo — any 6 digits work.)",
 }
 
-# e-KYC prompt (asked when advancing INTO the ekyc stage).
 _EKYC_PROMPT = {
     "mr": "🔐 ओळख पडताळणीसाठी तुम्ही कोणते **ओळखपत्र** वापराल? **आधार / मतदार ओळखपत्र / पासपोर्ट / वाहन परवाना** — फक्त प्रकार लिहा.\n(गोपनीयता: आम्ही तुमचा आधार क्रमांक विचारत नाही किंवा साठवत नाही.)",
     "hi": "🔐 पहचान सत्यापन के लिए आप कौन-सा **पहचान पत्र** उपयोग करेंगे? **आधार / वोटर आईडी / पासपोर्ट / ड्राइविंग लाइसेंस** — केवल प्रकार लिखें।\n(गोपनीयता: हम आपका आधार नंबर नहीं पूछते और न ही सहेजते हैं।)",
     "en": "🔐 For identity verification, which **ID** will you use? **Aadhaar / Voter ID / Passport / Driving licence** — just the type.\n(Privacy: we never ask for or store your Aadhaar number.)",
 }
 
-# Acknowledgement lines prepended to the NEXT prompt after a verify step.
+# Member age prompt — {name} is the member just named.
+_MEMBER_AGE_PROMPT = {
+    "mr": "**{name}** यांचे **वय**? (वर्षांमध्ये)",
+    "hi": "**{name}** की **उम्र**? (वर्षों में)",
+    "en": "**{name}**'s **age**? (in years)",
+}
+
+_MEMBER_ADDED = {
+    "mr": "✅ **{name}** जोडले.",
+    "hi": "✅ **{name}** जोड़ा गया।",
+    "en": "✅ Added **{name}**.",
+}
+
 _ACK = {
     "otp": {"mr": "✅ मोबाइल क्रमांक पडताळला.", "hi": "✅ मोबाइल नंबर सत्यापित।", "en": "✅ Mobile number verified."},
     "ekyc": {"mr": "✅ ओळख पडताळली (e-KYC — प्रात्यक्षिक, आधार क्रमांक साठवलेला नाही).",
@@ -96,9 +110,9 @@ _ACK = {
 }
 
 _ELIGIBILITY_NOTE = {
-    "mr": "⚠️ १३ वर्षांखालील व ७० वर्षांवरील यात्रेकरूंसाठी सोबती/वैद्यकीय दाखला आवश्यक — तुमचा पास 'अतिरिक्त काळजी' म्हणून चिन्हांकित केला जाईल.",
-    "hi": "⚠️ 13 वर्ष से कम और 70 वर्ष से अधिक यात्रियों के लिए साथी/चिकित्सा प्रमाण ज़रूरी — आपका पास 'अतिरिक्त देखभाल' के रूप में चिह्नित होगा।",
-    "en": "⚠️ Pilgrims under 13 or over 70 need a guardian / medical clearance — your pass will be flagged for extra care.",
+    "mr": "⚠️ १३ वर्षांखालील व ७० वर्षांवरील यात्रेकरूंसाठी सोबती/वैद्यकीय दाखला आवश्यक — पास 'अतिरिक्त काळजी' म्हणून चिन्हांकित केला जाईल.",
+    "hi": "⚠️ 13 वर्ष से कम और 70 वर्ष से अधिक यात्रियों के लिए साथी/चिकित्सा प्रमाण ज़रूरी — पास 'अतिरिक्त देखभाल' के रूप में चिह्नित होगा।",
+    "en": "⚠️ Pilgrims under 13 or over 70 need a guardian / medical clearance — the pass is flagged for extra care.",
 }
 
 _INVALID = {
@@ -116,6 +130,8 @@ _INVALID = {
 _NONE_WORDS = {"none", "no", "nil", "na", "n/a", "solo", "alone",
                "काही नाही", "नाही", "एकटा", "एकटी", "एकटे",
                "कुछ नहीं", "नहीं", "अकेला", "अकेले", "कोई नहीं"}
+_DONE_WORDS = {"done", "finish", "finished", "no", "nope", "that's all", "thats all", "bas",
+               "पूर्ण", "झाले", "बस", "नाही", "हो गया", "समाप्त", "नहीं"}
 
 
 def _last_user(messages) -> str:
@@ -133,18 +149,29 @@ def _is_none(text: str) -> bool:
     return text.strip().lower() in _NONE_WORDS
 
 
+def _is_done(text: str) -> bool:
+    return text.strip().lower() in _DONE_WORDS
+
+
 def _digits(text: str) -> str:
     return re.sub(r"\D", "", text or "")
 
 
 def _valid_mobile(text: str) -> str | None:
-    """Return a clean 10-digit Indian mobile, or None. Accepts +91/0 prefixes."""
     d = _digits(text)
     if len(d) == 12 and d.startswith("91"):
         d = d[2:]
     elif len(d) == 11 and d.startswith("0"):
         d = d[1:]
     return d if len(d) == 10 and d[0] in "6789" else None
+
+
+def _valid_age(text: str) -> int | None:
+    nums = re.findall(r"\d+", text or "")
+    if not nums:
+        return None
+    age = int(nums[0])
+    return age if 1 <= age <= 120 else None
 
 
 def _parse_yatra(text: str, default: str | None) -> str | None:
@@ -158,59 +185,54 @@ def _parse_yatra(text: str, default: str | None) -> str | None:
     return None
 
 
-def _parse_group(text: str) -> tuple[str, int]:
-    """Return (group_name, size). 'solo'/'none' → ('Solo', 1)."""
-    if _is_none(text):
-        return ("Solo", 1)
-    nums = re.findall(r"\d+", text)
-    size = int(nums[-1]) if nums else 1
-    name = re.sub(r"[,;]?\s*\d+\s*$", "", text).strip(" ,;-") or text.strip()
-    return (name or "—", max(size, 1))
-
-
 def _mask_phone(phone: str) -> str:
     d = _digits(phone)
     return d[-2:] if len(d) >= 2 else "00"
 
 
+def _eligibility_flag(age: int) -> str:
+    return "needs guardian/medical clearance" if (age < 13 or age > 70) else ""
+
+
 def _confirm_prompt(fields: dict, lang: str) -> str:
     yatra = fields.get("yatra", "pandharpur")
     yname = _YATRA_NAME.get(yatra, {}).get(lang, yatra)
-    rows = {
-        "mr": [("यात्रा", yname), ("नाव", fields.get("name", "")), ("वय", fields.get("age", "")),
-               ("मोबाइल", fields.get("phone", "")), ("ओळख (e-KYC)", fields.get("id_type", "")),
-               ("दिंडी/गट", f"{fields.get('group_name','')} ({fields.get('group_size',1)})"),
-               ("आपत्कालीन संपर्क", fields.get("emergency_contact", "")),
-               ("वैद्यकीय", fields.get("medical_flags", "—"))],
-        "hi": [("यात्रा", yname), ("नाम", fields.get("name", "")), ("उम्र", fields.get("age", "")),
-               ("मोबाइल", fields.get("phone", "")), ("पहचान (e-KYC)", fields.get("id_type", "")),
-               ("दिंडी/समूह", f"{fields.get('group_name','')} ({fields.get('group_size',1)})"),
-               ("आपातकालीन संपर्क", fields.get("emergency_contact", "")),
-               ("चिकित्सीय", fields.get("medical_flags", "—"))],
-        "en": [("Yatra", yname), ("Name", fields.get("name", "")), ("Age", fields.get("age", "")),
-               ("Mobile", fields.get("phone", "")), ("Identity (e-KYC)", fields.get("id_type", "")),
-               ("Dindi/Group", f"{fields.get('group_name','')} ({fields.get('group_size',1)})"),
-               ("Emergency", fields.get("emergency_contact", "")),
-               ("Medical", fields.get("medical_flags", "—"))],
+    members = fields.get("members", [])
+    labels = {
+        "mr": {"y": "यात्रा", "grp": "दिंडी/गट", "em": "आपत्कालीन संपर्क", "who": "पास ({n}):", "yrs": "वर्षे"},
+        "hi": {"y": "यात्रा", "grp": "दिंडी/समूह", "em": "आपातकालीन संपर्क", "who": "पास ({n}):", "yrs": "वर्ष"},
+        "en": {"y": "Yatra", "grp": "Dindi/Group", "em": "Emergency", "who": "Passes ({n}):", "yrs": "yrs"},
     }[lang]
-    summary = "\n".join(f"- **{k}:** {v}" for k, v in rows)
+    people = [f"{fields.get('name','')} ({fields.get('age','')} {labels['yrs']})"]
+    people += [f"{m['name']} ({m['age']} {labels['yrs']})" for m in members]
+    who = labels["who"].format(n=len(people)) + "\n" + "\n".join(f"  {i+1}. {p}" for i, p in enumerate(people))
+    lines = [
+        f"- **{labels['y']}:** {yname}",
+        f"- **{labels['grp']}:** {fields.get('group_name') or '—'}",
+        f"- **{labels['em']}:** {fields.get('emergency_contact','')}",
+        f"- **{who}**",
+    ]
     head = {"mr": "कृपया तपशील तपासा आणि पास तयार करण्यासाठी **'हो'** लिहा:",
             "hi": "कृपया विवरण जाँचें और पास बनाने के लिए **'हाँ'** लिखें:",
-            "en": "Please check your details and reply **'yes'** to issue your pass:"}[lang]
-    return f"{head}\n\n{summary}"
+            "en": "Please check the details and reply **'yes'** to issue the pass(es):"}[lang]
+    return f"{head}\n\n" + "\n".join(lines)
 
 
-def _issued_message(yatra_id: str, pass_url: str, fields: dict, lang: str) -> str:
-    """Verification receipt + the QR pass link (single streamed message)."""
+def _issued_message(issued: list[tuple[str, str]], wallet_url: str, lang: str) -> str:
+    """issued = [(name, yatra_id), ...] (primary first)."""
     checks = {
-        "mr": ["⏳ तपशील पडताळत आहे…", "✅ पात्रता तपासली", "✅ e-KYC पूर्ण (प्रात्यक्षिक)", "✅ यात्रा RFID वाटप केले"],
-        "hi": ["⏳ विवरण सत्यापित हो रहा है…", "✅ पात्रता जाँची", "✅ e-KYC पूर्ण (डेमो)", "✅ यात्रा RFID आवंटित"],
-        "en": ["⏳ Verifying details…", "✅ Eligibility checked", "✅ e-KYC complete (demo)", "✅ Yatra RFID allotted"],
+        "mr": ["⏳ तपशील पडताळत आहे…", "✅ पात्रता तपासली", "✅ e-KYC पूर्ण (प्रात्यक्षिक)", f"✅ {len(issued)} यात्रा RFID पास वाटप केले"],
+        "hi": ["⏳ विवरण सत्यापित हो रहा है…", "✅ पात्रता जाँची", "✅ e-KYC पूर्ण (डेमो)", f"✅ {len(issued)} यात्रा RFID पास आवंटित"],
+        "en": ["⏳ Verifying details…", "✅ Eligibility checked", "✅ e-KYC complete (demo)", f"✅ {len(issued)} Yatra RFID pass(es) allotted"],
     }[lang]
-    done = {"mr": f"🎉 **नोंदणी पूर्ण!** तुमचा **यात्रा ID: {yatra_id}**\n\n[📲 तुमचा QR यात्रा पास उघडा]({pass_url})\n\nचेकपॉइंटवर हा पास दाखवा — तो हजेरी नोंदतो आणि आणीबाणीत तुमची ओळख पटवतो.",
-            "hi": f"🎉 **पंजीकरण पूरा!** आपका **यात्रा ID: {yatra_id}**\n\n[📲 अपना QR यात्रा पास खोलें]({pass_url})\n\nचेकपॉइंट पर यह पास दिखाएं — यह हेडकाउंट करता है और आपात स्थिति में आपकी पहचान बताता है।",
-            "en": f"🎉 **Registration complete!** Your **Yatra ID: {yatra_id}**\n\n[📲 Open your QR yatra pass]({pass_url})\n\nShow this pass at checkpoints — it does headcount and identifies you in an emergency."}[lang]
-    return "\n".join(checks) + "\n\n" + done
+    rows = "\n".join(f"  {i+1}. **{name}** — {yid}" for i, (name, yid) in enumerate(issued))
+    head = {"mr": f"🎉 **नोंदणी पूर्ण!** {len(issued)} पास तयार:",
+            "hi": f"🎉 **पंजीकरण पूरा!** {len(issued)} पास बने:",
+            "en": f"🎉 **Registration complete!** {len(issued)} pass(es) issued:"}[lang]
+    cta = {"mr": f"[📲 सर्व पास उघडा (वॉलेट)]({wallet_url})\n\nप्रत्येक पास वॉलेटमधून डाउनलोड करा किंवा WhatsApp वर पाठवा. चेकपॉइंटवर QR दाखवा.",
+           "hi": f"[📲 सभी पास खोलें (वॉलेट)]({wallet_url})\n\nहर पास वॉलेट से डाउनलोड करें या WhatsApp पर भेजें। चेकपॉइंट पर QR दिखाएं।",
+           "en": f"[📲 Open all passes (wallet)]({wallet_url})\n\nDownload each pass from the wallet or share it on WhatsApp. Show the QR at checkpoints."}[lang]
+    return "\n".join(checks) + "\n\n" + head + "\n" + rows + "\n\n" + cta
 
 
 async def registration(state: YatraState) -> YatraState:
@@ -228,7 +250,6 @@ async def registration(state: YatraState) -> YatraState:
         return out
 
     def _prompt_for(next_stage: str, *, ack: str = "") -> str:
-        """Build the prompt shown when entering `next_stage` (with optional ack)."""
         if next_stage == "otp":
             body = _OTP_PROMPT[lang].format(tail=_mask_phone(fields.get("phone", "")))
         elif next_stage == "ekyc":
@@ -239,13 +260,12 @@ async def registration(state: YatraState) -> YatraState:
             body = _PROMPTS[next_stage][lang]
         return f"{ack}\n\n{body}" if ack else body
 
-    # Start (or restart) intake — ask the first question. Do not consume the
-    # trigger turn as an answer. A prior done/cancelled/unknown stage begins a
-    # clean intake with empty fields.
+    # Start (or restart) intake — ask the first question, empty fields.
     if stage not in _IN_PROGRESS_STAGES:
-        return _emit(_PROMPTS["yatra"][lang], reg_stage="yatra", reg_fields={})
+        return _emit(_PROMPTS["yatra"][lang], reg_stage="yatra", reg_fields={"members": []})
 
     answer = _last_user(messages)
+    fields.setdefault("members", [])
 
     # ── yatra selection ──────────────────────────────────────────────
     if stage == "yatra":
@@ -255,24 +275,21 @@ async def registration(state: YatraState) -> YatraState:
         fields["yatra"] = chosen
         return _emit(_prompt_for("name"), reg_stage="name", reg_fields=fields, active_yatra=chosen)
 
-    # ── name ─────────────────────────────────────────────────────────
     if stage == "name":
         fields["name"] = answer
         return _emit(_prompt_for("age"), reg_stage="age", reg_fields=fields)
 
-    # ── age (eligibility / health gate) ──────────────────────────────
     if stage == "age":
-        nums = re.findall(r"\d+", answer)
-        age = int(nums[0]) if nums else 0
-        if not (1 <= age <= 120):
+        age = _valid_age(answer)
+        if age is None:
             return _emit(_INVALID["age"][lang], reg_stage="age", reg_fields=fields)
         fields["age"] = str(age)
-        ack = _ELIGIBILITY_NOTE[lang] if (age < 13 or age > 70) else ""
-        if age < 13 or age > 70:
-            fields["medical_flags"] = (fields.get("medical_flags", "") + "; needs guardian/medical clearance").strip("; ")
+        flag = _eligibility_flag(age)
+        if flag:
+            fields["medical_flags"] = flag
+        ack = _ELIGIBILITY_NOTE[lang] if flag else ""
         return _emit(_prompt_for("phone", ack=ack), reg_stage="phone", reg_fields=fields)
 
-    # ── phone → send simulated OTP ───────────────────────────────────
     if stage == "phone":
         mobile = _valid_mobile(answer)
         if not mobile:
@@ -280,7 +297,6 @@ async def registration(state: YatraState) -> YatraState:
         fields["phone"] = mobile
         return _emit(_prompt_for("otp"), reg_stage="otp", reg_fields=fields)
 
-    # ── OTP verify (simulated) ───────────────────────────────────────
     if stage == "otp":
         code = _digits(answer)
         if not (4 <= len(code) <= 6):
@@ -288,7 +304,6 @@ async def registration(state: YatraState) -> YatraState:
         fields["mobile_verified"] = True
         return _emit(_prompt_for("ekyc", ack=_ACK["otp"][lang]), reg_stage="ekyc", reg_fields=fields)
 
-    # ── e-KYC identity verify (simulated — ID type only) ─────────────
     if stage == "ekyc":
         t = answer.strip().lower()
         id_type = ("Aadhaar" if ("aadhaar" in t or "aadhar" in t or "आधार" in answer)
@@ -300,14 +315,10 @@ async def registration(state: YatraState) -> YatraState:
         fields["ekyc_verified"] = True
         return _emit(_prompt_for("group", ack=_ACK["ekyc"][lang]), reg_stage="group", reg_fields=fields)
 
-    # ── Dindi/group + headcount ──────────────────────────────────────
     if stage == "group":
-        name, size = _parse_group(answer)
-        fields["group_name"] = name
-        fields["group_size"] = size
+        fields["group_name"] = "" if _is_none(answer) else answer.strip()
         return _emit(_prompt_for("emergency"), reg_stage="emergency", reg_fields=fields)
 
-    # ── emergency contact ────────────────────────────────────────────
     if stage == "emergency":
         mobile = _valid_mobile(answer)
         if not mobile:
@@ -316,33 +327,64 @@ async def registration(state: YatraState) -> YatraState:
         fields["emergency_contact"] = f"{name} {mobile}".strip()
         return _emit(_prompt_for("medical"), reg_stage="medical", reg_fields=fields)
 
-    # ── medical flags ────────────────────────────────────────────────
     if stage == "medical":
         med = "none" if _is_none(answer) else answer
         existing = fields.get("medical_flags", "")
-        # Preserve any eligibility flag set at the age step.
         fields["medical_flags"] = (f"{med}; {existing}".strip("; ") if existing and med != "none"
                                    else existing or med)
-        return _emit(_confirm_prompt(fields, lang), reg_stage="confirm", reg_fields=fields)
+        # Move into the family-member loop.
+        return _emit(_prompt_for("add_member"), reg_stage="add_member", reg_fields=fields)
 
-    # ── confirm → issue pass, or cancel ──────────────────────────────
+    # ── family-member loop ───────────────────────────────────────────
+    if stage == "add_member":
+        if _is_done(answer) or _is_none(answer):
+            return _emit(_prompt_for("confirm"), reg_stage="confirm", reg_fields=fields)
+        fields["_pending_name"] = answer.strip()
+        return _emit(_MEMBER_AGE_PROMPT[lang].format(name=fields["_pending_name"]),
+                     reg_stage="member_age", reg_fields=fields)
+
+    if stage == "member_age":
+        age = _valid_age(answer)
+        if age is None:
+            name = fields.get("_pending_name", "")
+            return _emit(f"{_INVALID['age'][lang]}\n\n" + _MEMBER_AGE_PROMPT[lang].format(name=name),
+                         reg_stage="member_age", reg_fields=fields)
+        name = fields.pop("_pending_name", "")
+        member = {"name": name, "age": str(age), "medical_flags": _eligibility_flag(age) or "none"}
+        fields["members"] = fields.get("members", []) + [member]
+        ack = _MEMBER_ADDED[lang].format(name=name)
+        if _eligibility_flag(age):
+            ack += "\n" + _ELIGIBILITY_NOTE[lang]
+        return _emit(_prompt_for("add_member", ack=ack), reg_stage="add_member", reg_fields=fields)
+
+    # ── confirm → issue one pass per person, or cancel ───────────────
     if stage == "confirm":
         if _is_yes(answer):
             yatra = fields.get("yatra") or state.get("active_yatra") or "pandharpur"
-            yatra_id = await persistence.create_registration(
-                user_id, yatra=yatra, name=fields.get("name", ""), phone=fields.get("phone", ""),
+            members = fields.get("members", [])
+            total = 1 + len(members)
+            group_id = persistence.new_group_id() if members else ""
+            common = dict(yatra=yatra, group_name=fields.get("group_name", ""), group_size=total,
+                          group_id=group_id, emergency_contact=fields.get("emergency_contact", ""),
+                          mobile_verified=True, ekyc_verified=True)
+            issued: list[tuple[str, str]] = []
+            primary_id = await persistence.create_registration(
+                user_id, name=fields.get("name", ""), phone=fields.get("phone", ""),
                 age=fields.get("age", ""), id_type=fields.get("id_type", ""),
-                group_name=fields.get("group_name", ""), group_size=fields.get("group_size", 1),
-                emergency_contact=fields.get("emergency_contact", ""),
-                medical_flags=fields.get("medical_flags", ""),
-                mobile_verified=bool(fields.get("mobile_verified")),
-                ekyc_verified=bool(fields.get("ekyc_verified")))
-            pass_url = f"{get_settings().PUBLIC_WEBVIEW_BASE}/yatri/pass?id={yatra_id}"
-            return _emit(_issued_message(yatra_id, pass_url, fields, lang), reg_stage="done", reg_fields=fields)
+                medical_flags=fields.get("medical_flags", ""), is_primary=True, **common)
+            issued.append((fields.get("name", ""), primary_id))
+            for m in members:
+                mid = await persistence.create_registration(
+                    user_id, name=m["name"], phone=fields.get("phone", ""),
+                    age=m.get("age", ""), id_type=fields.get("id_type", ""),
+                    medical_flags=m.get("medical_flags", "none"), is_primary=False, **common)
+                issued.append((m["name"], mid))
+            wallet_url = f"{get_settings().PUBLIC_WEBVIEW_BASE}/yatri/passes?user_id={user_id}"
+            return _emit(_issued_message(issued, wallet_url, lang), reg_stage="done", reg_fields=fields)
         cancel = {"mr": "नोंदणी रद्द केली. पुन्हा सुरू करण्यासाठी 'नोंदणी' लिहा.",
                   "hi": "पंजीकरण रद्द किया गया। फिर से शुरू करने के लिए 'पंजीकरण' लिखें।",
                   "en": "Registration cancelled. Type 'register' to start again."}[lang]
         return _emit(cancel, reg_stage="done", reg_fields=fields)
 
     # Unknown stage — restart cleanly.
-    return _emit(_PROMPTS["yatra"][lang], reg_stage="yatra", reg_fields={})
+    return _emit(_PROMPTS["yatra"][lang], reg_stage="yatra", reg_fields={"members": []})
