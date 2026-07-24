@@ -53,6 +53,13 @@ export const QUICK_ACTIVITIES = [
     action: { type: "send", text: "what safety drills should I know?" },
   },
   {
+    id: "lostfound",
+    icon: "🧿",
+    label: { mr: "हरवले–सापडले", hi: "खोया–पाया", en: "Lost & Found" },
+    tagline: { mr: "व्यक्ती/वस्तू नोंदवा", hi: "व्यक्ति/वस्तु दर्ज करें", en: "Report a person or item" },
+    action: { type: "route", href: "/yatri/lostfound" },
+  },
+  {
     id: "call",
     icon: "📞",
     label: { mr: "व्हॉइस कॉल", hi: "वॉइस कॉल", en: "Voice Call" },

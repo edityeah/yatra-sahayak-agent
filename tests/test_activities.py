@@ -13,10 +13,10 @@ def _run(node):
     return asyncio.run(node(s))
 
 
-def test_all_seven_activity_nodes_exist():
+def test_all_activity_nodes_exist():
     assert set(ACTIVITY_NODES) == {
         "weather", "advisory", "logistics", "helpline",
-        "drills_sos", "signage", "registration",
+        "drills_sos", "signage", "registration", "lost_found",
     }
 
 

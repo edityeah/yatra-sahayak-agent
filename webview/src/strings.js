@@ -7,6 +7,7 @@ export const strings = {
   chat: { mr: "गप्पा", hi: "चैट", en: "Chat" },
   pass: { mr: "यात्रा पास", hi: "यात्रा पास", en: "Yatra Pass" },
   wallet: { mr: "माझे यात्रा पास", hi: "मेरे यात्रा पास", en: "My Yatra Passes" },
+  lostFound: { mr: "हरवले–सापडले", hi: "खोया–पाया", en: "Lost & Found" },
   walletEmpty: {
     mr: "अजून एकही पास नाही. चॅटमध्ये 'नोंदणी' करून पास काढा.",
     hi: "अभी कोई पास नहीं। चैट में 'पंजीकरण' करके पास बनाएं।",

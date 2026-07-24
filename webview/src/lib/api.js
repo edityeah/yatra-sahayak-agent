@@ -9,6 +9,16 @@ export async function apiGet(path) {
   return r.json();
 }
 
+export async function apiPost(path, body) {
+  const r = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-API-Key": KEY },
+    body: JSON.stringify(body || {}),
+  });
+  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
+  return r.json();
+}
+
 // Stream a chat turn from the agent's /messages SSE endpoint (POST). Calls
 // onDelta(textChunk) as text arrives. Returns the full reply string.
 export async function streamChat({ user_id, conversation_id, text, language, yatra }, onDelta) {

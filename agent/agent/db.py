@@ -51,6 +51,19 @@ ALTER TABLE registrations ADD COLUMN IF NOT EXISTS group_id TEXT;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS is_primary BOOLEAN DEFAULT TRUE;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS mobile_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE registrations ADD COLUMN IF NOT EXISTS ekyc_verified BOOLEAN DEFAULT FALSE;
+CREATE TABLE IF NOT EXISTS lost_found (
+  id             TEXT PRIMARY KEY,
+  kind           TEXT NOT NULL,            -- 'person' | 'item'
+  status         TEXT NOT NULL DEFAULT 'open',   -- 'open' | 'reunited'
+  name           TEXT,
+  description    TEXT,
+  last_seen      TEXT,
+  reporter_name  TEXT,
+  reporter_phone TEXT,
+  yatra          TEXT,
+  yatra_id       TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 CREATE TABLE IF NOT EXISTS sos_events (
   id             TEXT PRIMARY KEY,
   user_id        TEXT NOT NULL,

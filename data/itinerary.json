@@ -1,0 +1,244 @@
+{
+  "pandharpur": [
+    {
+      "day": 1,
+      "title": {
+        "mr": "आळंदी → पुणे",
+        "hi": "आळंदी → पुणे",
+        "en": "Alandi → Pune"
+      },
+      "distance_km": 30,
+      "note": {
+        "mr": "माऊलींच्या पालखीचे आळंदीहून प्रस्थान; पुण्यात मुक्काम.",
+        "hi": "मौली की पालकी का आळंदी से प्रस्थान; पुणे में पड़ाव।",
+        "en": "Mauli's palkhi departs Alandi; halt at Pune."
+      }
+    },
+    {
+      "day": 2,
+      "title": {
+        "mr": "पुणे (विसावा)",
+        "hi": "पुणे (विश्राम)",
+        "en": "Pune (rest day)"
+      },
+      "distance_km": 0,
+      "note": {
+        "mr": "पुण्यात दुसऱ्या दिवशी विसावा; दर्शन व विश्रांती.",
+        "hi": "पुणे में विश्राम दिवस; दर्शन व विश्राम।",
+        "en": "A rest day at Pune; darshan and rest."
+      }
+    },
+    {
+      "day": 3,
+      "title": {
+        "mr": "पुणे → सासवड",
+        "hi": "पुणे → सासवड",
+        "en": "Pune → Saswad"
+      },
+      "distance_km": 30,
+      "note": {
+        "mr": "दिवे घाटाची चढण — मार्गातील कठीण टप्पा.",
+        "hi": "दिवे घाट की चढ़ाई — मार्ग का कठिन चरण।",
+        "en": "The Dive Ghat climb — a tough stretch of the route."
+      }
+    },
+    {
+      "day": 4,
+      "title": {
+        "mr": "सासवड → जेजुरी",
+        "hi": "सासवड → जेजुरी",
+        "en": "Saswad → Jejuri"
+      },
+      "distance_km": 15,
+      "note": {
+        "mr": "खंडोबा मंदिरासाठी प्रसिद्ध जेजुरी.",
+        "hi": "खंडोबा मंदिर हेतु प्रसिद्ध जेजुरी।",
+        "en": "Jejuri, famed for the Khandoba temple."
+      }
+    },
+    {
+      "day": 5,
+      "title": {
+        "mr": "जेजुरी → वाल्हे",
+        "hi": "जेजुरी → वाल्हे",
+        "en": "Jejuri → Walhe"
+      },
+      "distance_km": 20,
+      "note": {
+        "mr": "वाल्हे येथे मुक्काम.",
+        "hi": "वाल्हे में पड़ाव।",
+        "en": "Night halt at Walhe."
+      }
+    },
+    {
+      "day": 6,
+      "title": {
+        "mr": "वाल्हे → लोणंद",
+        "hi": "वाल्हे → लोणंद",
+        "en": "Walhe → Lonand"
+      },
+      "distance_km": 20,
+      "note": {
+        "mr": "सातारा मार्गावरील मुक्काम.",
+        "hi": "सतारा मार्ग पर पड़ाव।",
+        "en": "Halt on the Satara-side route."
+      }
+    },
+    {
+      "day": 7,
+      "title": {
+        "mr": "लोणंद → तरडगाव",
+        "hi": "लोनंद → तरडगांव",
+        "en": "Lonand → Taradgaon"
+      },
+      "distance_km": 18,
+      "note": {
+        "mr": "पहिले उभे रिंगण येथे होते.",
+        "hi": "पहला खड़ा रिंगण यहाँ होता है।",
+        "en": "The first standing ringan is held here."
+      }
+    },
+    {
+      "day": 8,
+      "title": {
+        "mr": "तरडगाव → फलटण",
+        "hi": "तरडगांव → फलटण",
+        "en": "Taradgaon → Phaltan"
+      },
+      "distance_km": 20,
+      "note": {
+        "mr": "फलटण शहरात मुक्काम.",
+        "hi": "फलटण शहर में पड़ाव।",
+        "en": "Night halt in Phaltan town."
+      }
+    },
+    {
+      "day": 9,
+      "title": {
+        "mr": "फलटण → बरड",
+        "hi": "फलटण → बरड",
+        "en": "Phaltan → Barad"
+      },
+      "distance_km": 22,
+      "note": {
+        "mr": "बरड येथे विसावा.",
+        "hi": "बरड में विश्राम।",
+        "en": "Rest at Barad."
+      }
+    },
+    {
+      "day": 10,
+      "title": {
+        "mr": "बरड → नातेपुते",
+        "hi": "बरड → नातेपुते",
+        "en": "Barad → Natepute"
+      },
+      "distance_km": 20,
+      "note": {
+        "mr": "रिंगण सोहळा; मोठी गर्दी.",
+        "hi": "रिंगण उत्सव; भारी भीड़।",
+        "en": "A ringan ceremony; large crowds."
+      }
+    },
+    {
+      "day": 11,
+      "title": {
+        "mr": "नातेपुते → माळशिरस",
+        "hi": "नातेपुते → माळशिरस",
+        "en": "Natepute → Malshiras"
+      },
+      "distance_km": 20,
+      "note": {
+        "mr": "माळशिरस येथे मुक्काम.",
+        "hi": "माळशिरस में पड़ाव।",
+        "en": "Halt at Malshiras."
+      }
+    },
+    {
+      "day": 12,
+      "title": {
+        "mr": "माळशिरस → वेळापूर",
+        "hi": "माळशिरस → वेळापूर",
+        "en": "Malshiras → Velapur"
+      },
+      "distance_km": 18,
+      "note": {
+        "mr": "प्रसिद्ध घोड्याचे रिंगण येथे.",
+        "hi": "प्रसिद्ध घोड़े का रिंगण यहाँ।",
+        "en": "The famous horse (ghodyache) ringan is here."
+      }
+    },
+    {
+      "day": 13,
+      "title": {
+        "mr": "वेळापूर → वाखरी",
+        "hi": "वेळापूर → वाखरी",
+        "en": "Velapur → Wakhari"
+      },
+      "distance_km": 25,
+      "note": {
+        "mr": "पंढरपूरपूर्वीचा शेवटचा मुक्काम; सर्व दिंड्या एकत्र.",
+        "hi": "पंढरपुर से पहले अंतिम पड़ाव; सभी दिंडियाँ एकत्र।",
+        "en": "The last halt before Pandharpur; all dindis converge."
+      }
+    },
+    {
+      "day": 14,
+      "title": {
+        "mr": "वाखरी → पंढरपूर",
+        "hi": "वाखरी → पंढरपुर",
+        "en": "Wakhari → Pandharpur"
+      },
+      "distance_km": 8,
+      "note": {
+        "mr": "आषाढी एकादशीला पंढरपुरात आगमन; चंद्रभागा स्नान व विठ्ठल दर्शन.",
+        "hi": "आषाढी एकादशी को पंढरपुर आगमन; चंद्रभागा स्नान व विट्ठल दर्शन।",
+        "en": "Arrival in Pandharpur on Ashadhi Ekadashi; Chandrabhaga bath and Vitthal darshan."
+      }
+    }
+  ],
+  "kumbh": [
+    {
+      "day": 1,
+      "title": {
+        "mr": "नाशिक आगमन · रामकुंड",
+        "hi": "नासिक आगमन · रामकुंड",
+        "en": "Arrive Nashik · Ramkund"
+      },
+      "distance_km": null,
+      "note": {
+        "mr": "पंचवटीतील रामकुंडावर गोदावरी स्नान व दर्शन.",
+        "hi": "पंचवटी के रामकुंड पर गोदावरी स्नान व दर्शन।",
+        "en": "Godavari bath and darshan at Ramkund in Panchavati."
+      }
+    },
+    {
+      "day": 2,
+      "title": {
+        "mr": "त्र्यंबकेश्वर · कुशावर्त",
+        "hi": "त्र्यंबकेश्वर · कुशावर्त",
+        "en": "Trimbakeshwar · Kushavarta"
+      },
+      "distance_km": null,
+      "note": {
+        "mr": "त्र्यंबकेश्वर ज्योतिर्लिंग दर्शन व कुशावर्त कुंड स्नान.",
+        "hi": "त्र्यंबकेश्वर ज्योतिर्लिंग दर्शन व कुशावर्त कुंड स्नान।",
+        "en": "Trimbakeshwar Jyotirlinga darshan and a bath at the Kushavarta kund."
+      }
+    },
+    {
+      "day": 3,
+      "title": {
+        "mr": "शाही स्नान दिवस",
+        "hi": "शाही स्नान दिवस",
+        "en": "Shahi Snan day"
+      },
+      "distance_km": null,
+      "note": {
+        "mr": "पहाटे रामकुंडावर स्नान; आखाड्यांची मिरवणूक पहा (सर्वाधिक गर्दी).",
+        "hi": "भोर में रामकुंड पर स्नान; अखाड़ों की शोभायात्रा देखें (सर्वाधिक भीड़)।",
+        "en": "Early bath at Ramkund; watch the akhada processions (peak crowds)."
+      }
+    }
+  ]
+}

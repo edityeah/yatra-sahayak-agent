@@ -12,6 +12,7 @@ from agent.nodes.activities.helpline import helpline
 from agent.nodes.activities.drills_sos import drills_sos
 from agent.nodes.activities.signage import signage
 from agent.nodes.activities.registration import registration
+from agent.nodes.activities.lost_found import lost_found
 
 ACTIVITY_NODES = {
     "weather": weather,
@@ -21,4 +22,5 @@ ACTIVITY_NODES = {
     "drills_sos": drills_sos,
     "signage": signage,
     "registration": registration,
+    "lost_found": lost_found,
 }

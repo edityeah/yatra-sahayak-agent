@@ -13,6 +13,7 @@ from agent import db
 _USER_STATE: dict[str, dict] = {}
 _REGISTRATIONS: dict[str, dict] = {}   # yatra_id -> row
 _SOS: list[dict] = []
+_LOSTFOUND: list[dict] = []            # lost & found reports
 _SEQ = {"n": 0}
 
 _PREFIX = {"pandharpur": "PWARI", "kumbh": "KUMBH"}
@@ -23,6 +24,7 @@ def reset() -> None:
     _USER_STATE.clear()
     _REGISTRATIONS.clear()
     _SOS.clear()
+    _LOSTFOUND.clear()
     _SEQ["n"] = 0
 
 
@@ -203,3 +205,58 @@ async def list_sos() -> list[dict]:
                 await cur.execute("SELECT * FROM sos_events ORDER BY created_at DESC")
                 return [dict(r) for r in await cur.fetchall()]
     return list(_SOS)
+
+
+# ── lost_found ──────────────────────────────────────────────────────
+async def create_lost_found(*, kind: str, name: str, description: str, last_seen: str,
+                            reporter_name: str, reporter_phone: str,
+                            yatra: str | None = None, yatra_id: str | None = None) -> str:
+    lid = f"LF-{_today()}-{_next():04d}"
+    row = {"id": lid, "kind": kind, "status": "open", "name": name, "description": description,
+           "last_seen": last_seen, "reporter_name": reporter_name, "reporter_phone": reporter_phone,
+           "yatra": yatra, "yatra_id": yatra_id}
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO lost_found(id,kind,status,name,description,last_seen,"
+                    "reporter_name,reporter_phone,yatra,yatra_id) "
+                    "VALUES(%(id)s,%(kind)s,%(status)s,%(name)s,%(description)s,%(last_seen)s,"
+                    "%(reporter_name)s,%(reporter_phone)s,%(yatra)s,%(yatra_id)s)",
+                    row,
+                )
+            await conn.commit()
+    else:
+        _LOSTFOUND.append(row)
+    return lid
+
+
+async def list_lost_found(yatra: str | None = None) -> list[dict]:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                if yatra:
+                    await cur.execute("SELECT * FROM lost_found WHERE yatra=%s ORDER BY created_at DESC", (yatra,))
+                else:
+                    await cur.execute("SELECT * FROM lost_found ORDER BY created_at DESC")
+                return [dict(r) for r in await cur.fetchall()]
+    rows = [r for r in _LOSTFOUND if (not yatra or r.get("yatra") == yatra)]
+    return list(reversed(rows))
+
+
+async def set_lost_found_status(lid: str, status: str) -> bool:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("UPDATE lost_found SET status=%s WHERE id=%s", (status, lid))
+                changed = cur.rowcount
+            await conn.commit()
+            return bool(changed)
+    for r in _LOSTFOUND:
+        if r["id"] == lid:
+            r["status"] = status
+            return True
+    return False

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-import { Navigation, MessageCircle, CalendarDays } from "lucide-react";
+import { Navigation, MessageCircle, CalendarDays, Route as RouteIcon } from "lucide-react";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
 import PageShell from "../components/PageShell.jsx";
@@ -25,6 +25,10 @@ const POI_KINDS = Object.keys(KIND);
 const ALL = { mr: "सर्व", hi: "सभी", en: "All" };
 const EVENTS = { mr: "कार्यक्रम", hi: "कार्यक्रम", en: "Events" };
 const EVENTS_TITLE = { mr: "कार्यक्रम व वेळापत्रक", hi: "कार्यक्रम व समय-सारणी", en: "Events & schedule" };
+const ITIN = { mr: "प्रवास वेळापत्रक", hi: "यात्रा कार्यक्रम", en: "Itinerary" };
+const ITIN_TITLE = { mr: "दिवसनिहाय प्रवास वेळापत्रक", hi: "दिन-प्रतिदिन यात्रा कार्यक्रम", en: "Day-by-day itinerary" };
+const DAY = { mr: "दिवस", hi: "दिन", en: "Day" };
+const KM = { mr: "किमी", hi: "किमी", en: "km" };
 const NAVIGATE = { mr: "दिशा", hi: "दिशा", en: "Navigate" };
 const ASK = { mr: "चॅटमध्ये विचारा", hi: "चैट में पूछें", en: "Ask in chat" };
 const EMPTY_TEXT = {
@@ -54,6 +58,7 @@ export default function MapPage() {
   const navigate = useNavigate();
   const [entries, setEntries] = useState(null);
   const [events, setEvents] = useState([]);
+  const [itinerary, setItinerary] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,11 +72,13 @@ export default function MapPage() {
     Promise.all([
       apiGet(`/api/yatra/${yatra}/routes`).catch(() => []),
       apiGet(`/api/yatra/${yatra}/events`).catch(() => []),
+      apiGet(`/api/yatra/${yatra}/itinerary`).catch(() => []),
     ])
-      .then(([routes, evs]) => {
+      .then(([routes, evs, itin]) => {
         if (cancelled) return;
         setEntries(routes || []);
         setEvents(evs || []);
+        setItinerary(itin || []);
       })
       .catch((e) => !cancelled && setError(e?.message || String(e)))
       .finally(() => !cancelled && setLoading(false));
@@ -88,9 +95,10 @@ export default function MapPage() {
     () => (entries || []).filter((e) => typeof e.lat === "number" && typeof e.lng === "number"),
     [entries]
   );
+  const nonPoiFilter = filter === "events" || filter === "itinerary";
   const shownPois = useMemo(
-    () => (filter === "all" || filter === "events" ? pois : pois.filter((e) => e.kind === filter)),
-    [pois, filter]
+    () => (filter === "all" || nonPoiFilter ? pois : pois.filter((e) => e.kind === filter)),
+    [pois, filter, nonPoiFilter]
   );
   const bounds = useMemo(() => (pois.length ? pois.map((p) => [p.lat, p.lng]) : null), [pois]);
 
@@ -98,7 +106,7 @@ export default function MapPage() {
   const openDirections = (lat, lng) =>
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, "_blank", "noopener");
 
-  const listPois = filter === "events" ? [] : shownPois;
+  const listPois = nonPoiFilter ? [] : shownPois;
 
   return (
     <PageShell title={tr(strings, "map", language)}>
@@ -122,6 +130,9 @@ export default function MapPage() {
               <Chip key={k} active={filter === k} onClick={() => setFilter(k)}
                 label={t(KIND[k].label, language)} color={KIND[k].color} />
             ))}
+            {itinerary.length ? (
+              <Chip active={filter === "itinerary"} onClick={() => setFilter("itinerary")} label={t(ITIN, language)} />
+            ) : null}
             {events.length ? (
               <Chip active={filter === "events"} onClick={() => setFilter("events")} label={t(EVENTS, language)} />
             ) : null}
@@ -180,6 +191,38 @@ export default function MapPage() {
               </div>
             </div>
           ))}
+
+          {/* Day-by-day itinerary */}
+          {filter === "itinerary" && itinerary.length ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-[14px] font-extrabold text-ink pt-1">
+                <RouteIcon size={16} className="text-primary" /> {t(ITIN_TITLE, language)}
+              </div>
+              {itinerary.map((st, i) => (
+                <div key={i} className="rounded-2xl border border-bdr bg-surface shadow-card p-4 flex gap-3">
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-primary-50 text-primary flex flex-col items-center justify-center leading-none">
+                    <span className="text-[9px] font-bold uppercase">{t(DAY, language)}</span>
+                    <span className="text-[16px] font-extrabold">{st.day}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[14.5px] font-extrabold text-ink">{t(st.title, language)}</span>
+                      {st.distance_km ? (
+                        <span className="text-[11px] font-bold text-primary bg-primary-50 rounded-full px-2 py-0.5">
+                          {st.distance_km} {t(KM, language)}
+                        </span>
+                      ) : null}
+                    </div>
+                    {st.note ? <p className="mt-1 text-[13px] text-ink leading-relaxed">{t(st.note, language)}</p> : null}
+                    <button onClick={() => askInChat(`${t(st.title, language)} (${yatraName}) — ${t(ITIN, language)}?`)}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-bdr bg-surface-2 text-ink text-[12px] font-bold px-2.5 h-8 hover:border-primary transition">
+                      <MessageCircle size={13} /> {t(ASK, language)}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
 
           {/* Events / schedule */}
           {filter === "events" && events.length ? (

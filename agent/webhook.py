@@ -126,7 +126,8 @@ async def api_yatra(yatra: str, x_api_key: str | None = Header(default=None)):
 @app.get("/api/yatra/{yatra}/{kind}")
 async def api_yatra_kind(yatra: str, kind: str, x_api_key: str | None = Header(default=None)):
     _require_key(x_api_key)
-    file_of = {"routes": "routes", "logistics": "logistics_rates", "advisories": "advisories", "events": "events"}
+    file_of = {"routes": "routes", "logistics": "logistics_rates", "advisories": "advisories",
+               "events": "events", "itinerary": "itinerary"}
     name = file_of.get(kind)
     if not name:
         raise HTTPException(status_code=404, detail="unknown kind")
@@ -291,6 +292,40 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
            "data": json.dumps({"p": "/message/content/0/text/value", "o": "append", "v": reply})}
     yield {"event": "end", "data": json.dumps({})}
     yield {"event": "done", "data": "[DONE]"}
+
+
+@app.get("/api/lostfound")
+async def api_lostfound_list(yatra: str | None = None, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    return await persistence.list_lost_found(yatra)
+
+
+@app.post("/api/lostfound")
+async def api_lostfound_create(request: Request, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    b = await request.json()
+    kind = b.get("kind", "person")
+    lid = await persistence.create_lost_found(
+        kind=kind, name=b.get("name", ""), description=b.get("description", ""),
+        last_seen=b.get("last_seen", ""), reporter_name=b.get("reporter_name", ""),
+        reporter_phone=b.get("reporter_phone", ""), yatra=b.get("yatra"), yatra_id=b.get("yatra_id"))
+    # A missing PERSON is an emergency — also raise an SOS so the control room /
+    # war-room SOS feed picks it up immediately (lost & found built on SOS).
+    if kind == "person":
+        await persistence.create_sos(
+            b.get("reporter_phone") or "lost-found", yatra=b.get("yatra"), yatra_id=b.get("yatra_id"),
+            location=b.get("last_seen"), nature=f"Missing person: {b.get('name', '')}".strip())
+    return {"id": lid}
+
+
+@app.post("/api/lostfound/{lid}/status")
+async def api_lostfound_status(lid: str, request: Request, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    b = await request.json()
+    ok = await persistence.set_lost_found_status(lid, b.get("status", "reunited"))
+    if not ok:
+        raise HTTPException(status_code=404, detail="report not found")
+    return {"ok": True}
 
 
 @app.post("/api/voice/token")

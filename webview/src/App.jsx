@@ -4,6 +4,7 @@ import ChatPage from "./chat/ChatPage.jsx";
 import QuickActivitiesPage from "./quick/QuickActivitiesPage.jsx";
 import PassPage from "./yatri/PassPage.jsx";
 import WalletPage from "./yatri/WalletPage.jsx";
+import LostFoundPage from "./yatri/LostFoundPage.jsx";
 import MapPage from "./yatri/MapPage.jsx";
 import LogisticsPage from "./yatri/LogisticsPage.jsx";
 import DrillsPage from "./yatri/DrillsPage.jsx";
@@ -24,6 +25,7 @@ export default function App() {
             feels like one product. */}
         <Route path="/yatri/pass" element={<PassPage />} />
         <Route path="/yatri/passes" element={<WalletPage />} />
+        <Route path="/yatri/lostfound" element={<LostFoundPage />} />
         <Route path="/yatri/map" element={<MapPage />} />
         <Route path="/yatri/logistics" element={<LogisticsPage />} />
         <Route path="/yatri/drills" element={<DrillsPage />} />
