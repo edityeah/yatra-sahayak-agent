@@ -92,6 +92,24 @@ def test_ekyc_verifies_by_id_type_and_never_asks_for_aadhaar_number():
     assert s["reg_fields"]["id_type"] == "Aadhaar"
 
 
+def test_question_midintake_is_answered_not_stored():
+    # Regression: asking "what is dindi" at the group step must be ANSWERED and
+    # the same field re-asked — not stored as the Dindi name and advanced past.
+    persistence.reset()
+    s = new_state("sess", "u-q"); s["language"] = "en"
+    s = _turn(s, "register"); s = _turn(s, "1"); s = _turn(s, "Asha"); s = _turn(s, "40")
+    s = _turn(s, "9812345678"); s = _turn(s, "123456"); s = _turn(s, "Aadhaar")
+    assert s["reg_stage"] == "group"
+    s = _turn(s, "what is dindi")
+    assert s["reg_stage"] == "group"                 # did NOT advance
+    body = s["messages"][-1].content
+    assert "Warkari" in body and "Dindi" in body     # actually explained it
+    assert s["reg_fields"].get("group_name") in (None, "")  # question not stored
+    # A real answer now advances.
+    s = _turn(s, "Alandi Dindi")
+    assert s["reg_stage"] == "emergency" and s["reg_fields"]["group_name"] == "Alandi Dindi"
+
+
 def test_invalid_phone_reprompts_without_advancing():
     persistence.reset()
     s = new_state("sess", "u-bad"); s["language"] = "en"

@@ -127,6 +127,67 @@ _INVALID = {
                   "en": "Please give a name and a valid 10-digit number (e.g. 'Sunil 98XXXXXXXX')."},
 }
 
+# Short, helpful answers when the user asks a question mid-intake instead of
+# answering (e.g. "what is a Dindi?"). We reply with this, then re-ask.
+_HELP = {
+    "yatra": {"mr": "आम्ही दोन यात्रांसाठी पास देतो — पंढरपूर वारी आणि सिंहस्थ कुंभ. तुम्ही ज्या यात्रेला जात आहात त्यासाठी 1 किंवा 2 लिहा.",
+              "hi": "हम दो यात्राओं के लिए पास देते हैं — पंढरपुर वारी और सिंहस्थ कुंभ। आप जिस यात्रा में जा रहे हैं उसके लिए 1 या 2 लिखें।",
+              "en": "We issue passes for two yatras — Pandharpur Wari and Simhastha Kumbh. Reply 1 or 2 for the one you're joining."},
+    "name": {"mr": "ओळखपत्रावर असलेले तुमचे पूर्ण नाव लिहा, म्हणजे पास तुमच्या ओळखीशी जुळेल.",
+             "hi": "पहचान पत्र पर छपा आपका पूरा नाम लिखें, ताकि पास आपकी पहचान से मेल खाए।",
+             "en": "Type your full name as printed on your ID, so the pass matches your identity."},
+    "age": {"mr": "वय वर्षांमध्ये — यामुळे अधिक काळजी लागणाऱ्या यात्रेकरूंना चिन्हांकित करता येते.",
+            "hi": "उम्र वर्षों में — इससे अधिक देखभाल वाले यात्रियों को चिह्नित किया जाता है।",
+            "en": "Your age in years — it helps us flag pilgrims who may need extra care."},
+    "phone": {"mr": "तुमचा मोबाइल क्रमांक — यात्रेदरम्यान तुमच्याशी संपर्क साधण्यासाठी वापरला जाईल.",
+              "hi": "आपका मोबाइल नंबर — यात्रा के दौरान आपसे संपर्क के लिए उपयोग होगा।",
+              "en": "Your mobile number — we use it to reach you during the yatra, especially in an emergency."},
+    "otp": {"mr": "तुमचा मोबाइल तुमचाच आहे हे तपासण्यासाठी पाठवलेला कोड. हे प्रात्यक्षिक आहे — कोणतेही ६ अंक चालतील.",
+            "hi": "यह जाँचने के लिए कोड कि मोबाइल आपका ही है। यह डेमो है — कोई भी 6 अंक चलेंगे।",
+            "en": "A code we 'sent' to confirm the mobile is yours. This is a demo — any 6 digits work."},
+    "ekyc": {"mr": "e-KYC फक्त ओळखीचा प्रकार तपासते — आम्ही आधार क्रमांक घेत नाही. आधार / मतदार ओळखपत्र / पासपोर्ट / वाहन परवाना यापैकी एक लिहा.",
+             "hi": "e-KYC केवल पहचान का प्रकार जाँचता है — हम आधार नंबर नहीं लेते। आधार / वोटर आईडी / पासपोर्ट / ड्राइविंग लाइसेंस में से एक लिखें।",
+             "en": "e-KYC just confirms the type of ID — we never take your Aadhaar number. Reply Aadhaar, Voter ID, Passport, or Driving licence."},
+    "group": {"mr": "दिंडी म्हणजे पालखीसोबत एकत्र चालणारा, अभंग गाणारा वारकऱ्यांचा गट. तुम्ही एखाद्या दिंडीसोबत असाल तर तिचे नाव लिहा; नसल्यास 'काही नाही'.",
+              "hi": "दिंडी यानी पालकी के साथ मिलकर चलने वाला, अभंग गाने वाला वारकरियों का समूह। आप किसी दिंडी के साथ हों तो उसका नाम लिखें; न हों तो 'कुछ नहीं'.",
+              "en": "A Dindi is a group of Warkari pilgrims who walk together with the palkhi, singing abhangs. If you're walking with one, type its name; otherwise type 'none'."},
+    "emergency": {"mr": "यात्रेत काही झाल्यास ज्याला फोन करता येईल अशी व्यक्ती — त्यांचे नाव व मोबाइल क्रमांक द्या.",
+                  "hi": "यात्रा में कुछ होने पर जिसे फोन कर सकें ऐसा व्यक्ति — उनका नाम और मोबाइल नंबर दें।",
+                  "en": "Someone we can call if something happens to you on the yatra — give their name and mobile number."},
+    "medical": {"mr": "आणीबाणीत महत्त्वाची ठरणारी कोणतीही वैद्यकीय बाब (मधुमेह, हृदयविकार, गर्भवती, वृद्ध) — किंवा 'काही नाही'.",
+                "hi": "आपात स्थिति में मायने रखने वाली कोई चिकित्सीय बात (मधुमेह, हृदय रोग, गर्भवती, बुज़ुर्ग) — या 'कुछ नहीं'.",
+                "en": "Any health condition worth knowing in an emergency (diabetes, heart condition, pregnancy, elderly) — or 'none'."},
+    "add_member": {"mr": "तुमच्यासोबत चालणाऱ्या कुटुंबातील प्रत्येकाला स्वतःचा पास मिळावा म्हणून त्यांचे नाव जोडा. सदस्याचे नाव लिहा, किंवा पूर्ण करण्यासाठी 'पूर्ण'.",
+                   "hi": "आपके साथ चलने वाले परिवार के हर सदस्य को अपना पास मिले, इसके लिए उनका नाम जोड़ें। सदस्य का नाम लिखें, या पूरा करने के लिए 'पूर्ण'.",
+                   "en": "Add family members walking with you so each gets their own pass. Reply a member's name, or 'done' to finish."},
+    "member_age": {"mr": "तुम्ही जोडत असलेल्या कुटुंब सदस्याचे वय (वर्षांमध्ये).",
+                   "hi": "आप जिस परिवार सदस्य को जोड़ रहे हैं उसकी उम्र (वर्षों में)।",
+                   "en": "The age (in years) of the family member you're adding."},
+    "confirm": {"mr": "वरील तपशील तपासा. पास तयार करण्यासाठी 'हो' लिहा, किंवा काय बदलायचे ते सांगा.",
+                "hi": "ऊपर के विवरण जाँचें। पास बनाने के लिए 'हाँ' लिखें, या बताएं क्या बदलना है।",
+                "en": "Check the details above. Reply 'yes' to issue the pass(es), or tell me what to change."},
+}
+_GENERIC_HELP = {"mr": "ठीक आहे — नोंदणी पुढे चालू ठेवूया.",
+                 "hi": "ठीक है — पंजीकरण आगे बढ़ाते हैं।",
+                 "en": "No problem — let's continue your registration."}
+
+# Question openers across en / hi / mr (romanised + Devanagari).
+_Q_STARTS = ("what", "why", "how", "who", "when", "where", "which", "can i", "do i", "should i",
+             "is it", "are ", "kya", "kyu", "kyun", "kaise", "kaisa", "kaun", "kab", "kahan", "matlab",
+             "kaay", "kay ", "ka ", "kase", "kon", "kuthe", "kadhi", "mhanje",
+             "काय", "का ", "कशी", "कसे", "कोण", "कुठे", "कधी", "म्हणजे",
+             "क्या", "क्यों", "कैसे", "कौन", "कब", "कहां", "मतलब")
+
+
+def _looks_like_question(text: str) -> bool:
+    t = (text or "").strip().lower()
+    if not t:
+        return False
+    if "?" in t or "？" in t:
+        return True
+    return any(t.startswith(w) for w in _Q_STARTS)
+
+
 _NONE_WORDS = {"none", "no", "nil", "na", "n/a", "solo", "alone",
                "काही नाही", "नाही", "एकटा", "एकटी", "एकटे",
                "कुछ नहीं", "नहीं", "अकेला", "अकेले", "कोई नहीं"}
@@ -260,12 +321,24 @@ async def registration(state: YatraState) -> YatraState:
             body = _PROMPTS[next_stage][lang]
         return f"{ack}\n\n{body}" if ack else body
 
+    def _reask(st: str) -> str:
+        """Re-ask the CURRENT stage's prompt (used after answering a question)."""
+        if st == "member_age":
+            return _MEMBER_AGE_PROMPT[lang].format(name=fields.get("_pending_name", ""))
+        return _prompt_for(st)
+
     # Start (or restart) intake — ask the first question, empty fields.
     if stage not in _IN_PROGRESS_STAGES:
         return _emit(_PROMPTS["yatra"][lang], reg_stage="yatra", reg_fields={"members": []})
 
     answer = _last_user(messages)
     fields.setdefault("members", [])
+
+    # The user asked a question instead of answering (e.g. "what is a Dindi?").
+    # Answer it briefly, then re-ask the same field — never store the question.
+    if _looks_like_question(answer):
+        help_text = _HELP.get(stage, {}).get(lang) or _GENERIC_HELP[lang]
+        return _emit(f"{help_text}\n\n{_reask(stage)}", reg_stage=stage, reg_fields=fields)
 
     # ── yatra selection ──────────────────────────────────────────────
     if stage == "yatra":
