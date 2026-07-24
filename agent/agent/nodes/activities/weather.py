@@ -11,6 +11,21 @@ _HEADER = {
     "en": "🌦️ **Weather forecast**",
 }
 
+# Name the yatra + the place the forecast is for, so the answer is never
+# context-free ("weather for WHICH route?").
+_LOCATION = {
+    "pandharpur": {
+        "mr": "📍 पंढरपूर वारी — पंढरपूरजवळ",
+        "hi": "📍 पंढरपुर वारी — पंढरपुर के पास",
+        "en": "📍 Pandharpur Wari — near Pandharpur",
+    },
+    "kumbh": {
+        "mr": "📍 सिंहस्थ कुंभमेळा — नाशिकजवळ",
+        "hi": "📍 सिंहस्थ कुंभ — नासिक के पास",
+        "en": "📍 Simhastha Kumbh — near Nashik",
+    },
+}
+
 _TEMP_LABEL = {
     "mr": "तापमान",
     "hi": "तापमान",
@@ -39,6 +54,9 @@ async def weather(state: YatraState) -> YatraState:
     forecast = await weather_client.get_forecast(yatra)
 
     lines = [_HEADER[lang], ""]
+    if yatra in _LOCATION:
+        lines.append(_LOCATION[yatra][lang])
+        lines.append("")
     lines.append(t(forecast["summary"], lang))
     lines.append("")
 

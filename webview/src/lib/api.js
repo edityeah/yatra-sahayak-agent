@@ -11,11 +11,14 @@ export async function apiGet(path) {
 
 // Stream a chat turn from the agent's /messages SSE endpoint (POST). Calls
 // onDelta(textChunk) as text arrives. Returns the full reply string.
-export async function streamChat({ user_id, conversation_id, text }, onDelta) {
+export async function streamChat({ user_id, conversation_id, text, language, yatra }, onDelta) {
   // The web app already knows the user's language (switcher / ?lang=) and the
-  // active yatra (header). Pass them so the agent skips the in-chat language +
-  // yatra prompts and goes straight to the intent (e.g. a "Register" tap).
-  const { language, yatra } = getContext();
+  // active yatra (header switcher). Pass them so the agent skips the in-chat
+  // language + yatra prompts and goes straight to the intent. Fall back to the
+  // context defaults only if the caller didn't supply them.
+  const ctx = getContext();
+  language = language || ctx.language;
+  yatra = yatra || ctx.yatra;
   const resp = await fetch(`${BASE}/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-API-Key": KEY },

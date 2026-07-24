@@ -13,6 +13,8 @@ export function useLang() {
 }
 
 const LS_KEY = "ysahayak.lang";
+const LS_YATRA = "ysahayak.yatra";
+const YATRAS = ["pandharpur", "kumbh"];
 
 export function LangProvider({ children }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -41,9 +43,33 @@ export function LangProvider({ children }) {
     [searchParams, setSearchParams]
   );
 
+  // Active yatra — user-controlled + persisted (a header switcher sets it),
+  // so it's an explicit choice, not a silent Pandharpur default.
+  const [yatra, setYatraState] = useState(() => {
+    const fromUrl = searchParams.get("yatra");
+    if (YATRAS.includes(fromUrl)) return fromUrl;
+    try {
+      const saved = localStorage.getItem(LS_YATRA);
+      if (YATRAS.includes(saved)) return saved;
+    } catch (e) { /* ignore */ }
+    return ctx.yatra;
+  });
+
+  const setYatra = useCallback(
+    (y) => {
+      if (!YATRAS.includes(y)) return;
+      setYatraState(y);
+      try { localStorage.setItem(LS_YATRA, y); } catch (e) { /* ignore */ }
+      const next = new URLSearchParams(searchParams);
+      next.set("yatra", y);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
+
   const value = useMemo(
-    () => ({ language, setLanguage, yatra: ctx.yatra, user_id: ctx.user_id }),
-    [language, setLanguage, ctx.yatra, ctx.user_id]
+    () => ({ language, setLanguage, yatra, setYatra, user_id: ctx.user_id }),
+    [language, setLanguage, yatra, setYatra, ctx.user_id]
   );
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;

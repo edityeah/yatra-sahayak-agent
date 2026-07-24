@@ -125,7 +125,7 @@ function detectTypedLang(text, current) {
 }
 
 export default function ChatPage() {
-  const { language, setLanguage } = useLang();
+  const { language, setLanguage, yatra, setYatra } = useLang();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const ctx = useRef(getContext()).current;
@@ -190,7 +190,7 @@ export default function ChatPage() {
 
       try {
         const full = await streamChat(
-          { user_id: ctx.user_id, conversation_id: id, text: clean },
+          { user_id: ctx.user_id, conversation_id: id, text: clean, language, yatra },
           (chunk) => {
             setWaitingFirstDelta(false);
             setStreamText((prev) => (prev || "") + chunk);
@@ -246,12 +246,16 @@ export default function ChatPage() {
     setThreadsOpen(false);
   }
 
-  const subtitle = t(YATRA_NAMES[ctx.yatra], language) || ctx.yatra;
   const isEmpty = messages.length === 0 && streamText === null;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden font-sans bg-surface text-ink">
-      <Header subtitle={subtitle} onMenu={() => setThreadsOpen(true)} onCall={() => navigate("/voice")} />
+      <Header
+        yatra={yatra}
+        onYatraChange={setYatra}
+        onMenu={() => setThreadsOpen(true)}
+        onCall={() => navigate("/voice")}
+      />
 
       <div className="flex-1 min-h-0 overflow-y-auto" ref={scrollRef}>
         <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 pt-4 pb-4">
