@@ -529,7 +529,7 @@ async def registration(state: YatraState) -> YatraState:
                     age=m.get("age", ""), id_type=fields.get("id_type", ""),
                     medical_flags=m.get("medical_flags", "none"), is_primary=False, **common)
                 issued.append((m["name"], mid))
-            wallet_url = f"{get_settings().PUBLIC_WEBVIEW_BASE}/yatri/passes?user_id={user_id}"
+            wallet_url = f"{get_settings().PUBLIC_WEBVIEW_BASE}/yatri/passes?user_id={user_id}&lang={lang}"
             return _emit(_issued_message(issued, wallet_url, lang), reg_stage="done", reg_fields=fields)
         cancel = {"mr": "नोंदणी रद्द केली. पुन्हा सुरू करण्यासाठी 'नोंदणी' लिहा.",
                   "hi": "पंजीकरण रद्द किया गया। फिर से शुरू करने के लिए 'पंजीकरण' लिखें।",

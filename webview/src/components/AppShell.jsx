@@ -12,14 +12,28 @@ export function useLang() {
   return useContext(LangContext);
 }
 
+const LS_KEY = "ysahayak.lang";
+
 export function LangProvider({ children }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const ctx = useMemo(() => getContext(), []);
-  const [language, setLanguageState] = useState(searchParams.get("lang") || ctx.language);
+  // Priority: explicit ?lang= → last chosen (localStorage) → context default.
+  // localStorage keeps the language consistent across page loads (e.g. opening
+  // the wallet link) instead of snapping back to the Marathi default.
+  const [language, setLanguageState] = useState(() => {
+    const fromUrl = searchParams.get("lang");
+    if (fromUrl && ["mr", "hi", "en"].includes(fromUrl)) return fromUrl;
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved && ["mr", "hi", "en"].includes(saved)) return saved;
+    } catch (e) { /* ignore */ }
+    return ctx.language;
+  });
 
   const setLanguage = useCallback(
     (lang) => {
       setLanguageState(lang);
+      try { localStorage.setItem(LS_KEY, lang); } catch (e) { /* ignore */ }
       const next = new URLSearchParams(searchParams);
       next.set("lang", lang);
       setSearchParams(next, { replace: true });

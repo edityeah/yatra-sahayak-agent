@@ -29,7 +29,7 @@ export default function WalletPage() {
         const entries = await Promise.all(
           (rows || []).map(async (r) => [
             r.yatra_id,
-            await QRCode.toDataURL(passUrl(r.yatra_id), { width: 240, margin: 1 }),
+            await QRCode.toDataURL(passUrl(r.yatra_id, language), { width: 240, margin: 1 }),
           ])
         );
         if (!cancelled) setQrs(Object.fromEntries(entries));
@@ -38,7 +38,7 @@ export default function WalletPage() {
     return () => {
       cancelled = true;
     };
-  }, [ctx.user_id]);
+  }, [ctx.user_id, language]);
 
   return (
     <PageShell title={tr(strings, "wallet", language)}>
@@ -58,8 +58,10 @@ export default function WalletPage() {
         {(passes || []).map((p) => (
           <div key={p.yatra_id} className="rounded-2xl border border-bdr bg-surface shadow-card overflow-hidden">
             <div className="bg-primary text-white px-4 py-2 flex items-center justify-between gap-2">
-              <div className="text-[12px] font-bold tracking-wide uppercase truncate">
-                {YATRA_NAMES[p.yatra] ? t(YATRA_NAMES[p.yatra], language) : p.yatra}
+              <div className="text-[12px] font-bold tracking-wide truncate">
+                {YATRA_NAMES[p.yatra]
+                  ? `${t(YATRA_NAMES[p.yatra], "en")} / ${t(YATRA_NAMES[p.yatra], "mr")}`
+                  : p.yatra}
               </div>
               {p.is_primary ? (
                 <span className="text-[10.5px] font-bold bg-white/20 rounded-full px-2 py-0.5">
@@ -77,7 +79,7 @@ export default function WalletPage() {
                 <div className="text-[11.5px] font-mono text-muted break-all mt-0.5">{p.yatra_id}</div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <Link
-                    to={`/yatri/pass?id=${p.yatra_id}`}
+                    to={`/yatri/pass?id=${p.yatra_id}&lang=${language}`}
                     className="h-8 px-2.5 rounded-lg border border-bdr bg-surface-2 text-ink text-[11.5px] font-bold flex items-center gap-1 hover:border-primary transition"
                   >
                     <ExternalLink size={13} /> {tr(strings, "openPass", language)}
@@ -90,7 +92,7 @@ export default function WalletPage() {
                     <Download size={13} /> {tr(strings, "downloadQr", language)}
                   </button>
                   <a
-                    href={whatsappUrl(p.yatra_id, `${tr(strings, "shareText", language)} — ${p.name}`)}
+                    href={whatsappUrl(p.yatra_id, `${tr(strings, "shareText", language)} — ${p.name}`, language)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="h-8 px-2.5 rounded-lg bg-[#25D366] text-white text-[11.5px] font-bold flex items-center gap-1 hover:opacity-90 transition"

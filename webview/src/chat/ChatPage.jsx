@@ -113,8 +113,19 @@ async function warmUpAgent() {
   }
 }
 
+// Detect the language the user is TYPING in, so the whole UI follows it.
+// Latin script → English; Devanagari → keep the current mr/hi (can't be told
+// apart from script), else Marathi; ambiguous (digits/punctuation) → no change.
+function detectTypedLang(text, current) {
+  const hasLatin = /[A-Za-z]/.test(text);
+  const hasDev = /[ऀ-ॿ]/.test(text);
+  if (hasLatin && !hasDev) return "en";
+  if (hasDev && !hasLatin) return current === "hi" ? "hi" : "mr";
+  return null; // no clear signal
+}
+
 export default function ChatPage() {
-  const { language } = useLang();
+  const { language, setLanguage } = useLang();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const ctx = useRef(getContext()).current;
@@ -159,6 +170,10 @@ export default function ChatPage() {
       if (!clean || busy) return;
       setError(null);
 
+      // Sync the whole UI to the language the user is typing in.
+      const typed = detectTypedLang(clean, language);
+      if (typed && typed !== language) setLanguage(typed);
+
       let id = activeId;
       if (!id) {
         const th = createThread({});
@@ -191,7 +206,7 @@ export default function ChatPage() {
         setStreamText(null);
       }
     },
-    [activeId, busy, ctx.user_id]
+    [activeId, busy, ctx.user_id, language, setLanguage]
   );
 
   // Consume a ?q=<text> deep link (handoff from the full-page Quick
