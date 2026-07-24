@@ -16,6 +16,16 @@ services:
         sync: false                 # set on the dashboard (Realtime access needed for voice)
       - key: INTERNAL_API_KEY
         generateValue: true
+      # Officer/admin key — guards the pilgrim-PII export (/api/registrations).
+      # Distinct from INTERNAL_API_KEY (which the webview ships to the browser).
+      - key: ADMIN_API_KEY
+        generateValue: true
+      # Postgres — provisioned by the `databases` block below, wired in here so
+      # registrations/SOS persist across restarts (DB_ENABLED flips on).
+      - key: DATABASE_URL
+        fromDatabase:
+          name: yatra-sahayak-db
+          property: connectionString
       - key: LLM_MAIN_MODEL
         value: gpt-4o-mini
       - key: PUBLIC_WEBVIEW_BASE
@@ -66,3 +76,12 @@ services:
           type: web
           name: yatra-sahayak-agent
           envVarKey: INTERNAL_API_KEY
+
+databases:
+  # Provisioned when the blueprint is synced — no manual DB creation needed.
+  # Free plan (expires ~30 days; fine for the POC). The web service migrates
+  # the schema (registrations/sos_events/user_state) automatically on boot.
+  - name: yatra-sahayak-db
+    plan: free
+    databaseName: yatra
+    user: yatra

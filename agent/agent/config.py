@@ -13,7 +13,17 @@ class Settings:
     LLM_MAIN_MODEL: str = os.environ.get("LLM_MAIN_MODEL", "gpt-4o-mini")
 
     # Webhook auth — every caller (SwiftChat, curl) must send X-API-Key.
+    # NOTE: this key is shipped to the browser by the webview (VITE_AGENT_KEY),
+    # so it must NOT guard officer/admin data (pilgrim PII). Use ADMIN_API_KEY.
     INTERNAL_API_KEY: str = os.environ.get("INTERNAL_API_KEY", "local-dev-key")
+
+    # Officer/admin auth — guards endpoints that expose pilgrim PII (the
+    # registrations export). MUST be a separate secret from INTERNAL_API_KEY
+    # (that one is public via the webview). Defaults to the internal key ONLY
+    # for local dev/tests; set a distinct value in production.
+    ADMIN_API_KEY: str = os.environ.get(
+        "ADMIN_API_KEY", os.environ.get("INTERNAL_API_KEY", "local-dev-key")
+    )
 
     # Public base URL of the deployed webview. Every markdown link the agent
     # returns must be absolute — SwiftChat calls new URL(link) on it.

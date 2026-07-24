@@ -124,6 +124,17 @@ async def get_registration_for_user(user_id: str) -> dict | None:
     return hits[-1] if hits else None
 
 
+async def list_registrations() -> list[dict]:
+    """All registrations, newest first — for the officer/admin export."""
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM registrations ORDER BY created_at DESC")
+                return [dict(r) for r in await cur.fetchall()]
+    return list(_REGISTRATIONS.values())
+
+
 async def get_registration_by_id(yatra_id: str) -> dict | None:
     pool = await _pool()
     if pool:

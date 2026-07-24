@@ -8,6 +8,8 @@ SSE contract (added in Task 8) mirrors swift-learning-agent/agent/webhook.py:
   event: done    data: [DONE]
 """
 from __future__ import annotations
+import csv
+import io
 import json
 import re
 import uuid
@@ -16,6 +18,7 @@ from typing import Any, AsyncIterator
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from sse_starlette.sse import EventSourceResponse
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -52,6 +55,57 @@ async def health() -> dict:
 def _require_key(x_api_key: str | None) -> None:
     if x_api_key != settings.INTERNAL_API_KEY:
         raise HTTPException(status_code=401, detail="bad api key")
+
+
+def _require_admin(x_api_key: str | None) -> None:
+    """Guards pilgrim-PII endpoints. Uses ADMIN_API_KEY, which is distinct from
+    the browser-shipped INTERNAL_API_KEY."""
+    if x_api_key != settings.ADMIN_API_KEY:
+        raise HTTPException(status_code=401, detail="admin key required")
+
+
+# Columns exported by the registrations CSV, in order.
+_REG_EXPORT_COLS = [
+    "yatra_id", "yatra", "name", "age", "phone", "id_type", "group_name",
+    "group_size", "emergency_contact", "medical_flags", "mobile_verified",
+    "ekyc_verified", "created_at",
+]
+
+
+@app.get("/api/registrations")
+async def api_registrations(format: str = "json", x_api_key: str | None = Header(default=None)):
+    """Officer/admin export of all pilgrim registrations. ADMIN_API_KEY-gated.
+    `?format=csv` returns a CSV download; default is JSON with a headcount."""
+    _require_admin(x_api_key)
+    regs = await persistence.list_registrations()
+
+    if format == "csv":
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=_REG_EXPORT_COLS, extrasaction="ignore")
+        writer.writeheader()
+        for r in regs:
+            writer.writerow({k: r.get(k, "") for k in _REG_EXPORT_COLS})
+        return PlainTextResponse(
+            buf.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=registrations.csv"},
+        )
+
+    by_yatra: dict[str, int] = {}
+    pilgrims = 0
+    for r in regs:
+        y = r.get("yatra", "unknown")
+        by_yatra[y] = by_yatra.get(y, 0) + 1
+        try:
+            pilgrims += int(r.get("group_size") or 1)
+        except (TypeError, ValueError):
+            pilgrims += 1
+    return {
+        "count": len(regs),
+        "pilgrims_incl_groups": pilgrims,
+        "by_yatra": by_yatra,
+        "registrations": regs,
+    }
 
 
 @app.get("/api/drills")

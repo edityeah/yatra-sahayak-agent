@@ -26,6 +26,46 @@ def test_messages_language_ask_streams(client):
     assert "event: done" in body
 
 
+def test_registrations_export_requires_admin_and_returns_rows(client):
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
+    from agent import persistence
+
+    persistence.reset()
+
+    # No key → 401.
+    assert client.get("/api/registrations").status_code == 401
+    # Wrong key → 401.
+    assert client.get("/api/registrations", headers={"X-API-Key": "nope"}).status_code == 401
+
+    # Seed two registrations directly in the store.
+    import asyncio
+    asyncio.run(persistence.create_registration(
+        "u1", yatra="pandharpur", name="Asha Patil", phone="9812345678",
+        age="45", id_type="Aadhaar", group_name="Alandi Dindi", group_size=4,
+        emergency_contact="Sunil 9800000000", medical_flags="diabetes",
+        mobile_verified=True, ekyc_verified=True))
+    asyncio.run(persistence.create_registration(
+        "u2", yatra="kumbh", name="Ravi Kumar", phone="9811111111",
+        age="30", id_type="Voter ID", group_name="Solo", group_size=1,
+        emergency_contact="Meena 9822222222", medical_flags="none"))
+
+    # Admin key (defaults to the internal key in tests) → JSON with headcount.
+    r = client.get("/api/registrations", headers={"X-API-Key": "local-dev-key"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["count"] == 2
+    assert data["pilgrims_incl_groups"] == 5          # 4 + 1
+    assert data["by_yatra"] == {"pandharpur": 1, "kumbh": 1}
+    assert any(row["name"] == "Asha Patil" for row in data["registrations"])
+
+    # CSV export.
+    rc = client.get("/api/registrations?format=csv", headers={"X-API-Key": "local-dev-key"})
+    assert rc.status_code == 200 and "text/csv" in rc.headers["content-type"]
+    assert "yatra_id,yatra,name" in rc.text and "Asha Patil" in rc.text
+    persistence.reset()
+
+
 def test_reply_language_returns_none_for_ambiguous_input():
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
