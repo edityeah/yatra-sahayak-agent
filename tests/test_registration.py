@@ -1,12 +1,26 @@
-import sys, os, asyncio
+import sys, os, asyncio, importlib
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
+import pytest
 from langchain_core.messages import HumanMessage
 from agent.state import new_state
 from agent import persistence
+# NB: the activities package re-exports `registration` (the function), so the
+# attribute path is shadowed — load the actual module via importlib.
+regmod = importlib.import_module("agent.nodes.activities.registration")
 from agent.nodes.activities.registration import registration
 from agent.nodes.intent_router import intent_router
 from agent.nodes.content_policy import content_policy
 from agent.nodes.yatra_context import yatra_context
+
+
+@pytest.fixture(autouse=True)
+def _no_llm(monkeypatch):
+    # Keep the intake tests hermetic: the LLM intent-gate fails open (None) so
+    # only the deterministic obvious-answer + heuristic layers run. Individual
+    # tests can override this to simulate an LLM verdict.
+    async def _none(*a, **k):
+        return None
+    monkeypatch.setattr(regmod, "_llm_is_question", _none)
 
 
 def _turn(state, text):
@@ -108,6 +122,28 @@ def test_question_midintake_is_answered_not_stored():
     # A real answer now advances.
     s = _turn(s, "Alandi Dindi")
     assert s["reg_stage"] == "emergency" and s["reg_fields"]["group_name"] == "Alandi Dindi"
+
+
+def test_llm_gate_catches_question_without_question_mark(monkeypatch):
+    # Bulletproofing: a question with NO "?" and no keyword ("i dont get this")
+    # is caught by the LLM intent-gate, answered, and the field re-asked.
+    async def fake(stage, text, lang):
+        if "get this" in text.lower():
+            return regmod._IntakeVerdict(is_answer=False, reply="A Dindi is a Warkari walking group.")
+        return regmod._IntakeVerdict(is_answer=True, reply="")
+    monkeypatch.setattr(regmod, "_llm_is_question", fake)
+
+    persistence.reset()
+    s = new_state("sess", "u-llm"); s["language"] = "en"
+    s = _turn(s, "register"); s = _turn(s, "1"); s = _turn(s, "Asha"); s = _turn(s, "40")
+    s = _turn(s, "9812345678"); s = _turn(s, "123456"); s = _turn(s, "Aadhaar")
+    assert s["reg_stage"] == "group"
+    s = _turn(s, "i dont get this")                  # no '?', no keyword
+    assert s["reg_stage"] == "group"                 # stayed on the field
+    assert "Dindi" in s["messages"][-1].content      # answered via LLM reply
+    assert s["reg_fields"].get("group_name") in (None, "")
+    s = _turn(s, "Alandi Dindi")
+    assert s["reg_stage"] == "emergency"             # real answer advances
 
 
 def test_invalid_phone_reprompts_without_advancing():

@@ -14,9 +14,12 @@ stores a real Aadhaar number. Each person gets their own Yatra ID + QR pass
 """
 from __future__ import annotations
 import re
-from langchain_core.messages import AIMessage, HumanMessage
+from pydantic import BaseModel, Field
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from agent.state import YatraState
 from agent.config import get_settings
+from agent.llm import get_main_llm
+from agent.i18n import LANG_NAME
 from agent import persistence
 
 # Ordered intake stages for the PRIMARY registrant. "otp"/"ekyc" are verify
@@ -188,6 +191,71 @@ def _looks_like_question(text: str) -> bool:
     return any(t.startswith(w) for w in _Q_STARTS)
 
 
+# Short English description of what each stage is asking for — fed to the
+# LLM intent-gate so it can judge "answer vs question/aside".
+_FIELD_DESC = {
+    "yatra": "which yatra to register for (Pandharpur Wari or Simhastha Kumbh)",
+    "name": "the pilgrim's full name",
+    "age": "the pilgrim's age in years",
+    "phone": "the pilgrim's 10-digit mobile number",
+    "otp": "the OTP code sent to their mobile",
+    "ekyc": "which ID type they will use for e-KYC (Aadhaar / Voter ID / Passport / Driving licence)",
+    "group": "the name of the Dindi / group they are walking with (or 'none')",
+    "emergency": "an emergency contact — a name and mobile number",
+    "medical": "any medical conditions to note (or 'none')",
+    "add_member": "the name of a family member to add, or 'done' to finish",
+    "member_age": "the family member's age in years",
+    "confirm": "confirmation ('yes') to issue the pass(es)",
+}
+
+
+class _IntakeVerdict(BaseModel):
+    is_answer: bool = Field(description="True if the user is PROVIDING the requested info; false if asking a question or saying something else.")
+    reply: str = Field(default="", description="If is_answer is false, a short helpful reply in the user's language. Empty if is_answer is true.")
+
+
+async def _llm_is_question(stage: str, text: str, lang: str) -> _IntakeVerdict | None:
+    """Ask the model whether `text` answers the current field or is a question/
+    aside. Returns None on any failure so the caller can fail open (proceed)."""
+    field = _FIELD_DESC.get(stage, "the requested detail")
+    sys = (
+        f"You are helping a pilgrim register for a yatra. The form just asked for {field}.\n"
+        f"The pilgrim replied: \"{text}\"\n\n"
+        "Decide: are they PROVIDING that information, or asking a question / saying "
+        "something else (confused, chit-chat, a request)?\n"
+        "- If they are giving the information (even loosely, e.g. 'my group is Alandi' "
+        "or 'no group'), set is_answer=true and reply=\"\".\n"
+        f"- If they are NOT (a question, 'what does that mean', 'I don't understand', an "
+        f"unrelated remark), set is_answer=false and write a brief, warm reply in "
+        f"{LANG_NAME.get(lang, 'English')} that answers/helps — do NOT re-ask the field "
+        "(the form will re-ask automatically)."
+    )
+    try:
+        return await get_main_llm().with_structured_output(_IntakeVerdict).ainvoke([SystemMessage(content=sys)])
+    except Exception as e:
+        print(f"[registration] intake classify failed, failing open: {e}", flush=True)
+        return None
+
+
+def _obvious_answer(stage: str, text: str) -> bool:
+    """Inputs that are unambiguously a valid field answer — skip the LLM gate."""
+    if stage == "yatra":
+        return _parse_yatra(text, None) is not None or _is_yes(text)
+    if stage in ("age", "member_age"):
+        return _valid_age(text) is not None
+    if stage in ("phone", "emergency"):
+        return _valid_mobile(text) is not None
+    if stage == "otp":
+        return 4 <= len(_digits(text)) <= 6
+    if stage in ("group", "medical"):
+        return _is_none(text)
+    if stage == "add_member":
+        return _is_done(text) or _is_none(text)
+    if stage == "confirm":
+        return _is_yes(text) or _is_done(text)
+    return False  # name / free-text values → let the gate check
+
+
 _NONE_WORDS = {"none", "no", "nil", "na", "n/a", "solo", "alone",
                "काही नाही", "नाही", "एकटा", "एकटी", "एकटे",
                "कुछ नहीं", "नहीं", "अकेला", "अकेले", "कोई नहीं"}
@@ -334,11 +402,20 @@ async def registration(state: YatraState) -> YatraState:
     answer = _last_user(messages)
     fields.setdefault("members", [])
 
-    # The user asked a question instead of answering (e.g. "what is a Dindi?").
-    # Answer it briefly, then re-ask the same field — never store the question.
-    if _looks_like_question(answer):
-        help_text = _HELP.get(stage, {}).get(lang) or _GENERIC_HELP[lang]
-        return _emit(f"{help_text}\n\n{_reask(stage)}", reg_stage=stage, reg_fields=fields)
+    # The user may ask a question / say something instead of answering (e.g.
+    # "what is a Dindi?", "i don't get it"). Catch it and answer, then re-ask —
+    # never store it as the field value. Three layers, cheapest first:
+    #   1. obvious valid answer  → proceed (no LLM)
+    #   2. obvious question form → canned help  (no LLM)
+    #   3. ambiguous             → LLM intent-gate (fails open to "answer")
+    if not _obvious_answer(stage, answer):
+        if _looks_like_question(answer):
+            help_text = _HELP.get(stage, {}).get(lang) or _GENERIC_HELP[lang]
+            return _emit(f"{help_text}\n\n{_reask(stage)}", reg_stage=stage, reg_fields=fields)
+        verdict = await _llm_is_question(stage, answer, lang)
+        if verdict is not None and not verdict.is_answer:
+            reply = verdict.reply.strip() or _HELP.get(stage, {}).get(lang) or _GENERIC_HELP[lang]
+            return _emit(f"{reply}\n\n{_reask(stage)}", reg_stage=stage, reg_fields=fields)
 
     # ── yatra selection ──────────────────────────────────────────────
     if stage == "yatra":
