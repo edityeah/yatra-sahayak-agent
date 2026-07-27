@@ -1,0 +1,345 @@
+{
+  "pandharpur": {
+    "locations": [
+      {
+        "name": {
+          "mr": "आळंदी",
+          "hi": "आळंदी",
+          "en": "Alandi"
+        },
+        "lat": 18.677,
+        "lng": 73.897
+      },
+      {
+        "name": {
+          "mr": "पुणे",
+          "hi": "पुणे",
+          "en": "Pune"
+        },
+        "lat": 18.516,
+        "lng": 73.856
+      },
+      {
+        "name": {
+          "mr": "सासवड",
+          "hi": "सासवड",
+          "en": "Saswad"
+        },
+        "lat": 18.345,
+        "lng": 74.031
+      },
+      {
+        "name": {
+          "mr": "जेजुरी",
+          "hi": "जेजुरी",
+          "en": "Jejuri"
+        },
+        "lat": 18.277,
+        "lng": 74.161
+      },
+      {
+        "name": {
+          "mr": "लोणंद",
+          "hi": "लोनंद",
+          "en": "Lonand"
+        },
+        "lat": 18.036,
+        "lng": 74.196
+      },
+      {
+        "name": {
+          "mr": "फलटण",
+          "hi": "फलटण",
+          "en": "Phaltan"
+        },
+        "lat": 17.988,
+        "lng": 74.431
+      },
+      {
+        "name": {
+          "mr": "नातेपुते",
+          "hi": "नातेपुते",
+          "en": "Natepute"
+        },
+        "lat": 17.9,
+        "lng": 75.05
+      },
+      {
+        "name": {
+          "mr": "माळशिरस",
+          "hi": "माळशिरस",
+          "en": "Malshiras"
+        },
+        "lat": 17.85,
+        "lng": 75.16
+      },
+      {
+        "name": {
+          "mr": "वेळापूर",
+          "hi": "वेळापूर",
+          "en": "Velapur"
+        },
+        "lat": 17.78,
+        "lng": 75.2
+      },
+      {
+        "name": {
+          "mr": "वाखरी",
+          "hi": "वाखरी",
+          "en": "Wakhari"
+        },
+        "lat": 17.703,
+        "lng": 75.308
+      },
+      {
+        "name": {
+          "mr": "पंढरपूर",
+          "hi": "पंढरपुर",
+          "en": "Pandharpur"
+        },
+        "lat": 17.679,
+        "lng": 75.333
+      }
+    ],
+    "modes": [
+      {
+        "id": "walk",
+        "name": {
+          "mr": "पायी (पालखीसोबत)",
+          "hi": "पैदल (पालकी के साथ)",
+          "en": "Walk (with palkhi)"
+        },
+        "rate_per_km": 0,
+        "min_fare": 0,
+        "speed_kmh": 4,
+        "per_person": false,
+        "note": {
+          "mr": "मोफत — बहुतांश वारकरी पायीच चालतात.",
+          "hi": "निःशुल्क — अधिकांश वारकरी पैदल चलते हैं।",
+          "en": "Free — most warkaris walk."
+        }
+      },
+      {
+        "id": "bullock",
+        "name": {
+          "mr": "बैलगाडी",
+          "hi": "बैलगाड़ी",
+          "en": "Bullock cart"
+        },
+        "rate_per_km": 15,
+        "min_fare": 100,
+        "speed_kmh": 4,
+        "per_person": false,
+        "note": {
+          "mr": "शासकीय दरपत्रकानुसार; संपूर्ण गाडी.",
+          "hi": "सरकारी दर अनुसार; पूरी गाड़ी।",
+          "en": "Govt-notified rate; whole cart."
+        }
+      },
+      {
+        "id": "shared_jeep",
+        "name": {
+          "mr": "शेअर जीप/टेम्पो",
+          "hi": "शेयर जीप/टेम्पो",
+          "en": "Shared jeep/tempo"
+        },
+        "rate_per_km": 3,
+        "min_fare": 20,
+        "speed_kmh": 30,
+        "per_person": true,
+        "note": {
+          "mr": "प्रति व्यक्ती; पावती मागा.",
+          "hi": "प्रति व्यक्ति; रसीद माँगें।",
+          "en": "Per person; ask for a receipt."
+        }
+      },
+      {
+        "id": "st_bus",
+        "name": {
+          "mr": "एसटी बस",
+          "hi": "एसटी बस",
+          "en": "ST bus"
+        },
+        "rate_per_km": 1.5,
+        "min_fare": 10,
+        "speed_kmh": 35,
+        "per_person": true,
+        "note": {
+          "mr": "प्रति व्यक्ती; सर्वात स्वस्त.",
+          "hi": "प्रति व्यक्ति; सबसे सस्ता।",
+          "en": "Per person; cheapest."
+        }
+      },
+      {
+        "id": "auto",
+        "name": {
+          "mr": "ऑटो रिक्षा",
+          "hi": "ऑटो रिक्शा",
+          "en": "Auto rickshaw"
+        },
+        "rate_per_km": 18,
+        "min_fare": 30,
+        "speed_kmh": 25,
+        "per_person": false,
+        "note": {
+          "mr": "छोट्या अंतरासाठी; मीटर/दर ठरवा.",
+          "hi": "छोटी दूरी हेतु; मीटर/दर तय करें।",
+          "en": "Short hops; agree the fare."
+        }
+      },
+      {
+        "id": "taxi",
+        "name": {
+          "mr": "खाजगी टॅक्सी",
+          "hi": "निजी टैक्सी",
+          "en": "Private taxi"
+        },
+        "rate_per_km": 25,
+        "min_fare": 150,
+        "speed_kmh": 45,
+        "per_person": false,
+        "note": {
+          "mr": "आराम­दायी; संपूर्ण वाहन.",
+          "hi": "आरामदायक; पूरा वाहन।",
+          "en": "Comfortable; whole vehicle."
+        }
+      }
+    ]
+  },
+  "kumbh": {
+    "locations": [
+      {
+        "name": {
+          "mr": "नाशिक (सीबीएस)",
+          "hi": "नासिक (सीबीएस)",
+          "en": "Nashik (CBS)"
+        },
+        "lat": 19.997,
+        "lng": 73.79
+      },
+      {
+        "name": {
+          "mr": "रामकुंड / पंचवटी",
+          "hi": "रामकुंड / पंचवटी",
+          "en": "Ramkund / Panchavati"
+        },
+        "lat": 20.007,
+        "lng": 73.792
+      },
+      {
+        "name": {
+          "mr": "नाशिक रोड स्थानक",
+          "hi": "नासिक रोड स्टेशन",
+          "en": "Nashik Road station"
+        },
+        "lat": 19.947,
+        "lng": 73.836
+      },
+      {
+        "name": {
+          "mr": "साधुग्राम",
+          "hi": "साधुग्राम",
+          "en": "Sadhugram"
+        },
+        "lat": 19.991,
+        "lng": 73.774
+      },
+      {
+        "name": {
+          "mr": "त्र्यंबकेश्वर",
+          "hi": "त्र्यंबकेश्वर",
+          "en": "Trimbakeshwar"
+        },
+        "lat": 19.932,
+        "lng": 73.529
+      }
+    ],
+    "modes": [
+      {
+        "id": "walk",
+        "name": {
+          "mr": "पायी",
+          "hi": "पैदल",
+          "en": "Walk"
+        },
+        "rate_per_km": 0,
+        "min_fare": 0,
+        "speed_kmh": 4,
+        "per_person": false,
+        "note": {
+          "mr": "घाट परिसरात जवळचे अंतर.",
+          "hi": "घाट क्षेत्र में नज़दीक।",
+          "en": "Short distances in the ghat area."
+        }
+      },
+      {
+        "id": "city_bus",
+        "name": {
+          "mr": "शहर बस",
+          "hi": "सिटी बस",
+          "en": "City bus"
+        },
+        "rate_per_km": 1.5,
+        "min_fare": 10,
+        "speed_kmh": 30,
+        "per_person": true,
+        "note": {
+          "mr": "प्रति व्यक्ती; मेळा विशेष सेवा.",
+          "hi": "प्रति व्यक्ति; मेला विशेष सेवा।",
+          "en": "Per person; mela shuttle."
+        }
+      },
+      {
+        "id": "shared_jeep",
+        "name": {
+          "mr": "शेअर जीप",
+          "hi": "शेयर जीप",
+          "en": "Shared jeep"
+        },
+        "rate_per_km": 3,
+        "min_fare": 20,
+        "speed_kmh": 30,
+        "per_person": true,
+        "note": {
+          "mr": "प्रति व्यक्ती.",
+          "hi": "प्रति व्यक्ति।",
+          "en": "Per person."
+        }
+      },
+      {
+        "id": "auto",
+        "name": {
+          "mr": "ऑटो रिक्षा",
+          "hi": "ऑटो रिक्शा",
+          "en": "Auto rickshaw"
+        },
+        "rate_per_km": 18,
+        "min_fare": 30,
+        "speed_kmh": 25,
+        "per_person": false,
+        "note": {
+          "mr": "शहरात; दर ठरवा.",
+          "hi": "शहर में; दर तय करें।",
+          "en": "In the city; agree the fare."
+        }
+      },
+      {
+        "id": "taxi",
+        "name": {
+          "mr": "खाजगी टॅक्सी",
+          "hi": "निजी टैक्सी",
+          "en": "Private taxi"
+        },
+        "rate_per_km": 25,
+        "min_fare": 150,
+        "speed_kmh": 45,
+        "per_person": false,
+        "note": {
+          "mr": "त्र्यंबकेश्वरसाठी सोयीचे.",
+          "hi": "त्र्यंबकेश्वर हेतु सुविधाजनक।",
+          "en": "Handy for Trimbakeshwar."
+        }
+      }
+    ]
+  }
+}

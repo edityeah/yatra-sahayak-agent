@@ -209,7 +209,7 @@ async def api_yatra(yatra: str, x_api_key: str | None = Header(default=None)):
 async def api_yatra_kind(yatra: str, kind: str, x_api_key: str | None = Header(default=None)):
     _require_key(x_api_key)
     file_of = {"routes": "routes", "logistics": "logistics_rates", "advisories": "advisories",
-               "events": "events", "itinerary": "itinerary"}
+               "events": "events", "itinerary": "itinerary", "transport": "transport"}
     name = file_of.get(kind)
     if not name:
         raise HTTPException(status_code=404, detail="unknown kind")

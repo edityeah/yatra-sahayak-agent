@@ -20,9 +20,9 @@ export const QUICK_ACTIVITIES = [
   {
     id: "rates",
     icon: "🐎",
-    label: { mr: "वाहतूक व दर", hi: "परिवहन व दर", en: "Transport & Rates" },
-    tagline: { mr: "शासकीय दरपत्रक", hi: "सरकारी दर सूची", en: "Govt-notified rates" },
-    action: { type: "send", text: "what are the transport and pony rates?" },
+    label: { mr: "वाहतूक नियोजन", hi: "परिवहन प्लानर", en: "Transport planner" },
+    tagline: { mr: "कुठून कुठे — खर्च काढा", hi: "कहाँ से कहाँ — खर्च जानें", en: "From → to → cost" },
+    action: { type: "route", href: "/yatri/transport" },
   },
   {
     id: "helplines",
