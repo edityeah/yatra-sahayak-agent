@@ -100,12 +100,12 @@ def test_language_sticky_across_ambiguous_turn(client):
     """Regression: typing English (while the webview still sends its Marathi
     default hint) must keep replies in English even when the next answer is a
     bare '1' with no script signal — no mid-flow flip to Marathi."""
-    import sys, os
+    import sys, os, asyncio
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
-    from agent import session_store, persistence
+    from agent import persistence
 
     conv = "sticky-lang-1"
-    session_store.clear(conv); persistence.reset()
+    asyncio.run(persistence.clear_session(conv)); persistence.reset()
 
     def post(text):
         return client.post(
@@ -123,20 +123,19 @@ def test_language_sticky_across_ambiguous_turn(client):
         r2 = post("1")
         assert "कोणत्या" not in r2 and "पूर्ण नाव" not in r2
     finally:
-        session_store.clear(conv); persistence.reset()
+        asyncio.run(persistence.clear_session(conv)); persistence.reset()
 
 
 def test_multi_turn_persists_language_and_reaches_activity(client):
     """Regression: a real multi-turn conversation must remember the chosen
     language + yatra across turns and reach an activity node — not get stuck
     re-asking. Stays offline (t1/t2 deterministic; t3 fail-open; t4 = SOS)."""
-    import sys, os
+    import sys, os, asyncio
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
-    from agent import session_store
     from agent import persistence
 
     conv = "mt-persist-1"
-    session_store.clear(conv)
+    asyncio.run(persistence.clear_session(conv))
     persistence.reset()
 
     def post(text):
@@ -161,5 +160,5 @@ def test_multi_turn_persists_language_and_reaches_activity(client):
         r4 = post("emergency stampede help")
         assert "112" in r4
     finally:
-        session_store.clear(conv)
+        asyncio.run(persistence.clear_session(conv))
         persistence.reset()

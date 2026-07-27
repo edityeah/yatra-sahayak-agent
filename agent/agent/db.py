@@ -26,6 +26,14 @@ CREATE TABLE IF NOT EXISTS user_state (
   state       JSONB NOT NULL DEFAULT '{}'::jsonb,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- Conversation-scoped state (transcript + in-progress registration intake +
+-- sticky reply language). Durable so it survives restarts and is shared
+-- across instances — the in-memory session_store was single-process only.
+CREATE TABLE IF NOT EXISTS sessions (
+  conversation_id TEXT PRIMARY KEY,
+  data            JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 CREATE TABLE IF NOT EXISTS registrations (
   yatra_id       TEXT PRIMARY KEY,
   user_id        TEXT NOT NULL,

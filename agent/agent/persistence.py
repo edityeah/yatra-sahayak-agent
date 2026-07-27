@@ -7,6 +7,8 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
+from langchain_core.messages import AIMessage, HumanMessage
+
 from agent.config import get_settings
 from agent import db
 
@@ -14,6 +16,7 @@ _USER_STATE: dict[str, dict] = {}
 _REGISTRATIONS: dict[str, dict] = {}   # yatra_id -> row
 _SOS: list[dict] = []
 _LOSTFOUND: list[dict] = []            # lost & found reports
+_SESSIONS: dict[str, dict] = {}        # conversation_id -> stored (serialized) state
 _SEQ = {"n": 0}
 
 _PREFIX = {"pandharpur": "PWARI", "kumbh": "KUMBH"}
@@ -25,6 +28,7 @@ def reset() -> None:
     _REGISTRATIONS.clear()
     _SOS.clear()
     _LOSTFOUND.clear()
+    _SESSIONS.clear()
     _SEQ["n"] = 0
 
 
@@ -78,6 +82,71 @@ async def set_user_state(user_id: str, *, language: str | None = None, active_ya
             await conn.commit()
         return
     _USER_STATE[user_id] = state
+
+
+# ── sessions (conversation-scoped: transcript + intake + sticky lang) ─
+def _ser_msgs(msgs) -> list[dict]:
+    return [{"r": "ai" if isinstance(m, AIMessage) else "human", "c": str(m.content)} for m in (msgs or [])]
+
+
+def _deser_msgs(rows) -> list:
+    return [AIMessage(content=r["c"]) if r.get("r") == "ai" else HumanMessage(content=r["c"]) for r in (rows or [])]
+
+
+async def _load_session_raw(conversation_id: str) -> dict:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT data FROM sessions WHERE conversation_id=%s", (conversation_id,))
+                row = await cur.fetchone()
+                return dict(row["data"]) if row and row.get("data") else {}
+    return dict(_SESSIONS.get(conversation_id, {}))
+
+
+async def get_session(conversation_id: str) -> dict:
+    """Conversation state with `messages` rehydrated into LangChain objects."""
+    data = await _load_session_raw(conversation_id)
+    if data.get("messages") is not None:
+        data["messages"] = _deser_msgs(data["messages"])
+    return data
+
+
+async def save_session(conversation_id: str, *, messages: list | None = None, reg_stage: str | None = None,
+                       reg_fields: dict | None = None, reply_language: str | None = None) -> None:
+    """Partial upsert — only the provided fields are updated (read-modify-write)."""
+    data = await _load_session_raw(conversation_id)
+    if messages is not None:
+        data["messages"] = _ser_msgs(messages)
+    if reg_stage is not None:
+        data["reg_stage"] = reg_stage
+    if reg_fields is not None:
+        data["reg_fields"] = reg_fields
+    if reply_language is not None:
+        data["reply_language"] = reply_language
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO sessions(conversation_id,data,updated_at) VALUES(%s,%s,NOW()) "
+                    "ON CONFLICT(conversation_id) DO UPDATE SET data=EXCLUDED.data, updated_at=NOW()",
+                    (conversation_id, json.dumps(data)),
+                )
+            await conn.commit()
+        return
+    _SESSIONS[conversation_id] = data
+
+
+async def clear_session(conversation_id: str) -> None:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("DELETE FROM sessions WHERE conversation_id=%s", (conversation_id,))
+            await conn.commit()
+        return
+    _SESSIONS.pop(conversation_id, None)
 
 
 # ── registrations ───────────────────────────────────────────────────

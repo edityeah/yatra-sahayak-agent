@@ -12,6 +12,12 @@ class Settings:
     OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "")
     LLM_MAIN_MODEL: str = os.environ.get("LLM_MAIN_MODEL", "gpt-4o-mini")
 
+    # CORS — comma-separated allowed origins. "*" is fine for dev but should be
+    # locked to the webview origin(s) in production.
+    CORS_ORIGINS: list = [
+        o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()
+    ] or ["*"]
+
     # Webhook auth — every caller (SwiftChat, curl) must send X-API-Key.
     # NOTE: this key is shipped to the browser by the webview (VITE_AGENT_KEY),
     # so it must NOT guard officer/admin data (pilgrim PII). Use ADMIN_API_KEY.

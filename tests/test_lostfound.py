@@ -43,6 +43,22 @@ def test_lostfound_requires_key(client):
     assert client.post("/api/lostfound", json={"kind": "item"}).status_code == 401
 
 
+def test_public_board_redacts_reporter_pii(client, monkeypatch):
+    # With a DISTINCT admin key (production), the public board (internal/browser
+    # key) must hide the reporter's contact; officers (admin key) see it.
+    import webhook
+    monkeypatch.setattr(webhook.settings, "ADMIN_API_KEY", "admin-distinct")
+    persistence.reset()
+    client.post("/api/lostfound", headers={"X-API-Key": "local-dev-key"},
+                json={"kind": "item", "name": "Bag", "reporter_phone": "9812345678",
+                      "reporter_name": "Asha", "yatra": "pandharpur"})
+    pub = client.get("/api/lostfound?yatra=pandharpur", headers={"X-API-Key": "local-dev-key"}).json()
+    assert pub and "reporter_phone" not in pub[0] and "reporter_name" not in pub[0]
+    adm = client.get("/api/lostfound?yatra=pandharpur", headers={"X-API-Key": "admin-distinct"}).json()
+    assert adm[0]["reporter_phone"] == "9812345678"
+    persistence.reset()
+
+
 def test_node_returns_link_and_emergency_number():
     s = new_state("s", "u"); s["language"] = "en"; s["active_yatra"] = "pandharpur"
     s["messages"] = [HumanMessage(content="lost and found")]

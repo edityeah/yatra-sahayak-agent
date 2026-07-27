@@ -26,7 +26,6 @@ from agent.config import get_settings
 from agent.state import new_state
 from agent.graph import yatra_graph
 from agent import db
-from agent import session_store
 from agent import persistence
 from agent import seed
 
@@ -36,7 +35,7 @@ settings = get_settings()
 app = FastAPI(title="Yatra Sahayak Agent", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -45,6 +44,16 @@ app.add_middleware(
 @app.on_event("startup")
 async def _startup() -> None:
     await db.run_migrations()
+    # Production posture checks — loud warnings when a live (DB-backed) deploy
+    # is running with insecure defaults, so they're caught in logs immediately.
+    if settings.DB_ENABLED:
+        if settings.ADMIN_API_KEY == settings.INTERNAL_API_KEY:
+            print("[startup] SECURITY: ADMIN_API_KEY == INTERNAL_API_KEY — officer/PII "
+                  "endpoints are guarded by the browser-shipped key. Set a distinct ADMIN_API_KEY.", flush=True)
+        if settings.INTERNAL_API_KEY == "local-dev-key":
+            print("[startup] SECURITY: INTERNAL_API_KEY is the dev default. Set a real key.", flush=True)
+        if "*" in settings.CORS_ORIGINS:
+            print("[startup] SECURITY: CORS is open to '*'. Set CORS_ORIGINS to the webview origin(s).", flush=True)
 
 
 @app.get("/health")
@@ -62,6 +71,15 @@ def _require_admin(x_api_key: str | None) -> None:
     the browser-shipped INTERNAL_API_KEY."""
     if x_api_key != settings.ADMIN_API_KEY:
         raise HTTPException(status_code=401, detail="admin key required")
+
+
+def _auth_level(x_api_key: str | None) -> str | None:
+    """'admin' (officer/admin key) | 'internal' (browser key) | None."""
+    if x_api_key == settings.ADMIN_API_KEY:
+        return "admin"
+    if x_api_key == settings.INTERNAL_API_KEY:
+        return "internal"
+    return None
 
 
 # Columns exported by the registrations CSV, in order.
@@ -210,11 +228,11 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     state = new_state(session_id=conv_id, user_id=user_id)
     state["context_from_webview"] = body.get("context_from_webview")
 
-    # Restore this conversation's transcript from the in-process session
-    # store. SwiftChat's webhook doesn't resend prior turns and markers are
-    # stripped before streaming, so this store is the POC stand-in for the
-    # reference's DB-backed history.
-    sess = session_store.load(conv_id)
+    # Restore this conversation's transcript from durable session storage
+    # (Postgres when enabled, in-memory otherwise). SwiftChat doesn't resend
+    # prior turns and markers are stripped before streaming, so this is the
+    # source of truth for history + in-progress intake across restarts/instances.
+    sess = await persistence.get_session(conv_id)
     prior = sess.get("messages")
     if prior is not None:
         state["messages"] = list(prior) + [HumanMessage(content=user_text)]
@@ -262,7 +280,7 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     after_msgs = result.get("messages", [])
 
     # Persist transcript + intake (conversation-scoped); language/yatra (user-scoped).
-    session_store.save(
+    await persistence.save_session(
         conv_id,
         messages=after_msgs,
         reg_stage=result.get("reg_stage"),
@@ -296,8 +314,15 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
 
 @app.get("/api/lostfound")
 async def api_lostfound_list(yatra: str | None = None, x_api_key: str | None = Header(default=None)):
-    _require_key(x_api_key)
-    return await persistence.list_lost_found(yatra)
+    level = _auth_level(x_api_key)
+    if not level:
+        raise HTTPException(status_code=401, detail="bad api key")
+    rows = await persistence.list_lost_found(yatra)
+    if level != "admin":
+        # Public reunification board (yatri) — redact the reporter's PII;
+        # officers (admin key) see full contact details.
+        rows = [{k: v for k, v in r.items() if k not in ("reporter_phone", "reporter_name")} for r in rows]
+    return rows
 
 
 @app.post("/api/lostfound")
