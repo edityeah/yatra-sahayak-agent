@@ -29,7 +29,7 @@ const CONFIRM_DELETE = { mr: "ही गप्पा हटवायची?", hi
 // Right slide-in drawer opened by the header hamburger — Chats/Settings
 // pill tabs, recency-grouped thread list with hover-delete, and a fixed
 // "+ New Chat" footer. Matches the Pravasi Setu reference ThreadsDrawer.
-export default function ThreadsDrawer({ open, onClose, threads, activeId, onPick, onNewChat }) {
+export default function ThreadsDrawer({ open, onClose, threads, activeId, onPick, onNewChat, onDelete = deleteThread }) {
   const [tab, setTab] = useState("chats");
   const { language, setLanguage } = useLang();
   const navigate = useNavigate();
@@ -72,10 +72,10 @@ export default function ThreadsDrawer({ open, onClose, threads, activeId, onPick
               {list.length === 0 && (
                 <div className="text-center py-14 text-muted text-[13px]">{t(EMPTY, language)}</div>
               )}
-              <ThreadGroup title={t(GROUP_TODAY, language)} threads={groups.today} activeId={activeId} onPick={onPick} language={language} />
-              <ThreadGroup title={t(GROUP_YDAY, language)} threads={groups.yesterday} activeId={activeId} onPick={onPick} language={language} />
-              <ThreadGroup title={t(GROUP_30, language)} threads={groups.prev30} activeId={activeId} onPick={onPick} language={language} />
-              <ThreadGroup title={t(GROUP_OLDER, language)} threads={groups.older} activeId={activeId} onPick={onPick} language={language} />
+              <ThreadGroup title={t(GROUP_TODAY, language)} threads={groups.today} activeId={activeId} onPick={onPick} onDelete={onDelete} language={language} />
+              <ThreadGroup title={t(GROUP_YDAY, language)} threads={groups.yesterday} activeId={activeId} onPick={onPick} onDelete={onDelete} language={language} />
+              <ThreadGroup title={t(GROUP_30, language)} threads={groups.prev30} activeId={activeId} onPick={onPick} onDelete={onDelete} language={language} />
+              <ThreadGroup title={t(GROUP_OLDER, language)} threads={groups.older} activeId={activeId} onPick={onPick} onDelete={onDelete} language={language} />
             </>
           )}
           {tab === "settings" && (
@@ -126,7 +126,7 @@ export default function ThreadsDrawer({ open, onClose, threads, activeId, onPick
   );
 }
 
-function ThreadGroup({ title, threads, activeId, onPick, language }) {
+function ThreadGroup({ title, threads, activeId, onPick, onDelete, language }) {
   if (!threads || threads.length === 0) return null;
   return (
     <div className="mb-4">
@@ -144,7 +144,7 @@ function ThreadGroup({ title, threads, activeId, onPick, language }) {
             </button>
             <button
               onClick={() => {
-                if (window.confirm(t(CONFIRM_DELETE, language))) deleteThread(th.id);
+                if (window.confirm(t(CONFIRM_DELETE, language))) onDelete(th.id);
               }}
               className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full text-muted hover:text-red-600 flex items-center justify-center"
               aria-label="Delete"

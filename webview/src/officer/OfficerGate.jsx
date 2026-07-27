@@ -27,11 +27,16 @@ export const useOfficerKey = () => useContext(KeyCtx);
 // Wraps every officer page: shows the admin-key unlock until a key is present,
 // then renders a shared header (title, optional back, optional refresh) and the
 // page content, with the key available via useOfficerKey().
-export default function OfficerGate({ title, subtitle = "Officer dashboard", back = false, onRefresh, children }) {
+export default function OfficerGate({ title, subtitle = "Officer dashboard", back = false, bare = false, onRefresh, children }) {
   const navigate = useNavigate();
   const [key, setK] = useState(() => getKey());
   const [input, setInput] = useState("");
   const [err, setErr] = useState(null);
+
+  if (key && bare) {
+    // Gate only — the child renders its own chrome (used by the chat landing).
+    return <KeyCtx.Provider value={key}>{children}</KeyCtx.Provider>;
+  }
 
   if (!key) {
     const unlock = () => {
