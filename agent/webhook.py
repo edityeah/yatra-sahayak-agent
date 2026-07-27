@@ -417,6 +417,65 @@ async def api_lostfound_status(lid: str, request: Request, x_api_key: str | None
     return {"ok": True}
 
 
+@app.post("/api/grievances")
+async def api_grievance_create(request: Request, x_api_key: str | None = Header(default=None)):
+    _require_key(x_api_key)
+    b = await request.json()
+    gid = await persistence.create_grievance(
+        category=b.get("category", "other"), description=b.get("description", ""),
+        location=b.get("location", ""), reporter_name=b.get("reporter_name", ""),
+        reporter_phone=b.get("reporter_phone", ""), yatra=b.get("yatra"), yatra_id=b.get("yatra_id"))
+    return {"id": gid}
+
+
+@app.get("/api/grievances")
+async def api_grievance_list(yatra: str | None = None, x_api_key: str | None = Header(default=None)):
+    level = _auth_level(x_api_key)
+    if not level:
+        raise HTTPException(status_code=401, detail="bad api key")
+    rows = await persistence.list_grievances(yatra)
+    if level != "admin":
+        rows = [{k: v for k, v in r.items() if k not in ("reporter_phone", "reporter_name")} for r in rows]
+    return rows
+
+
+@app.post("/api/grievances/{gid}/status")
+async def api_grievance_status(gid: str, request: Request, x_api_key: str | None = Header(default=None)):
+    _require_admin(x_api_key)
+    b = await request.json()
+    ok = await persistence.set_grievance_status(gid, b.get("status", "resolved"))
+    if not ok:
+        raise HTTPException(status_code=404, detail="grievance not found")
+    return {"ok": True}
+
+
+@app.get("/api/alerts")
+async def api_alerts_list(yatra: str | None = None, x_api_key: str | None = Header(default=None)):
+    # Public read (pilgrims see active alerts); either key works.
+    if not _auth_level(x_api_key):
+        raise HTTPException(status_code=401, detail="bad api key")
+    return await persistence.list_alerts(yatra, active_only=True)
+
+
+@app.post("/api/alerts")
+async def api_alert_create(request: Request, x_api_key: str | None = Header(default=None)):
+    _require_admin(x_api_key)   # officers only
+    b = await request.json()
+    aid = await persistence.create_alert(
+        title=b.get("title", ""), message=b.get("message", ""),
+        severity=b.get("severity", "info"), yatra=b.get("yatra"))
+    return {"id": aid}
+
+
+@app.post("/api/alerts/{aid}/deactivate")
+async def api_alert_deactivate(aid: str, x_api_key: str | None = Header(default=None)):
+    _require_admin(x_api_key)
+    ok = await persistence.set_alert_active(aid, False)
+    if not ok:
+        raise HTTPException(status_code=404, detail="alert not found")
+    return {"ok": True}
+
+
 def _require_officer(x_admin_key: str | None, user_id: str | None, sig_ok: bool) -> None:
     """Officer war-room gate: the ADMIN_API_KEY (dashboard) OR an allowlisted
     SwiftChat user_id WITH a verified webhook signature (the officer bot). The

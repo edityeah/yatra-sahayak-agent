@@ -16,13 +16,13 @@ from agent.i18n import LANG_NAME
 
 VALID_INTENTS = {
     "browse", "weather", "advisory", "logistics", "helpline",
-    "drills_sos", "signage", "registration", "lost_found", "answer", "off_topic",
+    "drills_sos", "signage", "registration", "lost_found", "grievance", "answer", "off_topic",
 }
 
 
 class RouteDecision(BaseModel):
     reply: str = Field(default="", description="Reply text ONLY for answer/off_topic. Empty for activity intents.")
-    intent: str = Field(description="One of: weather advisory logistics helpline drills_sos signage registration lost_found answer off_topic browse")
+    intent: str = Field(description="One of: weather advisory logistics helpline drills_sos signage registration lost_found grievance answer off_topic browse")
 
 
 def _system(lang: str, yatra: str) -> str:
@@ -38,11 +38,12 @@ Pick ONE intent for the latest user turn:
 - signage        — directions, route map, which way, signage, turn-by-turn
 - registration   — register for the yatra, yatra pass, QR pass, group/Dindi registration
 - lost_found     — lost & found: a lost belonging/item, a lost-and-found desk, reuniting with a group member (NOT a live emergency — a person missing right now is drills_sos)
+- grievance      — a complaint: overcharging, bad/absent facilities, cleanliness, staff conduct, wanting to file/lodge a grievance
 - answer         — a general on-topic question you can answer in 40-80 words
 - off_topic      — unrelated to the yatra; politely redirect in {LANG_NAME[lang]}
 - browse         — a bare greeting / "what can you do" / "menu"
 
-For weather/advisory/logistics/helpline/drills_sos/signage/registration/lost_found set reply="" (the app responds).
+For weather/advisory/logistics/helpline/drills_sos/signage/registration/lost_found/grievance set reply="" (the app responds).
 For answer/off_topic/browse write `reply` in {LANG_NAME[lang]}."""
 
 
@@ -71,7 +72,7 @@ async def intent_router(state: YatraState) -> YatraState:
         intent, reply = "answer", ""
 
     # Activity intents are answered downstream; suppress router reply.
-    if intent in {"weather", "advisory", "logistics", "helpline", "drills_sos", "signage", "registration", "lost_found"}:
+    if intent in {"weather", "advisory", "logistics", "helpline", "drills_sos", "signage", "registration", "lost_found", "grievance"}:
         reply = ""
 
     updates: YatraState = {**state, "current_node": "intent_router", "intent": intent}  # type: ignore[typeddict-item]

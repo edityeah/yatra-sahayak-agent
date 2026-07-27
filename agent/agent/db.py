@@ -72,6 +72,27 @@ CREATE TABLE IF NOT EXISTS lost_found (
   yatra_id       TEXT,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE TABLE IF NOT EXISTS grievances (
+  id             TEXT PRIMARY KEY,
+  category       TEXT,
+  description    TEXT,
+  location       TEXT,
+  reporter_name  TEXT,
+  reporter_phone TEXT,
+  yatra          TEXT,
+  yatra_id       TEXT,
+  status         TEXT NOT NULL DEFAULT 'open',   -- 'open' | 'in_progress' | 'resolved'
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS alerts (
+  id             TEXT PRIMARY KEY,
+  title          TEXT,
+  message        TEXT,
+  severity       TEXT NOT NULL DEFAULT 'info',    -- 'info' | 'warning' | 'danger'
+  yatra          TEXT,
+  active         BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 CREATE TABLE IF NOT EXISTS sos_events (
   id             TEXT PRIMARY KEY,
   user_id        TEXT NOT NULL,

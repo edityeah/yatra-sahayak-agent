@@ -15,7 +15,7 @@ _YATRA = {"pandharpur": "Pandharpur Wari", "kumbh": "Simhastha Kumbh (Nashik)"}
 
 
 class OfficerIntent(BaseModel):
-    intent: str = Field(description="One of: summary sos lostfound find help")
+    intent: str = Field(description="One of: summary sos lostfound grievance find help")
     yatra: str = Field(default="", description="pandharpur | kumbh | '' if not specified")
     query: str = Field(default="", description="search text (a name or Yatra ID) for intent=find")
 
@@ -23,6 +23,8 @@ class OfficerIntent(BaseModel):
 def _kw_intent(text: str) -> OfficerIntent:
     t = text.lower()
     yatra = "pandharpur" if any(k in t for k in ("pandhar", "wari")) else "kumbh" if any(k in t for k in ("kumbh", "nashik", "nasik")) else ""
+    if any(k in t for k in ("grievance", "complaint", "grievances", "complaints")):
+        return OfficerIntent(intent="grievance", yatra=yatra)
     if any(k in t for k in ("sos", "emergency", "missing person", "distress")):
         return OfficerIntent(intent="sos", yatra=yatra)
     if any(k in t for k in ("lost", "found", "belonging", "missing")):
@@ -37,9 +39,9 @@ def _kw_intent(text: str) -> OfficerIntent:
 async def _classify(text: str) -> OfficerIntent:
     sys = ("Classify an officer's operational request about a pilgrimage control room.\n"
            "intent: 'summary' (counts/headcount/status), 'sos' (emergencies/SOS feed), "
-           "'lostfound' (lost & found reports / missing belongings), 'find' (look up a specific "
-           "pilgrim by name or Yatra ID), or 'help'. yatra: pandharpur/kumbh if named. "
-           "query: the name or Yatra ID to search for intent=find.")
+           "'lostfound' (lost & found reports / missing belongings), 'grievance' (complaints/"
+           "grievances from pilgrims), 'find' (look up a specific pilgrim by name or Yatra ID), "
+           "or 'help'. yatra: pandharpur/kumbh if named. query: the name or Yatra ID for find.")
     try:
         return await get_main_llm().with_structured_output(OfficerIntent).ainvoke(
             [SystemMessage(content=sys), HumanMessage(content=text)])
@@ -83,6 +85,15 @@ async def officer_reply(text: str) -> str:
             lines.append(f"- `{x['id']}` — {kind}: {x.get('name') or '—'} · 📍 {x.get('last_seen') or '—'}")
         return "\n".join(lines)
 
+    if intent.intent == "grievance":
+        grv = [g for g in await persistence.list_grievances(yfilter) if (g.get("status") or "open") != "resolved"]
+        if not grv:
+            return "📝 No open grievances."
+        lines = [f"📝 **Open grievances ({len(grv)})**"]
+        for g in grv[:15]:
+            lines.append(f"- `{g['id']}` — {g.get('category') or 'other'}: {g.get('description') or '—'} · 📍 {g.get('location') or '—'}")
+        return "\n".join(lines)
+
     if intent.intent == "find":
         q = (intent.query or text).strip().lower()
         q = re.sub(r"\b(find|search|look ?up|pilgrim|yatra id|for)\b", "", q).strip()
@@ -97,4 +108,4 @@ async def officer_reply(text: str) -> str:
         return "\n".join(lines)
 
     return ("👮 **Yatra Control** — ask me for a **summary** (headcount), the **SOS** feed, "
-            "**lost & found** reports, or to **find** a pilgrim by name or Yatra ID.")
+            "**grievances**, **lost & found** reports, or to **find** a pilgrim by name or Yatra ID.")

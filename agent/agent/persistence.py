@@ -16,6 +16,8 @@ _USER_STATE: dict[str, dict] = {}
 _REGISTRATIONS: dict[str, dict] = {}   # yatra_id -> row
 _SOS: list[dict] = []
 _LOSTFOUND: list[dict] = []            # lost & found reports
+_GRIEVANCES: list[dict] = []           # pilgrim grievances/complaints
+_ALERTS: list[dict] = []               # officer → pilgrim broadcast alerts
 _SESSIONS: dict[str, dict] = {}        # conversation_id -> stored (serialized) state
 _SEQ = {"n": 0}
 
@@ -28,6 +30,8 @@ def reset() -> None:
     _REGISTRATIONS.clear()
     _SOS.clear()
     _LOSTFOUND.clear()
+    _GRIEVANCES.clear()
+    _ALERTS.clear()
     _SESSIONS.clear()
     _SEQ["n"] = 0
 
@@ -298,6 +302,7 @@ async def officer_summary() -> dict:
     regs = await list_registrations()
     sos = await list_sos()
     lf = await list_lost_found()
+    grv = await list_grievances()
     by_yatra: dict[str, int] = {}
     families = set()
     for r in regs:
@@ -310,6 +315,7 @@ async def officer_summary() -> dict:
         "by_yatra": by_yatra,
         "open_sos": sum(1 for s in sos if (s.get("status") or "open") == "open"),
         "open_lostfound": sum(1 for x in lf if (x.get("status") or "open") == "open"),
+        "open_grievances": sum(1 for g in grv if (g.get("status") or "open") != "resolved"),
     }
 
 
@@ -364,5 +370,113 @@ async def set_lost_found_status(lid: str, status: str) -> bool:
     for r in _LOSTFOUND:
         if r["id"] == lid:
             r["status"] = status
+            return True
+    return False
+
+
+# ── grievances (pilgrim complaints) ─────────────────────────────────
+async def create_grievance(*, category: str, description: str, location: str,
+                           reporter_name: str, reporter_phone: str,
+                           yatra: str | None = None, yatra_id: str | None = None) -> str:
+    gid = f"GRV-{_today()}-{_next():04d}"
+    row = {"id": gid, "category": category, "description": description, "location": location,
+           "reporter_name": reporter_name, "reporter_phone": reporter_phone,
+           "yatra": yatra, "yatra_id": yatra_id, "status": "open"}
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO grievances(id,category,description,location,reporter_name,"
+                    "reporter_phone,yatra,yatra_id,status) VALUES(%(id)s,%(category)s,%(description)s,"
+                    "%(location)s,%(reporter_name)s,%(reporter_phone)s,%(yatra)s,%(yatra_id)s,%(status)s)",
+                    row,
+                )
+            await conn.commit()
+    else:
+        _GRIEVANCES.append(row)
+    return gid
+
+
+async def list_grievances(yatra: str | None = None) -> list[dict]:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                if yatra:
+                    await cur.execute("SELECT * FROM grievances WHERE yatra=%s ORDER BY created_at DESC", (yatra,))
+                else:
+                    await cur.execute("SELECT * FROM grievances ORDER BY created_at DESC")
+                return [dict(r) for r in await cur.fetchall()]
+    rows = [r for r in _GRIEVANCES if (not yatra or r.get("yatra") == yatra)]
+    return list(reversed(rows))
+
+
+async def set_grievance_status(gid: str, status: str) -> bool:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("UPDATE grievances SET status=%s WHERE id=%s", (status, gid))
+                changed = cur.rowcount
+            await conn.commit()
+            return bool(changed)
+    for r in _GRIEVANCES:
+        if r["id"] == gid:
+            r["status"] = status
+            return True
+    return False
+
+
+# ── alerts (officer → pilgrim broadcast) ────────────────────────────
+async def create_alert(*, title: str, message: str, severity: str = "info",
+                       yatra: str | None = None) -> str:
+    aid = f"ALRT-{_today()}-{_next():04d}"
+    row = {"id": aid, "title": title, "message": message, "severity": severity,
+           "yatra": yatra, "active": True}
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO alerts(id,title,message,severity,yatra,active) "
+                    "VALUES(%(id)s,%(title)s,%(message)s,%(severity)s,%(yatra)s,%(active)s)",
+                    row,
+                )
+            await conn.commit()
+    else:
+        _ALERTS.append(row)
+    return aid
+
+
+async def list_alerts(yatra: str | None = None, active_only: bool = True) -> list[dict]:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM alerts ORDER BY created_at DESC")
+                rows = [dict(r) for r in await cur.fetchall()]
+    else:
+        rows = list(reversed(_ALERTS))
+    # Alerts with no yatra are broadcast to all; yatra filter keeps those + matches.
+    if yatra:
+        rows = [r for r in rows if not r.get("yatra") or r.get("yatra") == yatra]
+    if active_only:
+        rows = [r for r in rows if r.get("active", True)]
+    return rows
+
+
+async def set_alert_active(aid: str, active: bool) -> bool:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("UPDATE alerts SET active=%s WHERE id=%s", (active, aid))
+                changed = cur.rowcount
+            await conn.commit()
+            return bool(changed)
+    for r in _ALERTS:
+        if r["id"] == aid:
+            r["active"] = active
             return True
     return False

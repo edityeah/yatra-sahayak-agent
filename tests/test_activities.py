@@ -16,7 +16,7 @@ def _run(node):
 def test_all_activity_nodes_exist():
     assert set(ACTIVITY_NODES) == {
         "weather", "advisory", "logistics", "helpline",
-        "drills_sos", "signage", "registration", "lost_found",
+        "drills_sos", "signage", "registration", "lost_found", "grievance",
     }
 
 

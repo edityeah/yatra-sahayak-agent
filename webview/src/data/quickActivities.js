@@ -60,6 +60,13 @@ export const QUICK_ACTIVITIES = [
     action: { type: "route", href: "/yatri/lostfound" },
   },
   {
+    id: "grievance",
+    icon: "📝",
+    label: { mr: "तक्रार", hi: "शिकायत", en: "Grievance" },
+    tagline: { mr: "तक्रार नोंदवा", hi: "शिकायत दर्ज करें", en: "File a complaint" },
+    action: { type: "route", href: "/yatri/grievance" },
+  },
+  {
     id: "call",
     icon: "📞",
     label: { mr: "व्हॉइस कॉल", hi: "वॉइस कॉल", en: "Voice Call" },

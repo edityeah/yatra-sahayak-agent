@@ -10,7 +10,12 @@ import LogisticsPage from "./yatri/LogisticsPage.jsx";
 import DrillsPage from "./yatri/DrillsPage.jsx";
 import AdvisoriesPage from "./yatri/AdvisoriesPage.jsx";
 import CallPage from "./voice/CallPage.jsx";
-import OfficerDashboard from "./officer/OfficerDashboard.jsx";
+import GrievancePage from "./yatri/GrievancePage.jsx";
+import OfficerChatPage from "./officer/OfficerChatPage.jsx";
+import OfficerGrievances from "./officer/OfficerGrievances.jsx";
+import OfficerAlerts from "./officer/OfficerAlerts.jsx";
+import OfficerSos from "./officer/OfficerSos.jsx";
+import OfficerRegistry from "./officer/OfficerRegistry.jsx";
 
 export default function App() {
   return (
@@ -27,15 +32,21 @@ export default function App() {
         <Route path="/yatri/pass" element={<PassPage />} />
         <Route path="/yatri/passes" element={<WalletPage />} />
         <Route path="/yatri/lostfound" element={<LostFoundPage />} />
+        <Route path="/yatri/grievance" element={<GrievancePage />} />
         <Route path="/yatri/map" element={<MapPage />} />
         <Route path="/yatri/logistics" element={<LogisticsPage />} />
         <Route path="/yatri/drills" element={<DrillsPage />} />
         <Route path="/yatri/advisories" element={<AdvisoriesPage />} />
         <Route path="/voice" element={<CallPage />} />
 
-        {/* Officer war-room — gated by the admin key (separate SwiftChat
-            officer bot in production). */}
-        <Route path="/officer" element={<OfficerDashboard />} />
+        {/* Officer war-room — a chat agent (mirrors the yatri agent) whose
+            quick-activities open webview dashboards. Gated by the admin key
+            (a separate SwiftChat officer bot in production). */}
+        <Route path="/officer" element={<OfficerChatPage />} />
+        <Route path="/officer/grievances" element={<OfficerGrievances />} />
+        <Route path="/officer/alerts" element={<OfficerAlerts />} />
+        <Route path="/officer/sos" element={<OfficerSos />} />
+        <Route path="/officer/registry" element={<OfficerRegistry />} />
       </Routes>
     </LangProvider>
   );

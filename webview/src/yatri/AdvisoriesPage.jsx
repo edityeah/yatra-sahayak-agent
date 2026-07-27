@@ -29,6 +29,7 @@ export default function AdvisoriesPage() {
   const yatra = searchParams.get("yatra") || ctx.yatra;
 
   const [advisories, setAdvisories] = useState(null);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -36,9 +37,14 @@ export default function AdvisoriesPage() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    apiGet(`/api/yatra/${yatra}/advisories`)
-      .then((data) => {
-        if (!cancelled) setAdvisories(data);
+    Promise.all([
+      apiGet(`/api/yatra/${yatra}/advisories`),
+      apiGet(`/api/alerts?yatra=${yatra}`).catch(() => []),  // live officer alerts
+    ])
+      .then(([adv, al]) => {
+        if (cancelled) return;
+        setAdvisories(adv);
+        setAlerts(al || []);
       })
       .catch((e) => {
         if (!cancelled) setError(e?.message || String(e));
@@ -50,6 +56,13 @@ export default function AdvisoriesPage() {
       cancelled = true;
     };
   }, [yatra]);
+
+  const ALERT_STYLE = {
+    danger: "bg-red-50 text-red-700 border-red-200",
+    warning: "bg-amber-50 text-amber-800 border-amber-200",
+    info: "bg-primary-50 text-primary border-primary-200",
+  };
+  const LIVE = { mr: "थेट सूचना", hi: "लाइव अलर्ट", en: "Live alert" };
 
   const sorted = advisories
     ? [...advisories].sort(
@@ -68,7 +81,23 @@ export default function AdvisoriesPage() {
         </div>
       ) : null}
 
-      {!loading && !error && sorted && sorted.length === 0 ? (
+      {!loading && !error && alerts.length > 0 ? (
+        <div className="space-y-3 mb-3">
+          {alerts.map((a) => (
+            <div key={a.id} className={`rounded-2xl border shadow-card p-4 ${ALERT_STYLE[a.severity] || ALERT_STYLE.info}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-white/70 border border-current uppercase tracking-wide">
+                  📢 {t(LIVE, language)}
+                </span>
+                <strong className="text-[13.5px] font-extrabold">{a.title}</strong>
+              </div>
+              <p className="text-[13px] leading-relaxed">{a.message}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {!loading && !error && sorted && sorted.length === 0 && alerts.length === 0 ? (
         <div className="rounded-2xl border border-bdr bg-surface shadow-card p-4 text-[13.5px] text-ink">
           {EMPTY[language] || EMPTY.en}
         </div>
