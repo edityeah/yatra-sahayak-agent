@@ -235,6 +235,27 @@ async def api_passes(user_id: str, x_api_key: str | None = Header(default=None))
     return await persistence.list_registrations_for_user(user_id)
 
 
+@app.post("/api/register")
+async def api_register(request: Request, x_api_key: str | None = Header(default=None)):
+    """One-shot registration (used by the voice agent, which collects the
+    fields conversationally). Returns the Yatra ID + pass URL."""
+    _require_key(x_api_key)
+    b = await request.json()
+    yatra = b.get("yatra") if b.get("yatra") in ("pandharpur", "kumbh") else "pandharpur"
+    try:
+        group_size = int(b.get("group_size") or 1)
+    except (TypeError, ValueError):
+        group_size = 1
+    yid = await persistence.create_registration(
+        b.get("user_id", "voice-caller"), yatra=yatra, name=b.get("name", ""),
+        phone=b.get("phone", ""), age=str(b.get("age", "")), id_type=b.get("id_type", ""),
+        group_name=b.get("group_name", ""), group_size=group_size,
+        emergency_contact=b.get("emergency_contact", ""), medical_flags=b.get("medical_flags", ""),
+        mobile_verified=bool(b.get("mobile_verified")), ekyc_verified=bool(b.get("ekyc_verified")))
+    pass_url = f"{settings.PUBLIC_WEBVIEW_BASE}/yatri/pass?id={yid}"
+    return {"yatra_id": yid, "pass_url": pass_url}
+
+
 _MARKER_RE = re.compile(r"\[(?:lang:(?:mr|hi|en)|yatra:(?:pandharpur|kumbh)|yatra-ask)\]")
 
 

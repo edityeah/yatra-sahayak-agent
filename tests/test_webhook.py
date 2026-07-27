@@ -65,6 +65,24 @@ def test_registrations_export_requires_admin_and_returns_rows(client):
     persistence.reset()
 
 
+def test_oneshot_register_endpoint(client):
+    # The voice agent registers via POST /api/register (it collects fields by
+    # voice, then issues the pass in one shot).
+    import sys, os, asyncio
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
+    from agent import persistence
+    persistence.reset()
+    r = client.post("/api/register", headers={"X-API-Key": "local-dev-key"},
+                    json={"name": "Voice Caller", "age": "50", "phone": "9812345678",
+                          "yatra": "kumbh", "emergency_contact": "Sunil 9800000000"})
+    assert r.status_code == 200
+    d = r.json()
+    assert d["yatra_id"].startswith("KUMBH-") and "/yatri/pass?id=" in d["pass_url"]
+    regs = asyncio.run(persistence.list_registrations_for_user("voice-caller"))
+    assert regs and regs[0]["name"] == "Voice Caller" and regs[0]["yatra"] == "kumbh"
+    persistence.reset()
+
+
 def test_wallet_lists_all_passes_for_a_user(client):
     import sys, os, asyncio
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
