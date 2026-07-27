@@ -1,7 +1,25 @@
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, ArrowLeft, RefreshCw } from "lucide-react";
+import { useLang } from "../components/AppShell.jsx";
 import { getKey, setKey as persistKey } from "./officerApi.js";
+
+const LANG_LABEL = { mr: "मरा", hi: "हिं", en: "EN" };
+
+function LangSwitch() {
+  const { language, setLanguage } = useLang();
+  return (
+    <div className="flex items-center gap-0.5 bg-surface-2 rounded-full p-0.5">
+      {["mr", "hi", "en"].map((l) => (
+        <button key={l} onClick={() => setLanguage(l)}
+          className={`px-2 h-7 rounded-full text-[11px] font-bold transition ${
+            language === l ? "bg-primary text-white" : "text-muted hover:text-ink"}`}>
+          {LANG_LABEL[l]}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const KeyCtx = createContext("");
 export const useOfficerKey = () => useContext(KeyCtx);
@@ -52,6 +70,7 @@ export default function OfficerGate({ title, subtitle = "Officer dashboard", bac
             <div className="text-[14.5px] font-extrabold truncate">{title}</div>
             <div className="text-[11px] text-muted truncate">{subtitle}</div>
           </div>
+          <LangSwitch />
           {onRefresh ? (
             <button onClick={onRefresh} className="w-9 h-9 rounded-full hover:bg-surface-2 flex items-center justify-center text-muted" title="Refresh"><RefreshCw size={16} /></button>
           ) : null}
