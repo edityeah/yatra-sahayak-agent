@@ -10,6 +10,7 @@ import LogisticsPage from "./yatri/LogisticsPage.jsx";
 import DrillsPage from "./yatri/DrillsPage.jsx";
 import AdvisoriesPage from "./yatri/AdvisoriesPage.jsx";
 import CallPage from "./voice/CallPage.jsx";
+import OfficerDashboard from "./officer/OfficerDashboard.jsx";
 
 export default function App() {
   return (
@@ -31,6 +32,10 @@ export default function App() {
         <Route path="/yatri/drills" element={<DrillsPage />} />
         <Route path="/yatri/advisories" element={<AdvisoriesPage />} />
         <Route path="/voice" element={<CallPage />} />
+
+        {/* Officer war-room — gated by the admin key (separate SwiftChat
+            officer bot in production). */}
+        <Route path="/officer" element={<OfficerDashboard />} />
       </Routes>
     </LangProvider>
   );

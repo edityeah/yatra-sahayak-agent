@@ -25,6 +25,13 @@ class Settings:
         "ADMIN_API_KEY", os.environ.get("INTERNAL_API_KEY", "local-dev-key")
     )
 
+    # Officer war-room allowlist — comma-separated SwiftChat user_ids permitted
+    # to use the officer bot (/officer/messages). The dashboard + officer chat
+    # also accept the ADMIN_API_KEY as an alternative (webview gate).
+    OFFICER_IDS: set = frozenset(
+        i.strip() for i in os.environ.get("OFFICER_IDS", "").split(",") if i.strip()
+    )
+
     # Public base URL of the deployed webview. Every markdown link the agent
     # returns must be absolute — SwiftChat calls new URL(link) on it.
     PUBLIC_WEBVIEW_BASE: str = os.environ.get(

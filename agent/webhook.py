@@ -328,6 +328,64 @@ async def api_lostfound_status(lid: str, request: Request, x_api_key: str | None
     return {"ok": True}
 
 
+def _require_officer(x_admin_key: str | None, user_id: str | None) -> None:
+    """Officer war-room gate: the ADMIN_API_KEY (dashboard) OR an allowlisted
+    SwiftChat user_id (the separate officer bot)."""
+    if x_admin_key == settings.ADMIN_API_KEY:
+        return
+    if user_id and user_id in settings.OFFICER_IDS:
+        return
+    raise HTTPException(status_code=403, detail="officer access required")
+
+
+@app.get("/api/sos")
+async def api_sos_list(status: str | None = None, x_api_key: str | None = Header(default=None)):
+    _require_admin(x_api_key)
+    rows = await persistence.list_sos()
+    if status:
+        rows = [r for r in rows if (r.get("status") or "open") == status]
+    return rows
+
+
+@app.post("/api/sos/{sos_id}/status")
+async def api_sos_status(sos_id: str, request: Request, x_api_key: str | None = Header(default=None)):
+    _require_admin(x_api_key)
+    b = await request.json()
+    ok = await persistence.set_sos_status(sos_id, b.get("status", "resolved"))
+    if not ok:
+        raise HTTPException(status_code=404, detail="sos not found")
+    return {"ok": True}
+
+
+@app.get("/api/officer/summary")
+async def api_officer_summary(x_api_key: str | None = Header(default=None)):
+    _require_admin(x_api_key)
+    return await persistence.officer_summary()
+
+
+async def _officer_stream(body: dict) -> AsyncIterator[dict]:
+    from agent.officer import officer_reply
+    reply = _clean(await officer_reply(_extract_user_text(body.get("message", {})))) or "🙏"
+    stream_id = f"stream.officer.{uuid.uuid4()}"
+    yield {"event": "meta", "data": json.dumps({"stream_id": stream_id})}
+    yield {"event": "message",
+           "data": json.dumps({"message": {"content": [{"type": "text", "text": {"value": ""}}]}})}
+    yield {"event": "delta",
+           "data": json.dumps({"p": "/message/content/0/text/value", "o": "append", "v": reply})}
+    yield {"event": "end", "data": json.dumps({})}
+    yield {"event": "done", "data": "[DONE]"}
+
+
+@app.post("/officer/messages")
+async def officer_messages(request: Request,
+                           x_api_key: str | None = Header(default=None),
+                           x_admin_key: str | None = Header(default=None)):
+    body = await request.json()
+    # Accept the admin key via X-Admin-Key (dashboard) or X-API-Key (bot).
+    _require_officer(x_admin_key or x_api_key, body.get("user_id"))
+    return EventSourceResponse(_officer_stream(body))
+
+
 @app.post("/api/voice/token")
 async def api_voice_token(request: Request, x_api_key: str | None = Header(default=None)):
     _require_key(x_api_key)

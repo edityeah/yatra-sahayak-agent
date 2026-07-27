@@ -20,6 +20,11 @@ services:
       # Distinct from INTERNAL_API_KEY (which the webview ships to the browser).
       - key: ADMIN_API_KEY
         generateValue: true
+      # Officer war-room allowlist — comma-separated SwiftChat user_ids allowed
+      # to use the officer bot (/officer/messages). The dashboard also unlocks
+      # with ADMIN_API_KEY. Set on the dashboard.
+      - key: OFFICER_IDS
+        sync: false
       # Supabase Postgres (same stack as the reference build) — persists
       # registrations / SOS / user_state; DB_ENABLED flips on when set.
       # Paste both on the dashboard (Supabase → Project → Connect):

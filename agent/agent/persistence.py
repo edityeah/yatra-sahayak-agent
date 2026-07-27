@@ -207,6 +207,43 @@ async def list_sos() -> list[dict]:
     return list(_SOS)
 
 
+async def set_sos_status(sos_id: str, status: str) -> bool:
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("UPDATE sos_events SET status=%s WHERE id=%s", (status, sos_id))
+                changed = cur.rowcount
+            await conn.commit()
+            return bool(changed)
+    for r in _SOS:
+        if r["id"] == sos_id:
+            r["status"] = status
+            return True
+    return False
+
+
+async def officer_summary() -> dict:
+    """Aggregate KPIs for the officer war-room: pilgrim headcount (rows, one per
+    person), distinct families, and open SOS / lost-&-found counts."""
+    regs = await list_registrations()
+    sos = await list_sos()
+    lf = await list_lost_found()
+    by_yatra: dict[str, int] = {}
+    families = set()
+    for r in regs:
+        by_yatra[r.get("yatra", "unknown")] = by_yatra.get(r.get("yatra", "unknown"), 0) + 1
+        if r.get("group_id"):
+            families.add(r["group_id"])
+    return {
+        "pilgrims": len(regs),
+        "families": len(families),
+        "by_yatra": by_yatra,
+        "open_sos": sum(1 for s in sos if (s.get("status") or "open") == "open"),
+        "open_lostfound": sum(1 for x in lf if (x.get("status") or "open") == "open"),
+    }
+
+
 # ── lost_found ──────────────────────────────────────────────────────
 async def create_lost_found(*, kind: str, name: str, description: str, last_seen: str,
                             reporter_name: str, reporter_phone: str,
