@@ -25,6 +25,18 @@ services:
       # with ADMIN_API_KEY. Set on the dashboard.
       - key: OFFICER_IDS
         sync: false
+      # SwiftChat webhook HMAC secret — when set, the officer bot's allowlist
+      # path requires a valid signature (anti-spoof). Set once you have it.
+      - key: SWIFTCHAT_WEBHOOK_SECRET
+        sync: false
+      - key: RATE_LIMIT_PER_MIN
+        value: "30"
+      - key: LOG_LEVEL
+        value: INFO
+      # Optional error tracking — set a Sentry DSN to enable (add sentry-sdk to
+      # agent deps first).
+      - key: SENTRY_DSN
+        sync: false
       # Supabase Postgres (same stack as the reference build) — persists
       # registrations / SOS / user_state; DB_ENABLED flips on when set.
       # Paste both on the dashboard (Supabase → Project → Connect):

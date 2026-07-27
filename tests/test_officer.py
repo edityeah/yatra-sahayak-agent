@@ -65,3 +65,23 @@ def test_officer_chat_gated(client):
     assert client.post("/officer/messages", json=body).status_code == 403          # no key, not allowlisted
     r = client.post("/officer/messages", headers={"X-Admin-Key": "local-dev-key"}, json=body)
     assert r.status_code == 200 and "Pilgrims registered" in r.text
+
+
+def test_officer_bot_needs_valid_signature(client, monkeypatch):
+    # With a webhook secret + allowlist, an allowlisted user_id ALONE is not
+    # enough — the request must carry a valid HMAC signature (anti-spoof).
+    import hmac, hashlib, json as _json, webhook
+    monkeypatch.setattr(webhook.settings, "SWIFTCHAT_WEBHOOK_SECRET", "s3cret")
+    monkeypatch.setattr(webhook.settings, "OFFICER_IDS", frozenset({"officer-1"}))
+    webhook._RL.clear()
+    body = {"user_id": "officer-1", "message": {"content": [{"type": "text", "text": {"value": "summary"}}]}}
+    raw = _json.dumps(body).encode()
+    # allowlisted user, but no signature → 403
+    assert client.post("/officer/messages", content=raw,
+                       headers={"Content-Type": "application/json"}).status_code == 403
+    # valid signature → 200
+    sig = hmac.new(b"s3cret", raw, hashlib.sha256).hexdigest()
+    r = client.post("/officer/messages", content=raw,
+                    headers={"Content-Type": "application/json", "X-Signature": sig})
+    assert r.status_code == 200 and "Pilgrims registered" in r.text
+    webhook._RL.clear()

@@ -38,6 +38,20 @@ class Settings:
         i.strip() for i in os.environ.get("OFFICER_IDS", "").split(",") if i.strip()
     )
 
+    # SwiftChat webhook HMAC verification. When set, the officer-bot allowlist
+    # path requires a valid signature (else the ADMIN_API_KEY is the only way
+    # in) — so a spoofed user_id can't reach officer data.
+    SWIFTCHAT_WEBHOOK_SECRET: str = os.environ.get("SWIFTCHAT_WEBHOOK_SECRET", "").strip()
+    WEBHOOK_SIG_HEADER: str = os.environ.get("WEBHOOK_SIG_HEADER", "X-Signature").strip()
+
+    # Rate limiting (per user_id/IP, per minute) on the chat endpoints. 0 = off.
+    # In-process only — a multi-instance deploy needs a shared store (Redis).
+    RATE_LIMIT_PER_MIN: int = int(os.environ.get("RATE_LIMIT_PER_MIN", "30") or "30")
+
+    # Observability.
+    LOG_LEVEL: str = os.environ.get("LOG_LEVEL", "INFO").upper()
+    SENTRY_DSN: str = os.environ.get("SENTRY_DSN", "").strip()
+
     # Public base URL of the deployed webview. Every markdown link the agent
     # returns must be absolute — SwiftChat calls new URL(link) on it.
     PUBLIC_WEBVIEW_BASE: str = os.environ.get(

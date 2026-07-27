@@ -9,16 +9,20 @@ SSE contract (added in Task 8) mirrors swift-learning-agent/agent/webhook.py:
 """
 from __future__ import annotations
 import csv
+import hashlib
+import hmac
 import io
 import json
+import logging
 import re
+import time
 import uuid
 from typing import Any, AsyncIterator
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, JSONResponse
 from sse_starlette.sse import EventSourceResponse
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -32,6 +36,52 @@ from agent import seed
 load_dotenv()
 settings = get_settings()
 
+
+# ── logging: redact phone-number-like sequences from all log records ──
+class _PiiFilter(logging.Filter):
+    _PHONE = re.compile(r"\b(\d{10}|\d{12})\b")
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.msg, str):
+            record.msg = self._PHONE.sub("[redacted]", record.msg)
+        return True
+
+
+logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL, logging.INFO),
+                    format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logging.getLogger().addFilter(_PiiFilter())
+log = logging.getLogger("yatra")
+
+
+# ── security helpers ─────────────────────────────────────────────────
+def _sig_valid(raw_body: bytes, signature: str | None) -> bool:
+    """True if the request carries a valid SwiftChat HMAC signature. Always
+    False when no secret is configured (so callers fail closed on that path)."""
+    secret = settings.SWIFTCHAT_WEBHOOK_SECRET
+    if not secret or not signature:
+        return False
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    provided = signature.split("=", 1)[-1].strip()  # tolerate "sha256=" prefix
+    return hmac.compare_digest(expected, provided)
+
+
+_RL: dict[str, list[float]] = {}
+
+
+def _rate_limited(key: str) -> bool:
+    limit = settings.RATE_LIMIT_PER_MIN
+    if limit <= 0:
+        return False
+    now = time.time()
+    bucket = _RL.setdefault(key, [])
+    cutoff = now - 60.0
+    while bucket and bucket[0] < cutoff:
+        bucket.pop(0)
+    if len(bucket) >= limit:
+        return True
+    bucket.append(now)
+    return False
+
 app = FastAPI(title="Yatra Sahayak Agent", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
@@ -41,19 +91,33 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(Exception)
+async def _unhandled(request: Request, exc: Exception):
+    # Log the full error server-side; never leak stack traces to the client.
+    log.exception("unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "internal error"})
+
+
 @app.on_event("startup")
 async def _startup() -> None:
+    if settings.SENTRY_DSN:
+        try:
+            import sentry_sdk
+            sentry_sdk.init(dsn=settings.SENTRY_DSN, traces_sample_rate=0.1)
+            log.info("Sentry error tracking enabled")
+        except Exception as e:  # pragma: no cover - optional dep
+            log.warning("SENTRY_DSN set but sentry_sdk unavailable: %s", e)
     await db.run_migrations()
     # Production posture checks — loud warnings when a live (DB-backed) deploy
     # is running with insecure defaults, so they're caught in logs immediately.
     if settings.DB_ENABLED:
         if settings.ADMIN_API_KEY == settings.INTERNAL_API_KEY:
-            print("[startup] SECURITY: ADMIN_API_KEY == INTERNAL_API_KEY — officer/PII "
-                  "endpoints are guarded by the browser-shipped key. Set a distinct ADMIN_API_KEY.", flush=True)
+            log.warning("SECURITY: ADMIN_API_KEY == INTERNAL_API_KEY — officer/PII endpoints "
+                        "are guarded by the browser-shipped key. Set a distinct ADMIN_API_KEY.")
         if settings.INTERNAL_API_KEY == "local-dev-key":
-            print("[startup] SECURITY: INTERNAL_API_KEY is the dev default. Set a real key.", flush=True)
+            log.warning("SECURITY: INTERNAL_API_KEY is the dev default. Set a real key.")
         if "*" in settings.CORS_ORIGINS:
-            print("[startup] SECURITY: CORS is open to '*'. Set CORS_ORIGINS to the webview origin(s).", flush=True)
+            log.warning("SECURITY: CORS is open to '*'. Set CORS_ORIGINS to the webview origin(s).")
 
 
 @app.get("/health")
@@ -353,12 +417,14 @@ async def api_lostfound_status(lid: str, request: Request, x_api_key: str | None
     return {"ok": True}
 
 
-def _require_officer(x_admin_key: str | None, user_id: str | None) -> None:
+def _require_officer(x_admin_key: str | None, user_id: str | None, sig_ok: bool) -> None:
     """Officer war-room gate: the ADMIN_API_KEY (dashboard) OR an allowlisted
-    SwiftChat user_id (the separate officer bot)."""
+    SwiftChat user_id WITH a verified webhook signature (the officer bot). The
+    allowlist alone is not enough — a raw user_id is spoofable, so it must be
+    signed. If no webhook secret is configured, only the admin key works."""
     if x_admin_key == settings.ADMIN_API_KEY:
         return
-    if user_id and user_id in settings.OFFICER_IDS:
+    if sig_ok and user_id and user_id in settings.OFFICER_IDS:
         return
     raise HTTPException(status_code=403, detail="officer access required")
 
@@ -405,9 +471,14 @@ async def _officer_stream(body: dict) -> AsyncIterator[dict]:
 async def officer_messages(request: Request,
                            x_api_key: str | None = Header(default=None),
                            x_admin_key: str | None = Header(default=None)):
-    body = await request.json()
-    # Accept the admin key via X-Admin-Key (dashboard) or X-API-Key (bot).
-    _require_officer(x_admin_key or x_api_key, body.get("user_id"))
+    raw = await request.body()
+    sig_ok = _sig_valid(raw, request.headers.get(settings.WEBHOOK_SIG_HEADER))
+    body = json.loads(raw or b"{}")
+    # Admin key (dashboard) via X-Admin-Key/X-API-Key, or a SIGNED officer-bot
+    # request whose user_id is allowlisted.
+    _require_officer(x_admin_key or x_api_key, body.get("user_id"), sig_ok)
+    if _rate_limited(f"officer:{body.get('user_id') or (request.client.host if request.client else '?')}"):
+        raise HTTPException(status_code=429, detail="rate limit exceeded")
     return EventSourceResponse(_officer_stream(body))
 
 
@@ -442,7 +513,7 @@ async def api_voice_token(request: Request, x_api_key: str | None = Header(defau
         )
         await lkapi.aclose()
     except Exception as e:
-        print(f"[voice] dispatch failed (returning token anyway): {e}", flush=True)
+        log.warning("voice dispatch failed (returning token anyway): %s", e)
     return {"url": settings.LIVEKIT_URL, "token": token, "room": room}
 
 
@@ -465,4 +536,7 @@ async def messages(request: Request, x_api_key: str | None = Header(default=None
     if x_api_key != settings.INTERNAL_API_KEY:
         raise HTTPException(status_code=401, detail="bad api key")
     body = await request.json()
+    key = body.get("user_id") or (request.client.host if request.client else "?")
+    if _rate_limited(f"msg:{key}"):
+        raise HTTPException(status_code=429, detail="rate limit exceeded")
     return EventSourceResponse(_stream_turn(body))

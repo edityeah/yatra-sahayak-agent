@@ -85,6 +85,20 @@ def test_wallet_lists_all_passes_for_a_user(client):
     persistence.reset()
 
 
+def test_rate_limit_returns_429(client, monkeypatch):
+    import webhook
+    monkeypatch.setattr(webhook.settings, "RATE_LIMIT_PER_MIN", 2)
+    webhook._RL.clear()
+    def post():
+        return client.post("/messages", headers={"X-API-Key": "local-dev-key"},
+                           json={"user_id": "rl-user", "conversation_id": "rl",
+                                 "message": {"content": [{"type": "text", "text": {"value": "hi"}}]}})
+    assert post().status_code == 200
+    assert post().status_code == 200
+    assert post().status_code == 429          # third within the window is blocked
+    webhook._RL.clear()
+
+
 def test_reply_language_returns_none_for_ambiguous_input():
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
