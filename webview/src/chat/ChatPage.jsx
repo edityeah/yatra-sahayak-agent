@@ -73,7 +73,20 @@ function renderInline(line, keyPrefix) {
   return out;
 }
 
-function MessageBubble({ m, waitingFirstDelta, language }) {
+// Tappable quick-reply chips the agent can attach to a message:
+//   [[choices:Label::value||Label::value]]
+const CHOICES_RE = /\[\[choices:(.*?)\]\]/;
+function parseChoices(text) {
+  const hit = String(text || "").match(CHOICES_RE);
+  if (!hit) return { text, choices: [] };
+  const choices = hit[1].split("||").map((c) => {
+    const [label, value] = c.split("::");
+    return { label: (label || "").trim(), value: (value || label || "").trim() };
+  }).filter((c) => c.label);
+  return { text: String(text).replace(CHOICES_RE, "").trim(), choices };
+}
+
+function MessageBubble({ m, waitingFirstDelta, language, onChoice }) {
   if (m.role === "user") {
     return (
       <div className="flex justify-end">
@@ -83,7 +96,8 @@ function MessageBubble({ m, waitingFirstDelta, language }) {
       </div>
     );
   }
-  const isTyping = m.text === "" && waitingFirstDelta;
+  const { text: cleanText, choices } = parseChoices(m.text);
+  const isTyping = cleanText === "" && waitingFirstDelta && choices.length === 0;
   return (
     <div className="flex gap-2.5">
       <div className="w-8 h-8 rounded-full bg-primary-100 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -94,9 +108,19 @@ function MessageBubble({ m, waitingFirstDelta, language }) {
           {isTyping ? (
             <span className="text-[13px] text-muted italic">{t(TYPING, language)}</span>
           ) : (
-            <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{renderMarkdown(m.text)}</p>
+            <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{renderMarkdown(cleanText)}</p>
           )}
         </div>
+        {choices.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {choices.map((c, i) => (
+              <button key={i} onClick={() => onChoice?.(c.value)}
+                className="inline-flex items-center h-9 px-4 rounded-full bg-primary-50 border border-primary/30 text-primary text-[13px] font-bold hover:bg-primary-100 transition">
+                {c.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -247,12 +271,20 @@ export default function ChatPage() {
   }
 
   const isEmpty = messages.length === 0 && streamText === null;
+  const subtitle = yatra
+    ? t(YATRA_NAMES[yatra], language)
+    : t({ mr: "यात्रा निवडा", hi: "यात्रा चुनें", en: "Select your yatra" }, language);
+
+  // A tapped quick-reply chip: if it's a yatra pick, remember it locally too.
+  const onChoice = (value) => {
+    if (value === "pandharpur" || value === "kumbh") setYatra(value);
+    send(value);
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden font-sans bg-surface text-ink">
       <Header
-        yatra={yatra}
-        onYatraChange={setYatra}
+        subtitle={subtitle}
         onMenu={() => setThreadsOpen(true)}
         onCall={() => navigate("/voice")}
       />
@@ -264,7 +296,7 @@ export default function ChatPage() {
           ) : (
             <div className="pt-2 space-y-3">
               {messages.map((m, i) => (
-                <MessageBubble key={i} m={m} waitingFirstDelta={false} language={language} />
+                <MessageBubble key={i} m={m} waitingFirstDelta={false} language={language} onChoice={onChoice} />
               ))}
               {streamText !== null && (
                 <MessageBubble
@@ -272,6 +304,7 @@ export default function ChatPage() {
                   m={{ role: "bot", text: streamText }}
                   waitingFirstDelta={waitingFirstDelta}
                   language={language}
+                  onChoice={onChoice}
                 />
               )}
             </div>

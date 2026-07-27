@@ -44,6 +44,7 @@ class YatraState(TypedDict, total=False):
     # ── Selections ──────────────────────────────────────────────────
     language: Lang | None           # None until the user picks one
     active_yatra: Yatra | None      # None until the user picks one
+    just_selected_yatra: bool       # true on the turn the user picks a yatra (→ confirm + end)
 
     # ── Intent ──────────────────────────────────────────────────────
     intent: Intent

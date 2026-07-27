@@ -41,7 +41,11 @@ def _after_language(state: YatraState):
 
 
 def _after_yatra(state: YatraState):
-    return END if state.get("active_yatra") is None else "intent_router"
+    if state.get("active_yatra") is None:
+        return END
+    if state.get("just_selected_yatra"):   # bare pick → confirmation already sent
+        return END
+    return "intent_router"
 
 
 def _after_router(state: YatraState):

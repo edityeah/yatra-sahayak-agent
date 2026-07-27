@@ -45,6 +45,7 @@ export function LangProvider({ children }) {
 
   // Active yatra — user-controlled + persisted (a header switcher sets it),
   // so it's an explicit choice, not a silent Pandharpur default.
+  // Null until the user picks a yatra IN THE CHAT — never a silent default.
   const [yatra, setYatraState] = useState(() => {
     const fromUrl = searchParams.get("yatra");
     if (YATRAS.includes(fromUrl)) return fromUrl;
@@ -52,7 +53,7 @@ export function LangProvider({ children }) {
       const saved = localStorage.getItem(LS_YATRA);
       if (YATRAS.includes(saved)) return saved;
     } catch (e) { /* ignore */ }
-    return ctx.yatra;
+    return null;
   });
 
   const setYatra = useCallback(
