@@ -26,6 +26,7 @@ export const strings = {
   map: { mr: "मार्ग व मार्गदर्शक", hi: "मार्ग व गाइड", en: "Route & Guide" },
   logistics: { mr: "सुविधा", hi: "सुविधाएं", en: "Logistics" },
   transport: { mr: "वाहतूक नियोजन", hi: "परिवहन प्लानर", en: "Transport planner" },
+  routeWeather: { mr: "मार्ग हवामान", hi: "मार्ग मौसम", en: "Route weather" },
   drills: { mr: "सराव", hi: "अभ्यास", en: "Drills" },
   advisories: { mr: "सूचना", hi: "सूचनाएं", en: "Advisories" },
   loading: { mr: "लोड होत आहे…", hi: "लोड हो रहा है…", en: "Loading…" },

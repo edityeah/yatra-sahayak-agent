@@ -13,9 +13,9 @@ export const QUICK_ACTIVITIES = [
   {
     id: "weather",
     icon: "🌦️",
-    label: { mr: "हवामान", hi: "मौसम", en: "Weather" },
-    tagline: { mr: "मार्गावरील हवामान अंदाज", hi: "मार्ग का मौसम", en: "Forecast on the route" },
-    action: { type: "send", text: "what is the weather on the route today?" },
+    label: { mr: "मार्ग हवामान", hi: "मार्ग मौसम", en: "Route weather" },
+    tagline: { mr: "तुमच्या मार्गावरील हवामान", hi: "आपके मार्ग का मौसम", en: "Weather along your route" },
+    action: { type: "route", href: "/yatri/weather" },
   },
   {
     id: "rates",
