@@ -24,6 +24,9 @@ import {
 } from "../store/threads.js";
 
 const TYPING = { mr: "टाइप करत आहे…", hi: "टाइप कर रहा है…", en: "typing…" };
+const LOC_SHARED = { mr: "📍 स्थान शेअर केले", hi: "📍 स्थान साझा किया", en: "📍 Location shared" };
+const LOC_DENIED = { mr: "स्थान मिळाले नाही. कृपया शहर टाइप करा.", hi: "स्थान नहीं मिला। कृपया शहर टाइप करें।", en: "Couldn't get your location. Please type a city instead." };
+const LOC_UNSUPPORTED = { mr: "या डिव्हाइसवर स्थान उपलब्ध नाही. शहर टाइप करा.", hi: "इस डिवाइस पर स्थान उपलब्ध नहीं। शहर टाइप करें।", en: "Location isn't available here. Please type a city instead." };
 
 // Very small markdown-ish renderer: **bold**, [label](url), bare URLs,
 // tel: links, and line breaks. Returns an array of React nodes.
@@ -233,6 +236,43 @@ export default function ChatPage() {
     [activeId, busy, ctx.user_id, language, setLanguage]
   );
 
+  // Share the device location natively IN THE CHAT: geolocate, drop a user
+  // bubble, and POST a location message (same shape SwiftChat sends) so the
+  // agent streams the route-weather card inline — no webview, no separate page.
+  const sendLocation = useCallback(() => {
+    if (busy) return;
+    setError(null);
+    if (!navigator.geolocation) { setError(t(LOC_UNSUPPORTED, language)); return; }
+
+    let id = activeId;
+    if (!id) { const th = createThread({}); id = th.id; setActiveId(id); }
+
+    setBusy(true);
+    setWaitingFirstDelta(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        appendMessage(id, { role: "user", text: t(LOC_SHARED, language) });
+        setThreads(loadThreads());
+        setStreamText("");
+        try {
+          const full = await streamChat(
+            { user_id: ctx.user_id, conversation_id: id, location, language, yatra },
+            (chunk) => { setWaitingFirstDelta(false); setStreamText((prev) => (prev || "") + chunk); }
+          );
+          appendMessage(id, { role: "bot", text: full });
+          setThreads(loadThreads());
+        } catch (e) {
+          setError(e?.message || String(e));
+        } finally {
+          setBusy(false); setWaitingFirstDelta(false); setStreamText(null);
+        }
+      },
+      () => { setBusy(false); setWaitingFirstDelta(false); setError(t(LOC_DENIED, language)); },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  }, [activeId, busy, ctx.user_id, language, yatra]);
+
   // Consume a ?q=<text> deep link (handoff from the full-page Quick
   // Activities view) once, then strip it from the URL.
   useEffect(() => {
@@ -330,6 +370,10 @@ export default function ChatPage() {
       <PersistentMenuDrawer
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
+        onShareLocation={() => {
+          setMenuOpen(false);
+          sendLocation();
+        }}
         onQuickActivities={() => {
           setMenuOpen(false);
           navigate("/quick-activities");

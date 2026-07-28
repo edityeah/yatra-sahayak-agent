@@ -1,7 +1,8 @@
-import { Camera, Image as ImageIcon, FileText, Sparkles, X } from "lucide-react";
+import { MapPin, Camera, Image as ImageIcon, FileText, Sparkles, X } from "lucide-react";
 import { useLang } from "../AppShell.jsx";
 import { t } from "../../lib/i18n.js";
 
+const LOCATION = { mr: "स्थान शेअर करा", hi: "स्थान साझा करें", en: "Share location" };
 const CAMERA = { mr: "कॅमेरा", hi: "कैमरा", en: "Camera" };
 const GALLERY = { mr: "गॅलरी", hi: "गैलरी", en: "Gallery" };
 const DOCUMENT = { mr: "दस्तऐवज", hi: "दस्तावेज़", en: "Document" };
@@ -13,11 +14,12 @@ const NEW_BADGE = { mr: "नवीन", hi: "नया", en: "New" };
 // Pravasi Setu persistent menu (Camera / Gallery / Document / Quick
 // Activities). Camera/Gallery/Document are stubs; Quick Activities routes
 // to the full-page grid.
-export default function PersistentMenuDrawer({ open, onClose, onQuickActivities }) {
+export default function PersistentMenuDrawer({ open, onClose, onShareLocation, onQuickActivities }) {
   const { language } = useLang();
   if (!open) return null;
 
   const items = [
+    { icon: MapPin, label: LOCATION, onClick: onShareLocation },
     { icon: Camera, label: CAMERA, onClick: () => window.alert(t(COMING_SOON, language)) },
     { icon: ImageIcon, label: GALLERY, onClick: () => window.alert(t(COMING_SOON, language)) },
     { icon: FileText, label: DOCUMENT, onClick: () => window.alert(t(COMING_SOON, language)) },

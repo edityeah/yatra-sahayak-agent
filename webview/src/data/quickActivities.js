@@ -15,7 +15,9 @@ export const QUICK_ACTIVITIES = [
     icon: "🌦️",
     label: { mr: "मार्ग हवामान", hi: "मार्ग मौसम", en: "Route weather" },
     tagline: { mr: "तुमच्या मार्गावरील हवामान", hi: "आपके मार्ग का मौसम", en: "Weather along your route" },
-    action: { type: "route", href: "/yatri/weather" },
+    // In-chat: starts the weather flow in the conversation (asks for a shared
+    // location or a starting city) — no separate webview page.
+    action: { type: "send", text: "weather on the route" },
   },
   {
     id: "rates",

@@ -21,18 +21,24 @@ export async function apiPost(path, body) {
 
 // Stream a chat turn from the agent's /messages SSE endpoint (POST). Calls
 // onDelta(textChunk) as text arrives. Returns the full reply string.
-export async function streamChat({ user_id, conversation_id, text, language, yatra }, onDelta) {
+export async function streamChat({ user_id, conversation_id, text, location, language, yatra }, onDelta) {
   // Pass the known language so the agent replies in it. The YATRA is
   // deliberately NOT defaulted — it's selected in the chat itself, so when the
   // user hasn't picked one yet we send nothing and the agent asks.
   const ctx = getContext();
   language = language || ctx.language;
+  // A shared location is sent as a native "location" content block — the same
+  // shape SwiftChat's own location message uses — so the agent handles it
+  // identically whether it came from SwiftChat's attachment or our composer.
+  const content = location
+    ? [{ type: "location", location: { latitude: location.lat, longitude: location.lng } }]
+    : [{ type: "text", text: { value: text } }];
   const resp = await fetch(`${BASE}/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-API-Key": KEY },
     body: JSON.stringify({
       user_id, conversation_id, language, yatra,
-      message: { content: [{ type: "text", text: { value: text } }] },
+      message: { content },
     }),
   });
   const reader = resp.body.getReader();
