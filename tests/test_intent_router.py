@@ -67,6 +67,17 @@ def test_router_never_emits_empty_reply_when_llm_down(monkeypatch):
     assert "weather" in replies[-1].lower()
 
 
+def test_router_routes_shared_location_to_weather(monkeypatch):
+    # A location shared in chat with NO text and no pending ask still routes to
+    # weather (a shared pin is only meaningful to route weather today).
+    monkeypatch.setattr(ir, "get_main_llm", lambda: _RaisingLLM())
+    s = new_state("c", "u"); s["language"] = "en"; s["active_yatra"] = "pandharpur"
+    s["shared_location"] = {"lat": 19.076, "lng": 72.877}
+    s["messages"] = [HumanMessage(content="")]
+    out = asyncio.run(intent_router(s))
+    assert out["intent"] == "weather"
+
+
 def test_router_keyword_fallback_menu_is_trilingual(monkeypatch):
     monkeypatch.setattr(ir, "get_main_llm", lambda: _RaisingLLM())
     for lang in ("mr", "hi", "en"):

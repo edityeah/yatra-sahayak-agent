@@ -121,6 +121,12 @@ async def intent_router(state: YatraState) -> YatraState:
     if state.get("reg_stage") and state.get("reg_stage") != "done":
         return {**state, "current_node": "intent_router", "intent": "registration"}  # type: ignore[typeddict-item]
 
+    # A location shared natively in chat is, today, only meaningful to weather
+    # (route weather from that origin). Route it there whether or not we were
+    # explicitly awaiting an origin — a shared pin is an unambiguous signal.
+    if state.get("shared_location"):
+        return {**state, "current_node": "intent_router", "intent": "weather"}  # type: ignore[typeddict-item]
+
     # Sticky: the weather node asked for an origin. Capture the follow-up ONLY
     # when it actually looks like an origin (a location shared in chat, or a
     # bare city name/number). Anything else means the pilgrim changed topic, so
