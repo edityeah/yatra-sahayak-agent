@@ -7,15 +7,37 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
 
-  # Agent (Python) dependencies.
+  # Agent (Python) dependencies. Ignore major bumps for routine version
+  # updates — majors are breaking and should be done deliberately, not
+  # auto-PR'd. Security fixes still come through regardless of this ignore.
   - package-ecosystem: "pip"
     directory: "/agent"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
-  # Webview (npm) dependencies.
+  # Webview (npm) dependencies. Same policy: minor/patch only for routine
+  # updates (grouped into one PR), majors excluded. React 19 / Vite 8 are
+  # breaking upgrades we take on purpose, not via an auto-PR that fails the
+  # preview build. Security updates are unaffected by the major-ignore.
   - package-ecosystem: "npm"
     directory: "/webview"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
