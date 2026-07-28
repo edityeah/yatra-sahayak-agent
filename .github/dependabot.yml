@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Keep the SHA-pinned GitHub Actions current (Dependabot rewrites the pin +
+  # the version comment), so pinning for security doesn't leave us on stale,
+  # unpatched action code.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Agent (Python) dependencies.
+  - package-ecosystem: "pip"
+    directory: "/agent"
+    schedule:
+      interval: "weekly"
+
+  # Webview (npm) dependencies.
+  - package-ecosystem: "npm"
+    directory: "/webview"
+    schedule:
+      interval: "weekly"
