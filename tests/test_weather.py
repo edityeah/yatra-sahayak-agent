@@ -4,6 +4,7 @@ from langchain_core.messages import HumanMessage
 from agent.state import new_state
 from agent import weather_client
 from agent.nodes.activities.weather import weather
+from agent.nodes.yatra_context import yatra_context
 
 
 def test_wmo_bucket_mapping():
@@ -28,14 +29,20 @@ def test_bogus_imd_url_falls_back_to_cached(monkeypatch):
     assert f["source"] == "cached" and f["summary"]
 
 
-def test_weather_node_prompts_for_location_when_no_origin():
-    # "weather?" with no origin → ask where they're starting from, with chips.
+def test_weather_node_asks_in_chat_no_webview_no_choices():
+    # No origin → ask IN CHAT to share a location or pick a city. No webview
+    # link, no simulated [[choices:]] chips. Sets the sticky awaiting flag.
     s = new_state("s", "u"); s["language"] = "en"; s["active_yatra"] = "pandharpur"
     s["messages"] = [HumanMessage(content="what is the weather?")]
     out = asyncio.run(weather(s))
     body = out["messages"][-1].content
     assert out["current_node"] == "weather"
-    assert "starting from" in body and "[[choices:" in body
+    assert out["awaiting"] == "weather_origin"
+    assert "starting from" in body
+    assert "Share your location" in body            # native location share
+    assert "Mumbai" in body and "Pune" in body       # cities listed as text
+    assert "[[choices:" not in body                  # no simulated buttons
+    assert "/yatri/weather" not in body              # no webview link
     assert "°C" not in body
 
 
@@ -50,3 +57,36 @@ def test_weather_node_renders_route_card_for_a_city():
     assert "Weather on your route" in body
     assert "Pune" in body and "Pandharpur" in body   # you-are-here + destination
     assert "Source:" in body
+    assert out["awaiting"] is None                    # origin satisfied → flag cleared
+
+
+def test_weather_node_renders_for_location_shared_in_chat():
+    # A location shared natively in chat (lat/lng) → route card, no city needed.
+    s = new_state("s", "u"); s["language"] = "en"; s["active_yatra"] = "pandharpur"
+    s["messages"] = [HumanMessage(content="")]         # location messages carry no text
+    s["shared_location"] = {"lat": 18.516, "lng": 73.856}   # Pune
+    out = asyncio.run(weather(s))
+    body = out["messages"][-1].content
+    assert "Weather on your route" in body and "Pandharpur" in body
+    assert out["awaiting"] is None
+
+
+def test_weather_node_accepts_city_picked_by_number():
+    # The ask lists cities 1..6; replying "2" picks Pune.
+    s = new_state("s", "u"); s["language"] = "en"; s["active_yatra"] = "pandharpur"
+    s["awaiting"] = "weather_origin"
+    s["messages"] = [HumanMessage(content="2")]
+    out = asyncio.run(weather(s))
+    body = out["messages"][-1].content
+    assert "Pune" in body and "Weather on your route" in body
+
+
+def test_origin_city_nashik_does_not_flip_the_yatra():
+    # "Nashik" is a starting city AND the Kumbh location. When it's the answer
+    # to a weather origin-ask on Pandharpur, it must NOT switch the yatra.
+    s = new_state("s", "u"); s["language"] = "en"; s["active_yatra"] = "pandharpur"
+    s["awaiting"] = "weather_origin"
+    s["messages"] = [HumanMessage(content="Nashik")]
+    out = asyncio.run(yatra_context(s))
+    assert out["active_yatra"] == "pandharpur"          # not flipped to kumbh
+    assert not out.get("just_selected_yatra")           # no yatra-confirm turn

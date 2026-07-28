@@ -116,8 +116,12 @@ async def get_session(conversation_id: str) -> dict:
     return data
 
 
+_UNSET = object()  # sentinel: distinguishes "don't touch" from "set to None"
+
+
 async def save_session(conversation_id: str, *, messages: list | None = None, reg_stage: str | None = None,
-                       reg_fields: dict | None = None, reply_language: str | None = None) -> None:
+                       reg_fields: dict | None = None, reply_language: str | None = None,
+                       awaiting: str | None | object = _UNSET) -> None:
     """Partial upsert — only the provided fields are updated (read-modify-write)."""
     data = await _load_session_raw(conversation_id)
     if messages is not None:
@@ -128,6 +132,10 @@ async def save_session(conversation_id: str, *, messages: list | None = None, re
         data["reg_fields"] = reg_fields
     if reply_language is not None:
         data["reply_language"] = reply_language
+    # `awaiting` uses a sentinel so passing None explicitly CLEARS it (the
+    # weather origin-ask is satisfied), while omitting it leaves it untouched.
+    if awaiting is not _UNSET:
+        data["awaiting"] = awaiting
     pool = await _pool()
     if pool:
         async with pool.connection() as conn:

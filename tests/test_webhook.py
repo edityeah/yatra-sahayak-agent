@@ -1,9 +1,39 @@
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "agent"))
+import webhook
+
+
 def test_health_ok(client):
     r = client.get("/health")
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
     assert body["service"] == "yatra-sahayak-agent"
+
+
+def test_extract_location_handles_multiple_swiftchat_shapes():
+    # We don't hardcode one envelope path — a location can arrive as a content
+    # block, an attachment, or a nested object. All must yield (lat, lng).
+    pune = (18.516, 73.856)
+    shapes = [
+        {"content": [{"type": "location", "location": {"latitude": 18.516, "longitude": 73.856}}]},
+        {"content": [{"type": "location", "latitude": 18.516, "longitude": 73.856}]},
+        {"content": [{"type": "text", "text": {"value": "here"}}],
+         "attachments": [{"type": "location", "payload": {"lat": 18.516, "lng": 73.856}}]},
+        {"metadata": {"geo": {"lat": 18.516, "lon": 73.856}}},
+    ]
+    for shp in shapes:
+        got = webhook._extract_location(shp)
+        assert got is not None
+        assert round(got[0], 3) == pune[0] and round(got[1], 3) == pune[1]
+
+
+def test_extract_location_rejects_non_india_and_text_only():
+    # A text-only message has no coordinate.
+    assert webhook._extract_location({"content": [{"type": "text", "text": {"value": "hi"}}]}) is None
+    # Coordinates outside the India bounding box are ignored (stray numbers).
+    assert webhook._extract_location(
+        {"content": [{"type": "location", "latitude": 51.5, "longitude": -0.12}]}) is None
 
 
 def test_messages_requires_api_key(client):

@@ -316,6 +316,77 @@ def _extract_user_text(message: dict) -> str:
     return ""
 
 
+# India bounding box — sanity filter so we never treat a stray number pair as a
+# coordinate. (lat 6°–38° N, lng 68°–98° E covers the whole country generously.)
+_IN_LAT = (6.0, 38.0)
+_IN_LNG = (68.0, 98.0)
+
+
+def _coord_pair(d: dict):
+    """Return (lat, lng) if this dict holds a plausible India coordinate, else None.
+    Accepts the common spellings SwiftChat / WhatsApp-style payloads use."""
+    lat = d.get("latitude", d.get("lat"))
+    lng = d.get("longitude", d.get("lng", d.get("lon", d.get("long"))))
+    try:
+        lat, lng = float(lat), float(lng)
+    except (TypeError, ValueError):
+        return None
+    if _IN_LAT[0] <= lat <= _IN_LAT[1] and _IN_LNG[0] <= lng <= _IN_LNG[1]:
+        return (lat, lng)
+    return None
+
+
+def _extract_location(message: dict):
+    """Find a location shared natively in chat, wherever SwiftChat puts it.
+
+    The exact envelope shape for a SwiftChat location message isn't formally
+    documented, so instead of hardcoding one path we walk the whole message
+    (content blocks, attachments, metadata, nested objects) and return the
+    first plausible India coordinate. Returns (lat, lng) or None.
+    """
+    seen = 0
+
+    def walk(node):
+        nonlocal seen
+        seen += 1
+        if seen > 5000:            # cheap guard against pathological payloads
+            return None
+        if isinstance(node, dict):
+            hit = _coord_pair(node)
+            if hit:
+                return hit
+            for v in node.values():
+                r = walk(v)
+                if r:
+                    return r
+        elif isinstance(node, list):
+            for v in node:
+                r = walk(v)
+                if r:
+                    return r
+        return None
+
+    return walk(message)
+
+
+def _probe_location_envelope(message: dict) -> None:
+    """One-time diagnostic: if a message carries a non-text block or an
+    attachment but we could NOT parse a coordinate from it, log the raw
+    envelope so the exact SwiftChat location shape can be pinned from a real
+    device. PII-safe: the structured logger redacts before emit."""
+    has_attachments = bool(message.get("attachments"))
+    has_nontext = any(
+        isinstance(b, dict) and b.get("type") not in ("text", None)
+        for b in (message.get("content") or [])
+    )
+    if (has_attachments or has_nontext) and _extract_location(message) is None:
+        try:
+            log.info("location-probe: unparsed envelope %s",
+                        json.dumps(message, ensure_ascii=False)[:2000])
+        except Exception:
+            log.info("location-probe: non-json message present")
+
+
 def _rebuild_messages(history: list[dict], user_text: str) -> list:
     """Rebuild LangChain messages from SwiftChat's prior-turn history plus
     the new user turn. history items: {role, text}. For the POC the caller
@@ -333,11 +404,20 @@ def _rebuild_messages(history: list[dict], user_text: str) -> list:
 async def _stream_turn(body: dict) -> AsyncIterator[dict]:
     user_id = body.get("user_id", "anon")
     conv_id = body.get("conversation_id", "conv")
-    user_text = _extract_user_text(body.get("message", {}))
+    msg = body.get("message", {})
+    user_text = _extract_user_text(msg)
     history = body.get("history", [])
+
+    # Native location shared in chat (SwiftChat location message). Extracted
+    # here so any activity (weather today, more later) can use it; the probe
+    # logs the raw envelope if something location-like arrived but didn't parse.
+    loc = _extract_location(msg) if isinstance(msg, dict) else None
+    _probe_location_envelope(msg if isinstance(msg, dict) else {})
 
     state = new_state(session_id=conv_id, user_id=user_id)
     state["context_from_webview"] = body.get("context_from_webview")
+    if loc:
+        state["shared_location"] = {"lat": loc[0], "lng": loc[1]}
 
     # Restore this conversation's transcript from durable session storage
     # (Postgres when enabled, in-memory otherwise). SwiftChat doesn't resend
@@ -358,6 +438,10 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
         state["reg_stage"] = sess["reg_stage"]
     if sess.get("reg_fields"):
         state["reg_fields"] = sess["reg_fields"]
+    # Sticky "waiting for something" flag (e.g. the weather node asked for an
+    # origin) so a location message or a bare city name routes back correctly.
+    if sess.get("awaiting"):
+        state["awaiting"] = sess["awaiting"]
     ustate = await persistence.get_user_state(user_id)
     if ustate.get("active_yatra"):
         state["active_yatra"] = ustate["active_yatra"]
@@ -397,6 +481,7 @@ async def _stream_turn(body: dict) -> AsyncIterator[dict]:
         reg_stage=result.get("reg_stage"),
         reg_fields=result.get("reg_fields"),
         reply_language=reply_language or result.get("language"),
+        awaiting=result.get("awaiting"),   # None clears it once origin is satisfied
     )
     # Persist the SELECTED language (switcher/ask-flow result), not the
     # per-message detected reply language, so the user's preference is stable.

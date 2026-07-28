@@ -75,8 +75,14 @@ async def yatra_context(state: YatraState) -> YatraState:
     last_text = str(last_user.content) if last_user else ""
 
     reg_active = bool(state.get("reg_stage")) and state.get("reg_stage") != "done"
+    # When the weather node is waiting for an ORIGIN and a yatra is already set,
+    # a city name in the reply ("Nashik", "Pune") is the answer to that question
+    # — NOT a yatra switch. Suppress yatra re-detection for this turn so
+    # "Nashik" doesn't flip Pandharpur → Kumbh before routing reaches weather.
+    origin_answer = state.get("awaiting") == "weather_origin" and bool(state.get("active_yatra"))
 
-    # "change yatra" → clear the selection and re-ask.
+    # "change yatra" → clear the selection and re-ask. (An explicit "change
+    # yatra" still works even mid origin-ask.)
     if _CHANGE_RE.search(last_text) and not reg_active:
         return {
             **state, "current_node": "yatra_context", "active_yatra": None,
@@ -87,7 +93,7 @@ async def yatra_context(state: YatraState) -> YatraState:
     # registration intake is active, where a yatra-shaped word in an answer
     # (e.g. a Dindi/group name like "Alandi ... Dindi") must not flip the yatra.
     mentioned = detect_yatra(last_text)
-    if mentioned and not reg_active:
+    if mentioned and not reg_active and not origin_answer:
         # A bare pick (chip tap / one-word answer) → confirm and end the turn so
         # the model doesn't try to route the yatra name itself.
         if _is_bare_selection(last_text):

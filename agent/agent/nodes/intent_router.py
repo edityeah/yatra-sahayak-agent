@@ -121,6 +121,23 @@ async def intent_router(state: YatraState) -> YatraState:
     if state.get("reg_stage") and state.get("reg_stage") != "done":
         return {**state, "current_node": "intent_router", "intent": "registration"}  # type: ignore[typeddict-item]
 
+    # Sticky: the weather node asked for an origin. Capture the follow-up ONLY
+    # when it actually looks like an origin (a location shared in chat, or a
+    # bare city name/number). Anything else means the pilgrim changed topic, so
+    # release the flag and fall through to normal routing instead of trapping
+    # them on the weather ask.
+    if state.get("awaiting") == "weather_origin":
+        from agent import route_weather as rw
+        txt = _last_user_text(messages).strip()
+        looks_like_origin = (
+            bool(state.get("shared_location"))
+            or (txt.isdigit() and 1 <= int(txt) <= 6)
+            or rw.resolve_city(txt) is not None
+        )
+        if looks_like_origin:
+            return {**state, "current_node": "intent_router", "intent": "weather"}  # type: ignore[typeddict-item]
+        state = {**state, "awaiting": None}  # topic changed — drop the flag, route normally
+
     try:
         result = await get_main_llm().with_structured_output(RouteDecision).ainvoke([
             SystemMessage(content=_system(lang, yatra)),

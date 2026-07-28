@@ -56,6 +56,17 @@ class YatraState(TypedDict, total=False):
     reg_stage: str | None      # None | name | phone | group | emergency | medical | confirm | done
     reg_fields: dict           # collected fields so far
 
+    # ── Multi-turn "waiting for something" flag (sticky, persisted) ────
+    # e.g. "weather_origin" — the weather node asked the user to share a
+    # location or name a city, so the NEXT turn (a location message or a
+    # bare city name/number) must route back to weather.
+    awaiting: str | None
+
+    # ── Native location shared IN CHAT this turn (transient, per-turn) ─
+    # {"lat": float, "lng": float} extracted from SwiftChat's location
+    # message by the webhook. None on text-only turns.
+    shared_location: dict[str, Any] | None
+
 
 def new_state(session_id: str, user_id: str) -> YatraState:
     return {
@@ -72,4 +83,6 @@ def new_state(session_id: str, user_id: str) -> YatraState:
         "context_from_webview": None,
         "reg_stage": None,
         "reg_fields": {},
+        "awaiting": None,
+        "shared_location": None,
     }
