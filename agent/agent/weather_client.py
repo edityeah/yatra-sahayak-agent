@@ -61,8 +61,7 @@ def _cached(yatra: str) -> dict:
     }
 
 
-async def _open_meteo(yatra: str) -> dict:
-    lat, lon = _COORDS.get(yatra, _COORDS["pandharpur"])
+async def _open_meteo_at(lat: float, lon: float) -> dict:
     url = (
         "https://api.open-meteo.com/v1/forecast"
         f"?latitude={lat}&longitude={lon}"
@@ -75,15 +74,42 @@ async def _open_meteo(yatra: str) -> dict:
         data = resp.json()
     cur = data.get("current") or {}
     temp = cur.get("temperature_2m")
+    code = cur.get("weather_code")
     daily = data.get("daily") or {}
     probs = daily.get("precipitation_probability_max") or []
     rainy = bool(probs) and isinstance(probs[0], (int, float)) and probs[0] >= 50
+    bucket = _bucket(code)
+    rain = rainy or bucket in ("rain", "thunder")
     return {
-        "summary": _WMO[_bucket(cur.get("weather_code"))],
+        "summary": _WMO[bucket],
         "temp_c": round(temp) if isinstance(temp, (int, float)) else None,
-        "rain_alert": _RAIN_ALERT if rainy else None,
+        "code": code,
+        "rain": rain,
+        "rain_alert": _RAIN_ALERT if rain else None,
         "source": "live",
     }
+
+
+async def _open_meteo(yatra: str) -> dict:
+    lat, lon = _COORDS.get(yatra, _COORDS["pandharpur"])
+    return await _open_meteo_at(lat, lon)
+
+
+async def get_forecast_at(lat: float, lon: float) -> dict:
+    """Live forecast for explicit coordinates (route-weather). Never raises —
+    degrades to a neutral 'mixed' entry so one bad point doesn't kill the route."""
+    try:
+        return await _open_meteo_at(lat, lon)
+    except Exception as e:
+        print(f"[weather] point call failed ({e!r})", flush=True)
+        return {"summary": _WMO["mixed"], "temp_c": None, "code": None,
+                "rain": False, "rain_alert": None, "source": "cached"}
+
+
+async def get_forecasts(coords: list[tuple[float, float]]) -> list[dict]:
+    """Parallel forecasts for a list of (lat, lon) points."""
+    import asyncio
+    return await asyncio.gather(*[get_forecast_at(la, lo) for (la, lo) in coords])
 
 
 async def get_forecast(yatra: str) -> dict:

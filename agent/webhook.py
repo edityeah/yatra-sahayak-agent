@@ -219,6 +219,32 @@ async def api_yatra_kind(yatra: str, kind: str, x_api_key: str | None = Header(d
     return data
 
 
+@app.post("/api/route-weather")
+async def api_route_weather(request: Request, x_api_key: str | None = Header(default=None)):
+    """Live weather at the named halts along the route from an origin (lat/lng or
+    a known city) to the yatra destination."""
+    _require_key(x_api_key)
+    from agent import route_weather as rw
+    b = await request.json()
+    yatra = b.get("yatra") if b.get("yatra") in ("pandharpur", "kumbh") else "pandharpur"
+    o = b.get("origin") or {}
+    if o.get("lat") is not None and o.get("lng") is not None:
+        try:
+            olat, olng = float(o["lat"]), float(o["lng"])
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="bad origin coordinates")
+        oname = b.get("origin_name")
+    elif b.get("city"):
+        c = rw.resolve_city(b["city"])
+        if not c:
+            raise HTTPException(status_code=400, detail="unknown city")
+        olat, olng, oname = c["lat"], c["lng"], c["name"]
+    else:
+        raise HTTPException(status_code=400, detail="origin (lat/lng) or city required")
+    points = await rw.route_weather(olat, olng, yatra, oname)
+    return {"yatra": yatra, "points": points}
+
+
 @app.get("/api/pass/{yatra_id}")
 async def api_pass(yatra_id: str, x_api_key: str | None = Header(default=None)):
     _require_key(x_api_key)

@@ -14,6 +14,7 @@ export function useLang() {
 
 const LS_KEY = "ysahayak.lang";
 const LS_YATRA = "ysahayak.yatra";
+const LS_ORIGIN = "ysahayak.origin";
 const YATRAS = ["pandharpur", "kumbh"];
 
 export function LangProvider({ children }) {
@@ -68,9 +69,23 @@ export function LangProvider({ children }) {
     [searchParams, setSearchParams]
   );
 
+  // Shared origin (where the pilgrim is starting from) — set once (GPS or a city
+  // pick) and remembered, so route-weather doesn't re-prompt.
+  const [origin, setOriginState] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_ORIGIN) || "null");
+      if (saved && typeof saved.lat === "number" && typeof saved.lng === "number") return saved;
+    } catch (e) { /* ignore */ }
+    return null;
+  });
+  const setOrigin = useCallback((o) => {
+    setOriginState(o);
+    try { localStorage.setItem(LS_ORIGIN, JSON.stringify(o)); } catch (e) { /* ignore */ }
+  }, []);
+
   const value = useMemo(
-    () => ({ language, setLanguage, yatra, setYatra, user_id: ctx.user_id }),
-    [language, setLanguage, yatra, setYatra, ctx.user_id]
+    () => ({ language, setLanguage, yatra, setYatra, origin, setOrigin, user_id: ctx.user_id }),
+    [language, setLanguage, yatra, setYatra, origin, setOrigin, ctx.user_id]
   );
 
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
