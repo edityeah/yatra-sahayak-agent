@@ -8,8 +8,46 @@ weather at each point (origin + halts) via weather_client. Shared by the
 from __future__ import annotations
 import math
 
+import httpx
+
 from agent.seed import load
 from agent import weather_client
+
+# Reverse-geocode a shared pin to a human place name so the route card says
+# WHERE the pilgrim is ("Kothrud, Pune") instead of a generic "Your location".
+# OpenStreetMap Nominatim: free, no key. Never raises — falls back to the
+# generic label so a geocoder hiccup never breaks the weather reply.
+_NOMINATIM = "https://nominatim.openstreetmap.org/reverse"
+_YOU_FALLBACK = {"mr": "तुमचे स्थान", "hi": "आपका स्थान", "en": "Your location"}
+
+
+async def reverse_geocode(lat: float, lng: float) -> dict:
+    """Return a {mr,hi,en} place-name dict for a coordinate. A place name is a
+    proper noun, so the same string is used across languages. Falls back to the
+    trilingual 'Your location' label on any failure."""
+    try:
+        params = {"lat": lat, "lon": lng, "format": "jsonv2", "zoom": "14", "addressdetails": "1"}
+        headers = {"User-Agent": "maharashtra-yatra-sahayak/1.0 (pilgrim-safety)"}
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(_NOMINATIM, params=params, headers=headers)
+            resp.raise_for_status()
+            addr = (resp.json() or {}).get("address") or {}
+        # Prefer a "locality, city" style; fall back through the admin levels.
+        locality = addr.get("suburb") or addr.get("neighbourhood") or addr.get("village") or addr.get("town")
+        city = addr.get("city") or addr.get("town") or addr.get("county") or addr.get("state_district")
+        parts = [p for p in (locality, city) if p]
+        # De-dupe when locality == city; keep it short (max two parts).
+        seen, name_parts = set(), []
+        for p in parts:
+            if p not in seen:
+                seen.add(p)
+                name_parts.append(p)
+        name = ", ".join(name_parts[:2]) or addr.get("state") or ""
+        if not name:
+            return dict(_YOU_FALLBACK)
+        return {"mr": name, "hi": name, "en": name}
+    except Exception:
+        return dict(_YOU_FALLBACK)
 
 # Destination (final point) per yatra.
 _DEST = {

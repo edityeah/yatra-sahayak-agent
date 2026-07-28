@@ -60,15 +60,29 @@ def test_weather_node_renders_route_card_for_a_city():
     assert out["awaiting"] is None                    # origin satisfied → flag cleared
 
 
-def test_weather_node_renders_for_location_shared_in_chat():
+def test_weather_node_renders_for_location_shared_in_chat(monkeypatch):
     # A location shared natively in chat (lat/lng) → route card, no city needed.
+    # The origin is reverse-geocoded so the card NAMES the place (not "Your
+    # location"). Mocked so the test doesn't depend on the network geocoder.
+    import agent.route_weather as rw
+    async def fake_rev(lat, lng): return {"mr": "कोथरूड, पुणे", "hi": "कोथरूड, पुणे", "en": "Kothrud, Pune"}
+    monkeypatch.setattr(rw, "reverse_geocode", fake_rev)
     s = new_state("s", "u"); s["language"] = "en"; s["active_yatra"] = "pandharpur"
     s["messages"] = [HumanMessage(content="")]         # location messages carry no text
     s["shared_location"] = {"lat": 18.516, "lng": 73.856}   # Pune
     out = asyncio.run(weather(s))
     body = out["messages"][-1].content
     assert "Weather on your route" in body and "Pandharpur" in body
+    assert "Kothrud, Pune" in body                      # names WHERE they are
     assert out["awaiting"] is None
+
+
+def test_reverse_geocode_never_raises_on_network_failure(monkeypatch):
+    # An unreachable geocoder must degrade to the generic label, not error.
+    import agent.route_weather as rw
+    monkeypatch.setattr(rw, "_NOMINATIM", "http://127.0.0.1:9/nope")
+    out = asyncio.run(rw.reverse_geocode(18.516, 73.856))
+    assert out["en"] == "Your location"
 
 
 def test_weather_node_accepts_city_picked_by_number():

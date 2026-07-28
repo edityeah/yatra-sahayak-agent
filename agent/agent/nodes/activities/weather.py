@@ -101,10 +101,13 @@ async def weather(state: YatraState) -> YatraState:
     lang = state.get("language") or "en"
     yatra = state.get("active_yatra") or "pandharpur"
 
-    # 1) A location shared natively in chat this turn.
+    # 1) A location shared natively in chat this turn. Reverse-geocode it so the
+    # card names WHERE they are ("Kothrud, Pune"), not a generic "Your location".
     loc = state.get("shared_location")
     if loc and loc.get("lat") is not None and loc.get("lng") is not None:
-        return await _render(state, lang, yatra, float(loc["lat"]), float(loc["lng"]), _YOU)
+        lat, lng = float(loc["lat"]), float(loc["lng"])
+        name = await rw.reverse_geocode(lat, lng)
+        return await _render(state, lang, yatra, lat, lng, name)
 
     # 2) A city named or picked by number.
     city = _resolve_origin_from_text(_last_user(messages))

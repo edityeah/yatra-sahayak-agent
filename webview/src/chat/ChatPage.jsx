@@ -10,6 +10,7 @@ import Header from "../components/chat/Header.jsx";
 import EmptyState from "../components/chat/EmptyState.jsx";
 import QuickActivities from "../components/chat/QuickActivities.jsx";
 import Composer from "../components/chat/Composer.jsx";
+import LocationCard from "../components/chat/LocationCard.jsx";
 import PersistentMenuDrawer from "../components/chat/PersistentMenuDrawer.jsx";
 import ThreadsDrawer from "../components/chat/ThreadsDrawer.jsx";
 import { QUICK_ACTIVITIES } from "../data/quickActivities.js";
@@ -91,6 +92,15 @@ function parseChoices(text) {
 
 function MessageBubble({ m, waitingFirstDelta, language, onChoice }) {
   if (m.role === "user") {
+    // A shared location renders as a map card (like SwiftChat's native pin),
+    // not a text bubble.
+    if (m.kind === "location" && typeof m.lat === "number" && typeof m.lng === "number") {
+      return (
+        <div className="flex justify-end">
+          <LocationCard lat={m.lat} lng={m.lng} />
+        </div>
+      );
+    }
     return (
       <div className="flex justify-end">
         <div className="max-w-[80%] bg-user text-white rounded-2xl rounded-br-md px-4 py-2.5 shadow-card">
@@ -252,7 +262,7 @@ export default function ChatPage() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        appendMessage(id, { role: "user", text: t(LOC_SHARED, language) });
+        appendMessage(id, { role: "user", kind: "location", lat: location.lat, lng: location.lng, text: t(LOC_SHARED, language) });
         setThreads(loadThreads());
         setStreamText("");
         try {
