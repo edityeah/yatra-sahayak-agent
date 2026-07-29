@@ -36,6 +36,12 @@ const EMPTY_TEXT = {
   hi: "इस यात्रा के लिए जानकारी उपलब्ध नहीं है।",
   en: "No information is available for this yatra.",
 };
+const LOAD_FAILED = {
+  mr: "माहिती लोड करता आली नाही. सर्व्हर सुरू होत असावा — पुन्हा प्रयत्न करा.",
+  hi: "जानकारी लोड नहीं हो सकी। सर्वर शुरू हो रहा होगा — फिर से कोशिश करें।",
+  en: "Couldn't load the route info — the server may be waking up. Try again.",
+};
+const RETRY = { mr: "पुन्हा प्रयत्न करा", hi: "फिर से कोशिश करें", en: "Retry" };
 // Quick prompts that hop back to the chat (the webview → SwiftChat bridge).
 const PROMPTS = [
   { mr: "आजचा टप्पा नियोजित करा", hi: "आज का चरण प्लान करें", en: "Plan today's stage" },
@@ -65,25 +71,31 @@ export default function MapPage() {
 
   const yatraName = YATRA_NAMES[yatra] ? t(YATRA_NAMES[yatra], language) : yatra;
 
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    Promise.all([
-      apiGet(`/api/yatra/${yatra}/routes`).catch(() => []),
-      apiGet(`/api/yatra/${yatra}/events`).catch(() => []),
-      apiGet(`/api/yatra/${yatra}/itinerary`).catch(() => []),
-    ])
-      .then(([routes, evs, itin]) => {
+    // routes is the primary dataset — if it FAILS (vs returns empty), surface a
+    // retryable error, don't silently show "no information". events/itinerary
+    // stay best-effort. apiGet already retries to ride out a cold start.
+    apiGet(`/api/yatra/${yatra}/routes`)
+      .then(async (routes) => {
         if (cancelled) return;
         setEntries(routes || []);
+        const [evs, itin] = await Promise.all([
+          apiGet(`/api/yatra/${yatra}/events`).catch(() => []),
+          apiGet(`/api/yatra/${yatra}/itinerary`).catch(() => []),
+        ]);
+        if (cancelled) return;
         setEvents(evs || []);
         setItinerary(itin || []);
       })
       .catch((e) => !cancelled && setError(e?.message || String(e)))
       .finally(() => !cancelled && setLoading(false));
     return () => { cancelled = true; };
-  }, [yatra]);
+  }, [yatra, reloadKey]);
 
   // POI kinds actually present for this yatra (drives which chips show).
   const presentKinds = useMemo(
@@ -112,7 +124,13 @@ export default function MapPage() {
     <PageShell title={tr(strings, "map", language)}>
       {loading ? <div className="text-[13.5px] text-muted px-1 py-3">{tr(strings, "loading", language)}</div> : null}
       {!loading && error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 text-[13.5px] px-4 py-3">{error}</div>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 text-[13.5px] px-4 py-3 flex items-center justify-between gap-3">
+          <span>{t(LOAD_FAILED, language)}</span>
+          <button onClick={() => setReloadKey((k) => k + 1)}
+            className="flex-shrink-0 h-9 px-4 rounded-full bg-primary text-white text-[13px] font-bold hover:bg-primary-700 transition">
+            {t(RETRY, language)}
+          </button>
+        </div>
       ) : null}
 
       {!loading && !error && pois.length === 0 && events.length === 0 ? (

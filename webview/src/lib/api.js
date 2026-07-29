@@ -3,10 +3,26 @@ import { getContext } from "./swiftchat";
 const BASE = import.meta.env.VITE_AGENT_URL || "http://localhost:8000";
 const KEY = import.meta.env.VITE_AGENT_KEY || "local-dev-key";
 
-export async function apiGet(path) {
-  const r = await fetch(`${BASE}${path}`, { headers: { "X-API-Key": KEY } });
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
+const _sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+
+// The agent runs on a free tier that sleeps when idle, so the first request
+// after a lull can fail or 5xx while it cold-starts (~10–30s). Retry GETs a
+// few times with backoff so a cold start recovers instead of surfacing as
+// "no data". A 4xx (bad request/not found) is NOT retried — it won't change.
+export async function apiGet(path, { retries = 3 } = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const r = await fetch(`${BASE}${path}`, { headers: { "X-API-Key": KEY } });
+      if (r.ok) return r.json();
+      if (r.status >= 400 && r.status < 500) throw new Error(`${path} -> ${r.status}`);
+      lastErr = new Error(`${path} -> ${r.status}`);   // 5xx → retry
+    } catch (e) {
+      lastErr = e;   // network error (cold start / DNS) → retry
+    }
+    if (attempt < retries) await _sleep(1200 * (attempt + 1));   // 1.2s, 2.4s, 3.6s
+  }
+  throw lastErr;
 }
 
 export async function apiPost(path, body) {
