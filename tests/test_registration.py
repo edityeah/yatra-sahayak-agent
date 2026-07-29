@@ -32,14 +32,15 @@ def _turn(state, text):
 def test_solo_intake_issues_one_pass():
     persistence.reset()
     s = new_state("sess", "u-reg"); s["language"] = "en"
-    # yatra → name → age → phone → otp → ekyc → group → emergency → medical → add_member → confirm
+    # yatra → name → age → phone → otp → aadhaar → aadhaar_otp → group → emergency → medical → add_member → confirm
     s = _turn(s, "register me"); assert s["reg_stage"] == "yatra"
     s = _turn(s, "1"); assert s["reg_stage"] == "name" and s["active_yatra"] == "pandharpur"
     s = _turn(s, "Asha Patil"); assert s["reg_stage"] == "age"
     s = _turn(s, "45"); assert s["reg_stage"] == "phone"
     s = _turn(s, "9812345678"); assert s["reg_stage"] == "otp"
-    s = _turn(s, "123456"); assert s["reg_stage"] == "ekyc"
-    s = _turn(s, "Aadhaar"); assert s["reg_stage"] == "group"
+    s = _turn(s, "123456"); assert s["reg_stage"] == "aadhaar"
+    s = _turn(s, "2345 6789 0123"); assert s["reg_stage"] == "aadhaar_otp"
+    s = _turn(s, "123456"); assert s["reg_stage"] == "group"
     s = _turn(s, "Alandi Dindi"); assert s["reg_stage"] == "emergency"
     s = _turn(s, "Sunil 9800000000"); assert s["reg_stage"] == "medical"
     s = _turn(s, "diabetes"); assert s["reg_stage"] == "add_member"
@@ -64,7 +65,7 @@ def test_family_intake_issues_one_pass_per_member():
     s = _turn(s, "register"); s = _turn(s, "1")           # yatra
     s = _turn(s, "Asha Patil"); s = _turn(s, "45")        # primary name, age
     s = _turn(s, "9812345678"); s = _turn(s, "123456")    # phone, otp
-    s = _turn(s, "Aadhaar")                                # ekyc
+    s = _turn(s, "234567890123"); s = _turn(s, "123456")   # aadhaar number, aadhaar OTP
     s = _turn(s, "Alandi Dindi")                           # group
     s = _turn(s, "Sunil 9800000000")                       # emergency
     s = _turn(s, "none")                                   # medical → add_member
@@ -90,20 +91,29 @@ def test_family_intake_issues_one_pass_per_member():
     assert "guardian" in ravi["medical_flags"]            # under-13 eligibility flag
 
 
-def test_ekyc_verifies_by_id_type_and_never_asks_for_aadhaar_number():
+def test_aadhaar_ekyc_asks_for_number_then_otp_and_stores_only_masked():
     persistence.reset()
     s = new_state("sess", "u2"); s["language"] = "en"
     s = _turn(s, "register"); assert s["reg_stage"] == "yatra"
     s = _turn(s, "2"); s = _turn(s, "Ravi Kumar"); s = _turn(s, "30")
     s = _turn(s, "9812345678"); s = _turn(s, "111111")
-    ekyc_prompt = s["messages"][-1].content
-    assert s["reg_stage"] == "ekyc"
-    # e-KYC offers Aadhaar as an ID *type* but promises never to take/store the
-    # number — the privacy guarantee must be present, and it asks for the type.
-    assert "never" in ekyc_prompt.lower() and "aadhaar number" in ekyc_prompt.lower()
-    s = _turn(s, "Aadhaar")   # answer with just the type — no number needed
+    # After mobile OTP → Aadhaar e-KYC: ask for the 12-digit number, and promise
+    # to store only the last 4. No "demo" language.
+    aadhaar_prompt = s["messages"][-1].content
+    assert s["reg_stage"] == "aadhaar"
+    assert "12-digit aadhaar" in aadhaar_prompt.lower() and "last 4" in aadhaar_prompt.lower()
+    assert "demo" not in aadhaar_prompt.lower()
+    # A bad Aadhaar (starts with 1) is rejected; a valid one → OTP step.
+    s = _turn(s, "111122223333"); assert s["reg_stage"] == "aadhaar"
+    s = _turn(s, "2345 6789 0123"); assert s["reg_stage"] == "aadhaar_otp"
+    otp_prompt = s["messages"][-1].content
+    assert "aadhaar-linked" in otp_prompt.lower() and "demo" not in otp_prompt.lower()
+    s = _turn(s, "654321")
     assert s["reg_stage"] == "group" and s["reg_fields"]["ekyc_verified"] is True
     assert s["reg_fields"]["id_type"] == "Aadhaar"
+    # Only the masked Aadhaar is kept — never the full 12 digits.
+    assert s["reg_fields"]["aadhaar_masked"] == "XXXX XXXX 0123"
+    assert "234567890123" not in str(s["reg_fields"])
 
 
 def test_question_midintake_is_answered_not_stored():
@@ -112,7 +122,8 @@ def test_question_midintake_is_answered_not_stored():
     persistence.reset()
     s = new_state("sess", "u-q"); s["language"] = "en"
     s = _turn(s, "register"); s = _turn(s, "1"); s = _turn(s, "Asha"); s = _turn(s, "40")
-    s = _turn(s, "9812345678"); s = _turn(s, "123456"); s = _turn(s, "Aadhaar")
+    s = _turn(s, "9812345678"); s = _turn(s, "123456")
+    s = _turn(s, "234567890123"); s = _turn(s, "123456")   # aadhaar number, aadhaar OTP
     assert s["reg_stage"] == "group"
     s = _turn(s, "what is dindi")
     assert s["reg_stage"] == "group"                 # did NOT advance
@@ -136,7 +147,8 @@ def test_llm_gate_catches_question_without_question_mark(monkeypatch):
     persistence.reset()
     s = new_state("sess", "u-llm"); s["language"] = "en"
     s = _turn(s, "register"); s = _turn(s, "1"); s = _turn(s, "Asha"); s = _turn(s, "40")
-    s = _turn(s, "9812345678"); s = _turn(s, "123456"); s = _turn(s, "Aadhaar")
+    s = _turn(s, "9812345678"); s = _turn(s, "123456")
+    s = _turn(s, "234567890123"); s = _turn(s, "123456")   # aadhaar number, aadhaar OTP
     assert s["reg_stage"] == "group"
     s = _turn(s, "i dont get this")                  # no '?', no keyword
     assert s["reg_stage"] == "group"                 # stayed on the field

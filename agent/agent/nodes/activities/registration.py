@@ -22,9 +22,10 @@ from agent.llm import get_main_llm
 from agent.i18n import LANG_NAME
 from agent import persistence
 
-# Ordered intake stages for the PRIMARY registrant. "otp"/"ekyc" are verify
-# steps; "add_member" starts the family loop; "member_age" is a sub-stage.
-_ORDER = ["yatra", "name", "age", "phone", "otp", "ekyc",
+# Ordered intake stages for the PRIMARY registrant. "otp" (mobile), "aadhaar"
+# + "aadhaar_otp" (Aadhaar e-KYC) are verify steps; "add_member" starts the
+# family loop; "member_age" is a sub-stage.
+_ORDER = ["yatra", "name", "age", "phone", "otp", "aadhaar", "aadhaar_otp",
           "group", "emergency", "medical", "add_member", "confirm"]
 _NEXT = {a: b for a, b in zip(_ORDER, _ORDER[1:])}
 
@@ -81,15 +82,22 @@ _PROMPTS = {
 }
 
 _OTP_PROMPT = {
-    "mr": "📲 **+91-••••••{tail}** वर एक OTP पाठवला आहे. **६-अंकी कोड** लिहा.\n(हे प्रात्यक्षिक आहे — कोणतेही ६ अंक चालतील.)",
-    "hi": "📲 **+91-••••••{tail}** पर एक OTP भेजा गया है। **6-अंकों का कोड** लिखें।\n(यह डेमो है — कोई भी 6 अंक चलेंगे।)",
-    "en": "📲 An OTP has been sent to **+91-••••••{tail}**. Enter the **6-digit code**.\n(This is a demo — any 6 digits work.)",
+    "mr": "📲 **+91-••••••{tail}** वर एक OTP पाठवला आहे. **६-अंकी कोड** लिहा.",
+    "hi": "📲 **+91-••••••{tail}** पर एक OTP भेजा गया है। **6-अंकों का कोड** लिखें।",
+    "en": "📲 An OTP has been sent to **+91-••••••{tail}**. Enter the **6-digit code**.",
 }
 
-_EKYC_PROMPT = {
-    "mr": "🔐 ओळख पडताळणीसाठी तुम्ही कोणते **ओळखपत्र** वापराल? **आधार / मतदार ओळखपत्र / पासपोर्ट / वाहन परवाना** — फक्त प्रकार लिहा.\n(गोपनीयता: आम्ही तुमचा आधार क्रमांक विचारत नाही किंवा साठवत नाही.)",
-    "hi": "🔐 पहचान सत्यापन के लिए आप कौन-सा **पहचान पत्र** उपयोग करेंगे? **आधार / वोटर आईडी / पासपोर्ट / ड्राइविंग लाइसेंस** — केवल प्रकार लिखें।\n(गोपनीयता: हम आपका आधार नंबर नहीं पूछते और न ही सहेजते हैं।)",
-    "en": "🔐 For identity verification, which **ID** will you use? **Aadhaar / Voter ID / Passport / Driving licence** — just the type.\n(Privacy: we never ask for or store your Aadhaar number.)",
+# Aadhaar e-KYC — ask for the 12-digit number (never an upload), then verify
+# with an OTP sent to the Aadhaar-linked mobile, exactly like UIDAI e-KYC.
+_AADHAAR_PROMPT = {
+    "mr": "🔐 **आधार e-KYC.** ओळख पडताळण्यासाठी तुमचा **१२-अंकी आधार क्रमांक** लिहा. तुमच्या आधार-लिंक मोबाइलवर OTP पाठवला जाईल.\n(फक्त शेवटचे ४ अंक साठवले जातात — पूर्ण आधार कधीही नाही.)",
+    "hi": "🔐 **आधार e-KYC.** पहचान सत्यापित करने के लिए अपना **12-अंकों का आधार नंबर** लिखें। आपके आधार-लिंक मोबाइल पर OTP भेजा जाएगा।\n(केवल अंतिम 4 अंक सहेजे जाते हैं — पूरा आधार कभी नहीं।)",
+    "en": "🔐 **Aadhaar e-KYC.** Enter your **12-digit Aadhaar number** to verify your identity. An OTP will be sent to your Aadhaar-linked mobile.\n(Only the last 4 digits are stored — never your full Aadhaar.)",
+}
+_AADHAAR_OTP_PROMPT = {
+    "mr": "📲 तुमच्या आधार-लिंक मोबाइल **••••••{tail}** वर OTP पाठवला आहे. **६-अंकी आधार OTP** लिहा.",
+    "hi": "📲 आपके आधार-लिंक मोबाइल **••••••{tail}** पर OTP भेजा गया है। **6-अंकों का आधार OTP** लिखें।",
+    "en": "📲 An OTP has been sent to your Aadhaar-linked mobile **••••••{tail}**. Enter the **6-digit Aadhaar OTP**.",
 }
 
 # Member age prompt — {name} is the member just named.
@@ -107,9 +115,10 @@ _MEMBER_ADDED = {
 
 _ACK = {
     "otp": {"mr": "✅ मोबाइल क्रमांक पडताळला.", "hi": "✅ मोबाइल नंबर सत्यापित।", "en": "✅ Mobile number verified."},
-    "ekyc": {"mr": "✅ ओळख पडताळली (e-KYC — प्रात्यक्षिक, आधार क्रमांक साठवलेला नाही).",
-             "hi": "✅ पहचान सत्यापित (e-KYC — डेमो, आधार नंबर नहीं सहेजा गया)।",
-             "en": "✅ Identity verified via e-KYC (demo — no Aadhaar number stored)."},
+    # {mask} = the Aadhaar shown masked, e.g. "XXXX XXXX 1234".
+    "aadhaar_otp": {"mr": "✅ आधार e-KYC द्वारे ओळख पडताळली — **{mask}**.",
+                    "hi": "✅ आधार e-KYC से पहचान सत्यापित — **{mask}**।",
+                    "en": "✅ Identity verified via Aadhaar e-KYC — **{mask}**."},
 }
 
 _ELIGIBILITY_NOTE = {
@@ -125,6 +134,8 @@ _INVALID = {
     "age": {"mr": "कृपया वैध वय लिहा (१–१२० वर्षे).", "hi": "कृपया मान्य उम्र लिखें (1–120 वर्ष)।", "en": "Please enter a valid age (1–120 years)."},
     "phone": {"mr": "कृपया वैध १०-अंकी भारतीय मोबाइल क्रमांक लिहा.", "hi": "कृपया मान्य 10-अंकों का भारतीय मोबाइल नंबर लिखें।", "en": "Please enter a valid 10-digit Indian mobile number."},
     "otp": {"mr": "कृपया ४–६ अंकांचा OTP लिहा.", "hi": "कृपया 4–6 अंकों का OTP लिखें।", "en": "Please enter the 4–6 digit OTP."},
+    "aadhaar": {"mr": "कृपया वैध १२-अंकी आधार क्रमांक लिहा.", "hi": "कृपया मान्य 12-अंकों का आधार नंबर लिखें।", "en": "Please enter a valid 12-digit Aadhaar number."},
+    "aadhaar_otp": {"mr": "कृपया ४–६ अंकांचा आधार OTP लिहा.", "hi": "कृपया 4–6 अंकों का आधार OTP लिखें।", "en": "Please enter the 4–6 digit Aadhaar OTP."},
     "emergency": {"mr": "कृपया नाव व वैध १०-अंकी क्रमांक लिहा (उदा. 'सुनील ९८XXXXXXXX').",
                   "hi": "कृपया नाम और मान्य 10-अंकों का नंबर लिखें (जैसे 'सुनील 98XXXXXXXX')।",
                   "en": "Please give a name and a valid 10-digit number (e.g. 'Sunil 98XXXXXXXX')."},
@@ -145,12 +156,15 @@ _HELP = {
     "phone": {"mr": "तुमचा मोबाइल क्रमांक — यात्रेदरम्यान तुमच्याशी संपर्क साधण्यासाठी वापरला जाईल.",
               "hi": "आपका मोबाइल नंबर — यात्रा के दौरान आपसे संपर्क के लिए उपयोग होगा।",
               "en": "Your mobile number — we use it to reach you during the yatra, especially in an emergency."},
-    "otp": {"mr": "तुमचा मोबाइल तुमचाच आहे हे तपासण्यासाठी पाठवलेला कोड. हे प्रात्यक्षिक आहे — कोणतेही ६ अंक चालतील.",
-            "hi": "यह जाँचने के लिए कोड कि मोबाइल आपका ही है। यह डेमो है — कोई भी 6 अंक चलेंगे।",
-            "en": "A code we 'sent' to confirm the mobile is yours. This is a demo — any 6 digits work."},
-    "ekyc": {"mr": "e-KYC फक्त ओळखीचा प्रकार तपासते — आम्ही आधार क्रमांक घेत नाही. आधार / मतदार ओळखपत्र / पासपोर्ट / वाहन परवाना यापैकी एक लिहा.",
-             "hi": "e-KYC केवल पहचान का प्रकार जाँचता है — हम आधार नंबर नहीं लेते। आधार / वोटर आईडी / पासपोर्ट / ड्राइविंग लाइसेंस में से एक लिखें।",
-             "en": "e-KYC just confirms the type of ID — we never take your Aadhaar number. Reply Aadhaar, Voter ID, Passport, or Driving licence."},
+    "otp": {"mr": "तुमचा मोबाइल तुमचाच आहे हे तपासण्यासाठी पाठवलेला ६-अंकी कोड लिहा.",
+            "hi": "यह जाँचने के लिए कि मोबाइल आपका ही है, भेजा गया 6-अंकों का कोड लिखें।",
+            "en": "Enter the 6-digit code we sent to confirm the mobile is yours."},
+    "aadhaar": {"mr": "आधार e-KYC ओळख पडताळते. तुमचा १२-अंकी आधार क्रमांक लिहा — आम्ही फक्त शेवटचे ४ अंक साठवतो, पूर्ण क्रमांक नाही.",
+                "hi": "आधार e-KYC पहचान सत्यापित करता है। अपना 12-अंकों का आधार नंबर लिखें — हम केवल अंतिम 4 अंक सहेजते हैं, पूरा नंबर नहीं।",
+                "en": "Aadhaar e-KYC verifies your identity. Enter your 12-digit Aadhaar number — we store only the last 4 digits, never the full number."},
+    "aadhaar_otp": {"mr": "तुमच्या आधार-लिंक मोबाइलवर पाठवलेला ६-अंकी OTP लिहा.",
+                    "hi": "आपके आधार-लिंक मोबाइल पर भेजा गया 6-अंकों का OTP लिखें।",
+                    "en": "Enter the 6-digit OTP sent to your Aadhaar-linked mobile."},
     "group": {"mr": "दिंडी म्हणजे पालखीसोबत एकत्र चालणारा, अभंग गाणारा वारकऱ्यांचा गट. तुम्ही एखाद्या दिंडीसोबत असाल तर तिचे नाव लिहा; नसल्यास 'काही नाही'.",
               "hi": "दिंडी यानी पालकी के साथ मिलकर चलने वाला, अभंग गाने वाला वारकरियों का समूह। आप किसी दिंडी के साथ हों तो उसका नाम लिखें; न हों तो 'कुछ नहीं'.",
               "en": "A Dindi is a group of Warkari pilgrims who walk together with the palkhi, singing abhangs. If you're walking with one, type its name; otherwise type 'none'."},
@@ -199,7 +213,8 @@ _FIELD_DESC = {
     "age": "the pilgrim's age in years",
     "phone": "the pilgrim's 10-digit mobile number",
     "otp": "the OTP code sent to their mobile",
-    "ekyc": "which ID type they will use for e-KYC (Aadhaar / Voter ID / Passport / Driving licence)",
+    "aadhaar": "their 12-digit Aadhaar number for e-KYC",
+    "aadhaar_otp": "the OTP sent to their Aadhaar-linked mobile",
     "group": "the name of the Dindi / group they are walking with (or 'none')",
     "emergency": "an emergency contact — a name and mobile number",
     "medical": "any medical conditions to note (or 'none')",
@@ -245,8 +260,10 @@ def _obvious_answer(stage: str, text: str) -> bool:
         return _valid_age(text) is not None
     if stage in ("phone", "emergency"):
         return _valid_mobile(text) is not None
-    if stage == "otp":
+    if stage in ("otp", "aadhaar_otp"):
         return 4 <= len(_digits(text)) <= 6
+    if stage == "aadhaar":
+        return _valid_aadhaar(text) is not None
     if stage in ("group", "medical"):
         return _is_none(text)
     if stage == "add_member":
@@ -293,6 +310,21 @@ def _valid_mobile(text: str) -> str | None:
     elif len(d) == 11 and d.startswith("0"):
         d = d[1:]
     return d if len(d) == 10 and d[0] in "6789" else None
+
+
+def _valid_aadhaar(text: str) -> str | None:
+    """A 12-digit Aadhaar number. UIDAI numbers never start with 0 or 1, and
+    an all-same-digit string is rejected — enough to feel real without forcing
+    a Verhoeff-valid number in a simulation. Returns the 12 digits or None."""
+    d = _digits(text)
+    if len(d) != 12 or d[0] in "01" or len(set(d)) == 1:
+        return None
+    return d
+
+
+def _mask_aadhaar(digits: str) -> str:
+    """UIDAI-style masking: only the last 4 digits are ever shown/stored."""
+    return f"XXXX XXXX {digits[-4:]}" if len(digits) >= 4 else "XXXX XXXX XXXX"
 
 
 def _valid_age(text: str) -> int | None:
@@ -350,9 +382,9 @@ def _confirm_prompt(fields: dict, lang: str) -> str:
 def _issued_message(issued: list[tuple[str, str]], wallet_url: str, lang: str) -> str:
     """issued = [(name, yatra_id), ...] (primary first)."""
     checks = {
-        "mr": ["⏳ तपशील पडताळत आहे…", "✅ पात्रता तपासली", "✅ e-KYC पूर्ण (प्रात्यक्षिक)", f"✅ {len(issued)} यात्रा RFID पास वाटप केले"],
-        "hi": ["⏳ विवरण सत्यापित हो रहा है…", "✅ पात्रता जाँची", "✅ e-KYC पूर्ण (डेमो)", f"✅ {len(issued)} यात्रा RFID पास आवंटित"],
-        "en": ["⏳ Verifying details…", "✅ Eligibility checked", "✅ e-KYC complete (demo)", f"✅ {len(issued)} Yatra RFID pass(es) allotted"],
+        "mr": ["⏳ तपशील पडताळत आहे…", "✅ पात्रता तपासली", "✅ आधार e-KYC पूर्ण", f"✅ {len(issued)} यात्रा RFID पास वाटप केले"],
+        "hi": ["⏳ विवरण सत्यापित हो रहा है…", "✅ पात्रता जाँची", "✅ आधार e-KYC पूर्ण", f"✅ {len(issued)} यात्रा RFID पास आवंटित"],
+        "en": ["⏳ Verifying details…", "✅ Eligibility checked", "✅ Aadhaar e-KYC complete", f"✅ {len(issued)} Yatra RFID pass(es) allotted"],
     }[lang]
     rows = "\n".join(f"  {i+1}. **{name}** — {yid}" for i, (name, yid) in enumerate(issued))
     head = {"mr": f"🎉 **नोंदणी पूर्ण!** {len(issued)} पास तयार:",
@@ -381,8 +413,10 @@ async def registration(state: YatraState) -> YatraState:
     def _prompt_for(next_stage: str, *, ack: str = "") -> str:
         if next_stage == "otp":
             body = _OTP_PROMPT[lang].format(tail=_mask_phone(fields.get("phone", "")))
-        elif next_stage == "ekyc":
-            body = _EKYC_PROMPT[lang]
+        elif next_stage == "aadhaar":
+            body = _AADHAAR_PROMPT[lang]
+        elif next_stage == "aadhaar_otp":
+            body = _AADHAAR_OTP_PROMPT[lang].format(tail=_mask_phone(fields.get("phone", "")))
         elif next_stage == "confirm":
             body = _confirm_prompt(fields, lang)
         else:
@@ -452,18 +486,24 @@ async def registration(state: YatraState) -> YatraState:
         if not (4 <= len(code) <= 6):
             return _emit(_INVALID["otp"][lang], reg_stage="otp", reg_fields=fields)
         fields["mobile_verified"] = True
-        return _emit(_prompt_for("ekyc", ack=_ACK["otp"][lang]), reg_stage="ekyc", reg_fields=fields)
+        return _emit(_prompt_for("aadhaar", ack=_ACK["otp"][lang]), reg_stage="aadhaar", reg_fields=fields)
 
-    if stage == "ekyc":
-        t = answer.strip().lower()
-        id_type = ("Aadhaar" if ("aadhaar" in t or "aadhar" in t or "आधार" in answer)
-                   else "Voter ID" if ("voter" in t or "epic" in t or "मतदार" in answer or "वोटर" in answer)
-                   else "Passport" if ("passport" in t or "पासपोर्ट" in answer)
-                   else "Driving licence" if ("driv" in t or "dl" == t or "लाइसेंस" in answer or "परवाना" in answer)
-                   else "Govt ID")
-        fields["id_type"] = id_type
+    if stage == "aadhaar":
+        aadhaar = _valid_aadhaar(answer)
+        if not aadhaar:
+            return _emit(_INVALID["aadhaar"][lang], reg_stage="aadhaar", reg_fields=fields)
+        # Store ONLY the masked form — never the full Aadhaar number.
+        fields["aadhaar_masked"] = _mask_aadhaar(aadhaar)
+        fields["id_type"] = "Aadhaar"
+        return _emit(_prompt_for("aadhaar_otp"), reg_stage="aadhaar_otp", reg_fields=fields)
+
+    if stage == "aadhaar_otp":
+        code = _digits(answer)
+        if not (4 <= len(code) <= 6):
+            return _emit(_INVALID["aadhaar_otp"][lang], reg_stage="aadhaar_otp", reg_fields=fields)
         fields["ekyc_verified"] = True
-        return _emit(_prompt_for("group", ack=_ACK["ekyc"][lang]), reg_stage="group", reg_fields=fields)
+        ack = _ACK["aadhaar_otp"][lang].format(mask=fields.get("aadhaar_masked", ""))
+        return _emit(_prompt_for("group", ack=ack), reg_stage="group", reg_fields=fields)
 
     if stage == "group":
         fields["group_name"] = "" if _is_none(answer) else answer.strip()
