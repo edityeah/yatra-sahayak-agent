@@ -1,16 +1,21 @@
-"""Realtime function tools Setu can invoke mid-call.
+"""Realtime function tools Setu can invoke mid-call — parity with the chat
+agent's activities, so a voice caller can do everything a chat user can:
 
-Three tools:
-  - raise_sos:      raise an emergency SOS, POSTs to the web service
-  - get_weather:    current route weather for the caller's yatra
-  - get_helplines:  helpline numbers for the caller's yatra
+  - raise_sos:            emergency SOS (POSTs to the web service)
+  - register_for_yatra:   yatra-pass registration (POSTs to the web service)
+  - file_grievance:       lodge a complaint (POSTs to the web service)
+  - report_lost_found:    report a missing person/item (POSTs; person → SOS)
+  - get_weather:          destination or route weather (route if a start city given)
+  - get_helplines:        emergency/helpline numbers
+  - get_advisories:       official advisories (closures, diversions, weather)
+  - get_transport_rates:  approved pony/palkhi/porter fares (anti-overcharge)
+  - get_route_info:       named halts + day-by-day itinerary / directions
 
-raise_sos goes through the web service via HTTP POST (X-API-Key) — NOT
-direct DB access, matching the voice worker's narrow dependency surface
-(OpenAI + LiveKit + AGENT_API_HOST/KEY only, no Postgres credentials in
-this process). get_weather / get_helplines read local seed data /
-weather_client directly — both are pure, DB-free, and safe to call from
-the worker.
+Write tools (SOS, register, grievance, lost&found) go through the web service
+via HTTP POST (X-API-Key) — NOT direct DB access — keeping the worker's
+dependency surface narrow (OpenAI + LiveKit + AGENT_API_HOST/KEY only, no
+Postgres creds). Read tools load local seed data / weather_client directly —
+pure, DB-free, safe to call from the worker.
 """
 from __future__ import annotations
 
@@ -83,15 +88,37 @@ async def raise_sos(context: RunContext, nature: str, location: str | None = Non
 
 
 @function_tool
-async def get_weather(context: RunContext) -> str:
-    """Get the current route weather for the caller's yatra to read aloud."""
-    from agent.weather_client import get_forecast
-    from agent.seed import t
+async def get_weather(context: RunContext, origin_city: str | None = None) -> str:
+    """Weather for the caller's yatra, to read aloud. If the caller names the
+    city they're starting from, give the weather at the halts ALONG their route
+    to the destination (ask "where are you starting from?" if they haven't).
 
+    Args:
+        context:     injected by the runtime, do not pass manually.
+        origin_city: the city the caller is starting from (e.g. "Pune",
+                     "Mumbai", "Nashik"), or None for destination-only weather.
+    """
+    from agent.seed import t
     md = _meta(context)
     yatra = md.get("yatra") or "pandharpur"
-    f = await get_forecast(yatra)
     lang = md.get("language") or "mr"
+
+    # Route weather from a named origin — parity with the chat weather flow.
+    if origin_city:
+        from agent import route_weather as rw
+        city = rw.resolve_city(origin_city)
+        if city:
+            points = await rw.route_weather(city["lat"], city["lng"], yatra, city["name"])
+            legs = []
+            for p in points:
+                temp = f"{p['temp_c']} degrees" if p.get("temp_c") is not None else ""
+                legs.append(f"{t(p['name'], lang)}: {t(p['summary'], lang)} {temp}".strip())
+            warn = " Rain is likely on the route — advise a raincoat." if any(p.get("rain") for p in points) else ""
+            return ("Read this aloud, briefly, in the caller's language — weather along the route: "
+                    + "; ".join(legs) + "." + warn)
+
+    from agent.weather_client import get_forecast
+    f = await get_forecast(yatra)
     summary = t(f.get("summary"), lang)
     temp = f.get("temp_c")
     alert = t(f.get("rain_alert"), lang) if f.get("rain_alert") else None
@@ -100,7 +127,8 @@ async def get_weather(context: RunContext) -> str:
         parts.append(f"about {temp} degrees")
     if alert:
         parts.append(f"weather alert: {alert}")
-    return "Read this aloud, briefly, in the caller's language: " + "; ".join(parts)
+    return ("Read this aloud, briefly, in the caller's language. If they want route weather, "
+            "ask which city they're starting from: " + "; ".join(parts))
 
 
 @function_tool
@@ -200,4 +228,108 @@ async def get_helplines(context: RunContext) -> str:
     return "Read these numbers slowly, one at a time, in the caller's language: " + "; ".join(lines)
 
 
-ALL_TOOLS = [raise_sos, register_for_yatra, file_grievance, get_weather, get_helplines]
+@function_tool
+async def get_advisories(context: RunContext) -> str:
+    """Get the current official advisories (road closures, diversions, weather,
+    schedule changes) for the caller's yatra, to read aloud."""
+    from agent.seed import load, t
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    lang = md.get("language") or "mr"
+    items = load("advisories").get(yatra, [])
+    if not items:
+        return "Tell the caller there are no active advisories right now."
+    lines = [f"{t(a.get('title'), lang)} — {t(a.get('body'), lang)}" for a in items[:4]]
+    return "Read these advisories aloud, briefly, in the caller's language: " + "; ".join(lines)
+
+
+@function_tool
+async def get_transport_rates(context: RunContext) -> str:
+    """Get approved transport / porter rates (bullock cart, pony, palkhi porter,
+    etc.) for the caller's yatra, to read aloud. Use when the caller asks about
+    fares, rates, or thinks they're being overcharged."""
+    from agent.seed import load, t
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    lang = md.get("language") or "mr"
+    rates = load("logistics_rates").get(yatra, [])
+    if not rates:
+        return "Tell the caller official rates aren't listed for this yatra; suggest asking a marshal."
+    lines = [f"{t(r.get('service'), lang)}: {r.get('rate','')} {t(r.get('unit'), lang)}".strip() for r in rates[:6]]
+    return ("Read these approved rates aloud, in the caller's language, and note they're official "
+            "estimates so they can refuse overcharging: " + "; ".join(lines))
+
+
+@function_tool
+async def get_route_info(context: RunContext, day: int | None = None) -> str:
+    """Get route guidance for the caller's yatra — the named halts along the way
+    and the day-by-day itinerary. Use for directions, "which way", "what's the
+    route", or planning a stage. Optionally pass a day number for that day's leg.
+
+    Args:
+        context: injected by the runtime, do not pass manually.
+        day:     an itinerary day number to detail, or None for an overview.
+    """
+    from agent.seed import load, t
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    lang = md.get("language") or "mr"
+    itinerary = load("itinerary").get(yatra, [])
+    if day is not None:
+        leg = next((d for d in itinerary if d.get("day") == day), None)
+        if leg:
+            return (f"Read aloud, in the caller's language — day {day}: {t(leg.get('title'), lang)}, "
+                    f"about {leg.get('distance_km','')} kilometres. {t(leg.get('note'), lang)}")
+    halts = [t(h.get("name"), lang) for h in load("routes").get(yatra, []) if h.get("name")]
+    overview = ("Read aloud, briefly, in the caller's language. Main halts on the route: "
+                + ", ".join(halts[:8]) + f". The journey is {len(itinerary)} days.")
+    if itinerary:
+        d1 = itinerary[0]
+        overview += f" Day 1 is {t(d1.get('title'), lang)}, about {d1.get('distance_km','')} kilometres."
+    overview += " Offer to detail any specific day."
+    return overview
+
+
+@function_tool
+async def report_lost_found(context: RunContext, kind: str, name: str,
+                            description: str = "", last_seen: str = "") -> str:
+    """File a lost-and-found report on the caller's behalf. A missing PERSON is
+    treated as an emergency and also alerts the control room.
+
+    Args:
+        context:     injected by the runtime, do not pass manually.
+        kind:        "person" for a missing person, or "item" for a lost belonging.
+        name:        the missing person's name, or a short name for the item.
+        description: distinguishing details (clothing, colour, contents), if given.
+        last_seen:   where/when they were last seen, if the caller said it.
+    """
+    md = _meta(context)
+    s = get_settings()
+    payload = {
+        "kind": ("person" if str(kind).lower().startswith("p") else "item"),
+        "name": name, "description": description, "last_seen": last_seen,
+        "reporter_phone": md.get("phone", md.get("user_id", "")), "yatra": md.get("yatra"),
+    }
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as c:
+            r = await c.post(
+                f"{s.AGENT_API_HOST}/api/lostfound",
+                headers={"X-API-Key": s.AGENT_API_KEY, "Content-Type": "application/json"},
+                json=payload,
+            )
+            r.raise_for_status()
+            lid = r.json().get("id")
+    except Exception:
+        logger.exception("report_lost_found failed")
+        return "I couldn't reach the lost-and-found desk. Ask the caller to try again shortly."
+    if payload["kind"] == "person":
+        return (f"Report {lid} filed and the control room has been alerted about the missing person. "
+                "Reassure the caller that officers are now looking, and to stay where they are.")
+    return (f"Lost-item report {lid} has been filed. Tell the caller to check the nearest lost-and-found "
+            "desk and that officers will reach out if it's found.")
+
+
+ALL_TOOLS = [
+    raise_sos, register_for_yatra, file_grievance, get_weather, get_helplines,
+    get_advisories, get_transport_rates, get_route_info, report_lost_found,
+]
