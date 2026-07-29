@@ -5,6 +5,7 @@ exercised only when DATABASE_URL is set (prod / Plan 4); tests cover the
 in-memory path."""
 from __future__ import annotations
 import json
+import random
 from datetime import datetime, timezone
 
 from langchain_core.messages import AIMessage, HumanMessage
@@ -19,7 +20,11 @@ _LOSTFOUND: list[dict] = []            # lost & found reports
 _GRIEVANCES: list[dict] = []           # pilgrim grievances/complaints
 _ALERTS: list[dict] = []               # officer → pilgrim broadcast alerts
 _SESSIONS: dict[str, dict] = {}        # conversation_id -> stored (serialized) state
-_SEQ = {"n": 0}
+# Per-process id counter. Seeded at a RANDOM base (not 0) so a process
+# restart — deploy, cold start, an OOM — doesn't reset to 0001 and collide with
+# an id already in the DB (yatra_id etc. are primary keys). create_registration
+# also retries on a duplicate-key as a hard guarantee.
+_SEQ = {"n": random.randint(1000, 8999)}
 
 _PREFIX = {"pandharpur": "PWARI", "kumbh": "KUMBH"}
 
@@ -167,32 +172,45 @@ async def create_registration(user_id: str, *, yatra: str, name: str, phone: str
                               age: str = "", id_type: str = "", group_size: int = 1,
                               group_id: str = "", is_primary: bool = True,
                               mobile_verified: bool = False, ekyc_verified: bool = False) -> str:
-    yatra_id = f"{_PREFIX.get(yatra, 'YATRA')}-{_today()}-{_next():04d}"
-    row = {
-        "yatra_id": yatra_id, "user_id": user_id, "yatra": yatra, "name": name,
-        "phone": phone, "age": age, "id_type": id_type,
-        "group_name": group_name, "group_size": group_size,
-        "group_id": group_id, "is_primary": is_primary,
-        "emergency_contact": emergency_contact, "medical_flags": medical_flags,
-        "mobile_verified": mobile_verified, "ekyc_verified": ekyc_verified,
-    }
+    base = dict(
+        user_id=user_id, yatra=yatra, name=name, phone=phone, age=age, id_type=id_type,
+        group_name=group_name, group_size=group_size, group_id=group_id, is_primary=is_primary,
+        emergency_contact=emergency_contact, medical_flags=medical_flags,
+        mobile_verified=mobile_verified, ekyc_verified=ekyc_verified,
+    )
     pool = await _pool()
-    if pool:
-        async with pool.connection() as conn:
-            async with conn.cursor() as cur:
-                await cur.execute(
-                    "INSERT INTO registrations(yatra_id,user_id,yatra,name,phone,age,id_type,"
-                    "group_name,group_size,group_id,is_primary,emergency_contact,medical_flags,"
-                    "mobile_verified,ekyc_verified) "
-                    "VALUES(%(yatra_id)s,%(user_id)s,%(yatra)s,%(name)s,%(phone)s,%(age)s,%(id_type)s,"
-                    "%(group_name)s,%(group_size)s,%(group_id)s,%(is_primary)s,%(emergency_contact)s,"
-                    "%(medical_flags)s,%(mobile_verified)s,%(ekyc_verified)s)",
-                    row,
-                )
-            await conn.commit()
-    else:
-        _REGISTRATIONS[yatra_id] = row
-    return yatra_id
+    if not pool:
+        yatra_id = f"{_PREFIX.get(yatra, 'YATRA')}-{_today()}-{_next():04d}"
+        _REGISTRATIONS[yatra_id] = {"yatra_id": yatra_id, **base}
+        return yatra_id
+
+    # Retry on a duplicate primary key (23505): a fresh process starts its
+    # counter at a random base, but two starts could still collide with an
+    # existing yatra_id — bump to the next id and retry rather than 500.
+    last_err = None
+    for _ in range(10):
+        yatra_id = f"{_PREFIX.get(yatra, 'YATRA')}-{_today()}-{_next():04d}"
+        row = {"yatra_id": yatra_id, **base}
+        try:
+            async with pool.connection() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "INSERT INTO registrations(yatra_id,user_id,yatra,name,phone,age,id_type,"
+                        "group_name,group_size,group_id,is_primary,emergency_contact,medical_flags,"
+                        "mobile_verified,ekyc_verified) "
+                        "VALUES(%(yatra_id)s,%(user_id)s,%(yatra)s,%(name)s,%(phone)s,%(age)s,%(id_type)s,"
+                        "%(group_name)s,%(group_size)s,%(group_id)s,%(is_primary)s,%(emergency_contact)s,"
+                        "%(medical_flags)s,%(mobile_verified)s,%(ekyc_verified)s)",
+                        row,
+                    )
+                await conn.commit()
+            return yatra_id
+        except Exception as e:
+            last_err = e
+            if getattr(e, "sqlstate", None) == "23505":
+                continue   # duplicate id — try the next one
+            raise          # any other DB error is real — surface it
+    raise last_err
 
 
 def new_group_id() -> str:
