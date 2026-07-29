@@ -34,7 +34,7 @@ const CAPTIONS_HINT = { mr: "बोलायला सुरुवात कर�
 // "Listening…" screen with a bottom control bar once connected.
 // States: connecting | connected | ended | error | unavailable.
 export default function CallPage() {
-  const { language } = useLang();
+  const { language, yatra } = useLang();
   const navigate = useNavigate();
   const [state, setState] = useState("connecting");
   const [muted, setMuted] = useState(false);
@@ -127,8 +127,10 @@ export default function CallPage() {
     baselinePassesRef.current = null;
     setCaptionLines([]);
     try {
-      const { user_id, yatra, language: ctxLanguage } = getContext();
-      const { url, token } = await getVoiceToken({ user_id, yatra, language: ctxLanguage });
+      // Pass the caller's SELECTED language + yatra (not the webview default),
+      // so the voice AND captions open in the language they chose.
+      const { user_id } = getContext();
+      const { url, token } = await getVoiceToken({ user_id, yatra, language });
 
       const room = new Room();
       roomRef.current = room;
@@ -163,7 +165,7 @@ export default function CallPage() {
         setState("error");
       }
     }
-  }, [cleanupRoom, fetchPassCount]);
+  }, [cleanupRoom, fetchPassCount, language, yatra]);
 
   // Auto-start the call on mount — landing here (a tap on the phone icon)
   // IS the "Call" action, so there is no second tap. Also disconnect any

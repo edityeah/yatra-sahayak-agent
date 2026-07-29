@@ -39,7 +39,7 @@ from openai.types.beta.realtime.session import TurnDetection, InputAudioTranscri
 from pydantic import BaseModel, ValidationError
 
 from agent.config import get_settings
-from agent.voice.persona import GREETING, INSTRUCTIONS
+from agent.voice.persona import greeting_instruction, instructions_for
 
 # NB: agent.voice.tools is imported LAZILY inside YatraVoiceAssistant.__init__
 # so subprocess boot doesn't pay its import cost (httpx, seed data) before
@@ -94,13 +94,15 @@ class YatraVoiceAssistant(Agent):
     def __init__(self, metadata: JobMetadata, **kwargs: Any) -> None:
         # Lazy import so subprocess boot doesn't pay the tools' import cost.
         from agent.voice.tools import ALL_TOOLS
-        super().__init__(instructions=INSTRUCTIONS, tools=ALL_TOOLS, **kwargs)
+        # Persona is bound to the caller's SELECTED language so both the voice
+        # and the captions open (and stay) in that language.
+        self._lang = metadata.language if metadata.language in ("mr", "hi", "en") else "mr"
+        super().__init__(instructions=instructions_for(self._lang), tools=ALL_TOOLS, **kwargs)
         self._metadata = metadata
 
     async def on_enter(self) -> None:
-        # Fire the canonical Setu greeting the moment the caller connects —
-        # no waiting for them to speak first.
-        await self.session.generate_reply(instructions=GREETING)
+        # Greet the moment the caller connects — in their selected language.
+        await self.session.generate_reply(instructions=greeting_instruction(self._lang))
 
 
 # ---------------------------------------------------------------------------
