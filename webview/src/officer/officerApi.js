@@ -12,6 +12,18 @@ export async function adminGet(path, key) {
   if (!r.ok) throw new Error(String(r.status));
   return r.json();
 }
+// Download an admin CSV export (fetch as a blob so we can send the key header,
+// which a plain <a download> can't do).
+export async function adminDownloadCsv(path, key, filename = "export.csv") {
+  const r = await fetch(`${BASE}${path}`, { headers: { "X-API-Key": key } });
+  if (!r.ok) throw new Error(String(r.status));
+  const blob = await r.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
+
 export async function adminPost(path, key, body) {
   const r = await fetch(`${BASE}${path}`, {
     method: "POST", headers: { "Content-Type": "application/json", "X-API-Key": key },
