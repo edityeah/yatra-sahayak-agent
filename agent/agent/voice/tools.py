@@ -61,7 +61,7 @@ async def raise_sos(context: RunContext, nature: str, location: str | None = Non
         "location": location,
     }
     try:
-        async with httpx.AsyncClient(timeout=6.0) as c:
+        async with httpx.AsyncClient(timeout=20.0) as c:
             r = await c.post(
                 f"{s.AGENT_API_HOST}/api/voice/sos",
                 headers={"X-API-Key": s.AGENT_API_KEY, "Content-Type": "application/json"},
@@ -132,7 +132,7 @@ async def register_for_yatra(context: RunContext, name: str, age: str, phone: st
         "emergency_contact": emergency_contact, "medical_flags": medical_flags,
     }
     try:
-        async with httpx.AsyncClient(timeout=6.0) as c:
+        async with httpx.AsyncClient(timeout=20.0) as c:
             r = await c.post(
                 f"{s.AGENT_API_HOST}/api/register",
                 headers={"X-API-Key": s.AGENT_API_KEY, "Content-Type": "application/json"},
@@ -170,7 +170,7 @@ async def file_grievance(context: RunContext, category: str, description: str,
         "location": location or "", "reporter_phone": md.get("phone", ""),
     }
     try:
-        async with httpx.AsyncClient(timeout=6.0) as c:
+        async with httpx.AsyncClient(timeout=20.0) as c:
             r = await c.post(
                 f"{s.AGENT_API_HOST}/api/grievances",
                 headers={"X-API-Key": s.AGENT_API_KEY, "Content-Type": "application/json"},
