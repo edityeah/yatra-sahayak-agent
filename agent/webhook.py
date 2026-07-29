@@ -14,6 +14,7 @@ import hmac
 import io
 import json
 import logging
+import os
 import re
 import time
 import uuid
@@ -22,7 +23,8 @@ from typing import Any, AsyncIterator
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi.responses import PlainTextResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -731,3 +733,30 @@ async def messages(request: Request, x_api_key: str | None = Header(default=None
     if _rate_limited(f"msg:{key}"):
         raise HTTPException(status_code=429, detail="rate limit exceeded")
     return EventSourceResponse(_stream_turn(body))
+
+
+# ── Serve the built web UI from the same origin (single-host deploy) ──────
+# Active only when WEBVIEW_DIST points at a real build, so the Vercel+Render
+# split is untouched. Defined LAST so every API route above wins; unknown,
+# non-API GET paths fall back to index.html for client-side (SPA) routing.
+# This is what lets one Cloudflare tunnel serve both the app and the API.
+_DIST = settings.WEBVIEW_DIST
+if _DIST and os.path.isdir(_DIST):
+    _ASSETS = os.path.join(_DIST, "assets")
+    if os.path.isdir(_ASSETS):
+        app.mount("/assets", StaticFiles(directory=_ASSETS), name="assets")
+
+    _API_PREFIXES = ("api/", "messages", "officer/", "health", "assets/")
+
+    @app.get("/{full_path:path}")
+    async def _spa(full_path: str):
+        if full_path.startswith(_API_PREFIXES):
+            raise HTTPException(status_code=404, detail="not found")
+        candidate = os.path.normpath(os.path.join(_DIST, full_path))
+        # Serve a real static file (favicon, etc.) if it exists inside dist…
+        if full_path and candidate.startswith(_DIST) and os.path.isfile(candidate):
+            return FileResponse(candidate)
+        # …otherwise the SPA entrypoint (client routes: /voice, /yatri/*, /officer/*).
+        return FileResponse(os.path.join(_DIST, "index.html"))
+
+    log.info("serving web UI from %s (single-origin mode)", _DIST)

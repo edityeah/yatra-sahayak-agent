@@ -94,6 +94,12 @@ class Settings:
     AGENT_API_HOST: str = os.environ.get("AGENT_API_HOST", "http://localhost:8000").rstrip("/")
     AGENT_API_KEY:  str = os.environ.get("AGENT_API_KEY", os.environ.get("INTERNAL_API_KEY", "local-dev-key"))
 
+    # Single-origin deploy: when set to a built webview/dist, the agent also
+    # SERVES the web UI (so one host — e.g. a Cloudflare tunnel at
+    # yatri.adityeah.ai — serves both the app and the API). Empty ⇒ API only
+    # (the Vercel + Render split keeps working unchanged).
+    WEBVIEW_DIST: str = os.environ.get("WEBVIEW_DIST", "").strip()
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
