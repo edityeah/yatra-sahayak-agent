@@ -25,6 +25,9 @@ const VOICE_CALL_TITLE = { mr: "व्हॉइस कॉल", hi: "वॉइस
 const PASS_READY = { mr: "🎫 तुमचे यात्रा पास तयार आहेत.", hi: "🎫 आपके यात्रा पास तैयार हैं।", en: "🎫 Your Yatra pass(es) are ready." };
 const OPEN_WALLET = { mr: "📲 पास उघडा (वॉलेट)", hi: "📲 पास खोलें (वॉलेट)", en: "📲 Open passes (wallet)" };
 const CALL_ENDED_NOTE = { mr: "— कॉल संपला —", hi: "— कॉल समाप्त —", en: "— call ended —" };
+const YOU_LABEL = { mr: "तुम्ही", hi: "आप", en: "You" };
+const SETU_LABEL = { mr: "सेतू", hi: "सेतू", en: "Setu" };
+const CAPTIONS_HINT = { mr: "बोलायला सुरुवात करा…", hi: "बोलना शुरू करें…", en: "Start speaking…" };
 
 // Full-screen voice call surface — replicates the Pravasi Setu Assistant
 // call screens: a blue "Calling…" screen while connecting and a light
@@ -35,6 +38,9 @@ export default function CallPage() {
   const navigate = useNavigate();
   const [state, setState] = useState("connecting");
   const [muted, setMuted] = useState(false);
+  const [showCaptions, setShowCaptions] = useState(true);
+  const [captionLines, setCaptionLines] = useState([]);   // live {id, role, text}
+  const captionsEndRef = useRef(null);
   const roomRef = useRef(null);
   const audioContainerRef = useRef(null);
   const startedRef = useRef(false);
@@ -48,6 +54,21 @@ export default function CallPage() {
   // update live but aren't persisted).
   const recordSegments = useCallback((segments, participant) => {
     const isUser = !!participant?.isLocal;
+    const role = isUser ? "user" : "bot";
+
+    // 1) Live captions: upsert every segment (partial + final) by id so the
+    // caption updates as the words come in; keep the last few lines.
+    setCaptionLines((prev) => {
+      const map = new Map(prev.map((l) => [l.id, l]));
+      for (const seg of segments || []) {
+        const text = String(seg?.text || "").trim();
+        if (!text) continue;
+        map.set(seg.id, { id: seg.id, role, text });
+      }
+      return [...map.values()].slice(-8);
+    });
+
+    // 2) Transcript thread: persist FINAL segments only, once each.
     for (const seg of segments || []) {
       if (!seg?.final) continue;
       const text = String(seg.text || "").trim();
@@ -56,7 +77,7 @@ export default function CallPage() {
       if (!threadIdRef.current) {
         threadIdRef.current = createThread({ title: t(VOICE_CALL_TITLE, language) }).id;
       }
-      appendMessage(threadIdRef.current, { role: isUser ? "user" : "bot", text });
+      appendMessage(threadIdRef.current, { role, text });
     }
   }, [language]);
 
@@ -88,10 +109,11 @@ export default function CallPage() {
   const handleCall = useCallback(async () => {
     setState("connecting");
     setMuted(false);
-    // Fresh transcript thread for each call attempt.
+    // Fresh transcript thread + captions for each call attempt.
     threadIdRef.current = null;
     seenSegRef.current = new Set();
     finalizedRef.current = false;
+    setCaptionLines([]);
     try {
       const { user_id, yatra, language: ctxLanguage } = getContext();
       const { url, token } = await getVoiceToken({ user_id, yatra, language: ctxLanguage });
@@ -140,6 +162,11 @@ export default function CallPage() {
     return () => cleanupRoom();
   }, [handleCall, cleanupRoom]);
 
+  // Keep the captions scrolled to the newest line.
+  useEffect(() => {
+    captionsEndRef.current?.scrollIntoView({ block: "end" });
+  }, [captionLines]);
+
   const handleHangUp = useCallback(() => {
     finalizeCall();          // save the transcript + wallet link (idempotent)
     cleanupRoom();
@@ -178,11 +205,39 @@ export default function CallPage() {
       <div className="fixed inset-0 z-50 bg-lavender-50 flex flex-col items-center justify-center font-sans">
         <button
           type="button"
-          className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white shadow-card flex items-center justify-center text-primary"
-          aria-label="Captions"
+          onClick={() => setShowCaptions((v) => !v)}
+          className={`absolute top-4 right-4 z-10 w-11 h-11 rounded-full shadow-card flex items-center justify-center ${showCaptions ? "bg-primary text-white" : "bg-white text-primary"}`}
+          aria-label={t({ mr: "उपशीर्षके", hi: "कैप्शन", en: "Captions" }, language)}
+          aria-pressed={showCaptions}
+          title="Captions"
         >
           <Captions size={18} />
         </button>
+
+        {/* Live captions — both sides, streaming as they speak (top overlay). */}
+        {showCaptions ? (
+          <div className="absolute top-0 inset-x-0 h-[42%] px-4 pt-20 pb-3 overflow-y-auto">
+            <div className="max-w-2xl mx-auto">
+              {captionLines.length === 0 ? (
+                <p className="text-center text-[14px] text-muted">{t(CAPTIONS_HINT, language)}</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {captionLines.map((l) => (
+                    <div key={l.id} className={l.role === "user" ? "text-right" : "text-left"}>
+                      <div className="text-[11px] font-bold uppercase tracking-wide text-muted mb-0.5">
+                        {t(l.role === "user" ? YOU_LABEL : SETU_LABEL, language)}
+                      </div>
+                      <div className={`inline-block max-w-[85%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-card ${l.role === "user" ? "bg-primary text-white rounded-br-md" : "bg-white text-ink rounded-tl-md"}`}>
+                        {l.text}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={captionsEndRef} />
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
 
         <div className="flex flex-col items-center gap-5 -mt-10">
           <Avatar chip="bg-primary" />
