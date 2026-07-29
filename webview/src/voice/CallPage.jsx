@@ -47,6 +47,18 @@ export default function CallPage() {
   const threadIdRef = useRef(null);        // the chat thread this call is recorded into
   const seenSegRef = useRef(new Set());    // transcription segment ids already saved
   const finalizedRef = useRef(false);
+  const baselinePassesRef = useRef(null);  // pass count at call start (to detect a NEW pass)
+
+  const fetchPassCount = useCallback(async () => {
+    try {
+      const { user_id } = getContext();
+      const data = await apiGet(`/api/passes?user_id=${encodeURIComponent(user_id)}`);
+      const passes = Array.isArray(data) ? data : data?.passes || [];
+      return passes.length;
+    } catch (e) {
+      return null;
+    }
+  }, []);
 
   // Record a batch of transcription segments into the call's thread. The thread
   // is created lazily on the first real segment, so a call with no speech never
@@ -81,24 +93,23 @@ export default function CallPage() {
     }
   }, [language]);
 
-  // After the call, if the pilgrim has any passes (e.g. registered by voice),
-  // drop a tappable wallet link into the transcript so they can find the QR.
+  // After the call, add the wallet link ONLY if a NEW pass was actually issued
+  // during THIS call (pass count went up). Ending mid-registration issues no
+  // pass, so no link — and a pass from an earlier session never triggers it.
   const finalizeCall = useCallback(async () => {
     if (finalizedRef.current) return;
     finalizedRef.current = true;
     const tid = threadIdRef.current;
     if (!tid) return;
     appendMessage(tid, { role: "bot", text: t(CALL_ENDED_NOTE, language) });
-    try {
+    const before = baselinePassesRef.current;
+    const after = await fetchPassCount();
+    if (before != null && after != null && after > before) {
       const { user_id } = getContext();
-      const data = await apiGet(`/api/passes?user_id=${encodeURIComponent(user_id)}`);
-      const passes = Array.isArray(data) ? data : data?.passes || [];
-      if (passes.length > 0) {
-        const url = `${window.location.origin}/yatri/passes?user_id=${encodeURIComponent(user_id)}&lang=${language}`;
-        appendMessage(tid, { role: "bot", text: `${t(PASS_READY, language)}\n\n[${t(OPEN_WALLET, language)}](${url})` });
-      }
-    } catch (e) { /* best-effort — a transcript with no wallet link is fine */ }
-  }, [language]);
+      const url = `${window.location.origin}/yatri/passes?user_id=${encodeURIComponent(user_id)}&lang=${language}`;
+      appendMessage(tid, { role: "bot", text: `${t(PASS_READY, language)}\n\n[${t(OPEN_WALLET, language)}](${url})` });
+    }
+  }, [language, fetchPassCount]);
 
   const cleanupRoom = useCallback(() => {
     const room = roomRef.current;
@@ -113,6 +124,7 @@ export default function CallPage() {
     threadIdRef.current = null;
     seenSegRef.current = new Set();
     finalizedRef.current = false;
+    baselinePassesRef.current = null;
     setCaptionLines([]);
     try {
       const { user_id, yatra, language: ctxLanguage } = getContext();
@@ -141,6 +153,8 @@ export default function CallPage() {
       await room.connect(url, token);
       await room.localParticipant.setMicrophoneEnabled(true);
       setState("connected");
+      // Baseline pass count so we can tell if THIS call issues a new one.
+      baselinePassesRef.current = await fetchPassCount();
     } catch (err) {
       if (err?.code === 503) {
         setState("unavailable");
@@ -149,7 +163,7 @@ export default function CallPage() {
         setState("error");
       }
     }
-  }, [cleanupRoom]);
+  }, [cleanupRoom, fetchPassCount]);
 
   // Auto-start the call on mount — landing here (a tap on the phone icon)
   // IS the "Call" action, so there is no second tap. Also disconnect any
