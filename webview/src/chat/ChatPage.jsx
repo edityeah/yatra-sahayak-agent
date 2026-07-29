@@ -321,9 +321,9 @@ export default function ChatPage() {
   }
 
   const isEmpty = messages.length === 0 && streamText === null;
-  const subtitle = yatra
-    ? t(YATRA_NAMES[yatra], language)
-    : t({ mr: "यात्रा निवडा", hi: "यात्रा चुनें", en: "Select your yatra" }, language);
+  // Only show a subtitle once a yatra is picked; the header stays just
+  // "Maharashtra Yatra Sahayak" until then (no "Select your yatra" line).
+  const subtitle = yatra ? t(YATRA_NAMES[yatra], language) : "";
 
   // A tapped quick-reply chip: if it's a yatra pick, remember it locally too.
   const onChoice = (value) => {
