@@ -14,8 +14,17 @@ import {
 } from "lucide-react";
 import { useLang } from "../components/AppShell.jsx";
 import { strings, tr } from "../strings.js";
-import { getVoiceToken } from "../lib/api.js";
+import { getVoiceToken, apiGet } from "../lib/api.js";
 import { getContext } from "../lib/swiftchat.js";
+import { t } from "../lib/i18n.js";
+import { createThread, appendMessage } from "../store/threads.js";
+
+// The voice call is recorded into a chat thread so the transcript (and any
+// pass issued during the call) is reachable afterwards, exactly like a chat.
+const VOICE_CALL_TITLE = { mr: "व्हॉइस कॉल", hi: "वॉइस कॉल", en: "Voice call" };
+const PASS_READY = { mr: "🎫 तुमचे यात्रा पास तयार आहेत.", hi: "🎫 आपके यात्रा पास तैयार हैं।", en: "🎫 Your Yatra pass(es) are ready." };
+const OPEN_WALLET = { mr: "📲 पास उघडा (वॉलेट)", hi: "📲 पास खोलें (वॉलेट)", en: "📲 Open passes (wallet)" };
+const CALL_ENDED_NOTE = { mr: "— कॉल संपला —", hi: "— कॉल समाप्त —", en: "— call ended —" };
 
 // Full-screen voice call surface — replicates the Pravasi Setu Assistant
 // call screens: a blue "Calling…" screen while connecting and a light
@@ -29,6 +38,46 @@ export default function CallPage() {
   const roomRef = useRef(null);
   const audioContainerRef = useRef(null);
   const startedRef = useRef(false);
+  const threadIdRef = useRef(null);        // the chat thread this call is recorded into
+  const seenSegRef = useRef(new Set());    // transcription segment ids already saved
+  const finalizedRef = useRef(false);
+
+  // Record a batch of transcription segments into the call's thread. The thread
+  // is created lazily on the first real segment, so a call with no speech never
+  // leaves an empty thread behind. Only FINAL segments are saved (partials
+  // update live but aren't persisted).
+  const recordSegments = useCallback((segments, participant) => {
+    const isUser = !!participant?.isLocal;
+    for (const seg of segments || []) {
+      if (!seg?.final) continue;
+      const text = String(seg.text || "").trim();
+      if (!text || seenSegRef.current.has(seg.id)) continue;
+      seenSegRef.current.add(seg.id);
+      if (!threadIdRef.current) {
+        threadIdRef.current = createThread({ title: t(VOICE_CALL_TITLE, language) }).id;
+      }
+      appendMessage(threadIdRef.current, { role: isUser ? "user" : "bot", text });
+    }
+  }, [language]);
+
+  // After the call, if the pilgrim has any passes (e.g. registered by voice),
+  // drop a tappable wallet link into the transcript so they can find the QR.
+  const finalizeCall = useCallback(async () => {
+    if (finalizedRef.current) return;
+    finalizedRef.current = true;
+    const tid = threadIdRef.current;
+    if (!tid) return;
+    appendMessage(tid, { role: "bot", text: t(CALL_ENDED_NOTE, language) });
+    try {
+      const { user_id } = getContext();
+      const data = await apiGet(`/api/passes?user_id=${encodeURIComponent(user_id)}`);
+      const passes = Array.isArray(data) ? data : data?.passes || [];
+      if (passes.length > 0) {
+        const url = `${window.location.origin}/yatri/passes?user_id=${encodeURIComponent(user_id)}&lang=${language}`;
+        appendMessage(tid, { role: "bot", text: `${t(PASS_READY, language)}\n\n[${t(OPEN_WALLET, language)}](${url})` });
+      }
+    } catch (e) { /* best-effort — a transcript with no wallet link is fine */ }
+  }, [language]);
 
   const cleanupRoom = useCallback(() => {
     const room = roomRef.current;
@@ -39,6 +88,10 @@ export default function CallPage() {
   const handleCall = useCallback(async () => {
     setState("connecting");
     setMuted(false);
+    // Fresh transcript thread for each call attempt.
+    threadIdRef.current = null;
+    seenSegRef.current = new Set();
+    finalizedRef.current = false;
     try {
       const { user_id, yatra, language: ctxLanguage } = getContext();
       const { url, token } = await getVoiceToken({ user_id, yatra, language: ctxLanguage });
@@ -53,8 +106,13 @@ export default function CallPage() {
           audioContainerRef.current?.appendChild(el);
         }
       });
+      // Live transcript → chat thread (both the pilgrim's speech and Setu's).
+      room.on(RoomEvent.TranscriptionReceived, (segments, participant) => {
+        recordSegments(segments, participant);
+      });
       room.on(RoomEvent.Disconnected, () => {
         roomRef.current = null;
+        finalizeCall();
         setState("ended");
       });
 
@@ -83,9 +141,10 @@ export default function CallPage() {
   }, [handleCall, cleanupRoom]);
 
   const handleHangUp = useCallback(() => {
+    finalizeCall();          // save the transcript + wallet link (idempotent)
     cleanupRoom();
-    navigate("/");
-  }, [cleanupRoom, navigate]);
+    navigate("/");           // land on chat with the voice thread open
+  }, [cleanupRoom, navigate, finalizeCall]);
 
   const handleToggleMute = useCallback(async () => {
     const room = roomRef.current;

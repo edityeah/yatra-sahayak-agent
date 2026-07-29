@@ -34,7 +34,7 @@ from livekit.agents import (
     cli,
 )
 from livekit.plugins import openai
-from openai.types.beta.realtime.session import TurnDetection
+from openai.types.beta.realtime.session import TurnDetection, InputAudioTranscription
 from pydantic import BaseModel, ValidationError
 
 from agent.config import get_settings
@@ -120,6 +120,9 @@ async def entrypoint(ctx: JobContext) -> None:
             model=REALTIME_MODEL,
             voice=REALTIME_VOICE,
             modalities=REALTIME_MODALITIES,
+            # Transcribe the pilgrim's speech too, so the call transcript saved
+            # to the chat thread has BOTH sides (not just Setu's replies).
+            input_audio_transcription=InputAudioTranscription(model="gpt-4o-mini-transcribe"),
             turn_detection=TurnDetection(
                 type="semantic_vad",
                 eagerness="auto",
