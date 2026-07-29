@@ -50,11 +50,11 @@ services:
       - key: LLM_MAIN_MODEL
         value: gpt-4o-mini
       - key: PUBLIC_WEBVIEW_BASE
-        value: https://yatra-sahayak-agent.vercel.app
+        value: https://yatri.adityeah.ai
       # Lock browser CORS to the webview origin(s) (comma-separated). Add any
       # custom domain here. Server-to-server callers (SwiftChat) are unaffected.
       - key: CORS_ORIGINS
-        value: https://yatra-sahayak-agent.vercel.app
+        value: https://yatra-sahayak-agent.vercel.app,https://yatri.adityeah.ai
       # LiveKit — set these three on the dashboard (the worker inherits them
       # via fromService, so you only paste them here, once).
       - key: LIVEKIT_URL
