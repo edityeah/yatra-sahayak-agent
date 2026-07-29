@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any
 
 from livekit.agents import (
@@ -66,11 +67,13 @@ class JobMetadata(BaseModel):
     POST /api/voice/token in webhook.py). All fields optional so console /
     local dispatches (no metadata) don't crash.
     """
-    message_id:      str | None = None
-    user_id:         str | None = None
-    conversation_id: str | None = None
-    yatra:           str | None = None
-    language:        str | None = None
+    message_id:            str | None = None
+    user_id:               str | None = None
+    conversation_id:       str | None = None
+    conversation_title:    str | None = None
+    multimodal_session_id: str | None = None
+    yatra:                 str | None = None
+    language:              str | None = None
 
     @classmethod
     def parse(cls, raw: str | None) -> "JobMetadata":
@@ -101,10 +104,48 @@ class YatraVoiceAssistant(Agent):
 
 
 # ---------------------------------------------------------------------------
+# End-of-call: push the transcript + summary back so the chat thread can
+# show BOTH sides of the voice call, just like a text chat.
+# ---------------------------------------------------------------------------
+
+async def _on_shutdown(session: "AgentSession", metadata: JobMetadata, start_time: float) -> None:
+    """Pull the transcript off the session, summarise it, and POST both to the
+    platform's multimodal-session endpoint. Best-effort — any failure is logged
+    and swallowed so call teardown is never disrupted. Heavy imports are lazy
+    so idle voice subprocesses stay within Render's memory budget."""
+    from agent.voice.agent_api import AgentAPIClient
+    from agent.voice.schemas import SessionStatus, SessionUpdatePayload
+    from agent.voice.summary import SummaryService
+
+    MAX_TRANSCRIPT_ITEMS = 30
+    try:
+        duration = int(time.time() - start_time)
+        history = session.history.to_dict(exclude_timestamp=False) if session.history else {}
+        items = history.get("items") or []
+        transcript = [i for i in items if i.get("type") == "message"]
+        logger.info("voice call closing — %d transcript items, %ds, session_id=%s",
+                    len(transcript), duration, metadata.multimodal_session_id)
+
+        summary = await SummaryService().generate(transcript[-MAX_TRANSCRIPT_ITEMS:], metadata.conversation_title)
+        payload = SessionUpdatePayload(
+            status=SessionStatus.COMPLETED,
+            duration=duration,
+            message_id=metadata.message_id or "",
+            summary=summary.summary,
+            conversation_title=summary.title,
+            transcript=transcript,   # full transcript; only the summariser input is capped
+        )
+        await AgentAPIClient().update_multimodal_session(metadata.multimodal_session_id or "", payload)
+    except Exception:
+        logger.exception("voice shutdown handler failed — call teardown continues")
+
+
+# ---------------------------------------------------------------------------
 # Worker entry point
 # ---------------------------------------------------------------------------
 
 async def entrypoint(ctx: JobContext) -> None:
+    start_time = time.time()
     metadata = JobMetadata.parse(ctx.job.metadata)
     logger.info(
         "voice job received: room=%s user_id=%s yatra=%s language=%s",
@@ -140,6 +181,10 @@ async def entrypoint(ctx: JobContext) -> None:
             video_enabled=False,
         ),
     )
+
+    # When the call ends, push the transcript + summary back so it appears in
+    # the chat thread — the same way a text conversation shows both sides.
+    ctx.add_shutdown_callback(lambda: _on_shutdown(session, metadata, start_time))
 
 
 # ---------------------------------------------------------------------------
