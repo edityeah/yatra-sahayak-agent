@@ -12,6 +12,7 @@ import AdvisoriesPage from "./yatri/AdvisoriesPage.jsx";
 import CallPage from "./voice/CallPage.jsx";
 import GrievancePage from "./yatri/GrievancePage.jsx";
 import TransportPage from "./yatri/TransportPage.jsx";
+import AlertsPage from "./yatri/AlertsPage.jsx";
 import OfficerChatPage from "./officer/OfficerChatPage.jsx";
 import OfficerGrievances from "./officer/OfficerGrievances.jsx";
 import OfficerAlerts from "./officer/OfficerAlerts.jsx";
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/yatri/lostfound" element={<LostFoundPage />} />
         <Route path="/yatri/grievance" element={<GrievancePage />} />
         <Route path="/yatri/transport" element={<TransportPage />} />
+        <Route path="/yatri/alerts" element={<AlertsPage />} />
         <Route path="/yatri/map" element={<MapPage />} />
         <Route path="/yatri/logistics" element={<LogisticsPage />} />
         <Route path="/yatri/drills" element={<DrillsPage />} />

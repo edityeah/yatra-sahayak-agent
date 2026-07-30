@@ -27,6 +27,13 @@ export const QUICK_ACTIVITIES = [
     action: { type: "route", href: "/yatri/transport" },
   },
   {
+    id: "alerts",
+    icon: "📢",
+    label: { mr: "सूचना / अलर्ट", hi: "सूचनाएँ / अलर्ट", en: "Alerts" },
+    tagline: { mr: "नियंत्रण कक्षाकडून अधिकृत सूचना", hi: "नियंत्रण कक्ष से आधिकारिक सूचनाएँ", en: "Official alerts from the control room" },
+    action: { type: "route", href: "/yatri/alerts" },
+  },
+  {
     id: "helplines",
     icon: "☎️",
     label: { mr: "मदत क्रमांक", hi: "हेल्पलाइन", en: "Helplines" },

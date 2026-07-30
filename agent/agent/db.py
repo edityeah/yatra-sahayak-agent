@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS sos_events (
   status         TEXT NOT NULL DEFAULT 'open',
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS routed_to TEXT;
 """
 
 

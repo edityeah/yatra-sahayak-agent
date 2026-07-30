@@ -276,18 +276,34 @@ async def get_registration_by_id(yatra_id: str) -> dict | None:
 
 
 # ── sos_events ──────────────────────────────────────────────────────
+# Which official control the SOS is escalated to (simulated intervention). In
+# production this is the ERSS-112 CAD / State Emergency Operations Centre.
+_SOS_CONTROL = {
+    "pandharpur": "Pune District Control Room · 112 / 1077",
+    "kumbh": "Nashik District Control Room · 112 / 1077",
+}
+_SOS_CONTROL_DEFAULT = "State Emergency Control Centre · 112"
+
+
+def sos_control_for(yatra: str | None) -> str:
+    return _SOS_CONTROL.get(yatra or "", _SOS_CONTROL_DEFAULT)
+
+
 async def create_sos(user_id: str, *, yatra: str | None = None, yatra_id: str | None = None,
-                     location: str | None = None, nature: str | None = None) -> str:
+                     location: str | None = None, nature: str | None = None,
+                     routed_to: str | None = None) -> str:
     sid = f"SOS-{_today()}-{_next():04d}"
+    routed_to = routed_to or sos_control_for(yatra)
+    # status starts "open" = escalated/awaiting-acknowledgement at the control room.
     row = {"id": sid, "user_id": user_id, "yatra": yatra, "yatra_id": yatra_id,
-           "location": location, "nature": nature, "status": "open"}
+           "location": location, "nature": nature, "status": "open", "routed_to": routed_to}
     pool = await _pool()
     if pool:
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
-                    "INSERT INTO sos_events(id,user_id,yatra,yatra_id,location,nature,status) "
-                    "VALUES(%(id)s,%(user_id)s,%(yatra)s,%(yatra_id)s,%(location)s,%(nature)s,%(status)s)",
+                    "INSERT INTO sos_events(id,user_id,yatra,yatra_id,location,nature,status,routed_to) "
+                    "VALUES(%(id)s,%(user_id)s,%(yatra)s,%(yatra_id)s,%(location)s,%(nature)s,%(status)s,%(routed_to)s)",
                     row,
                 )
             await conn.commit()
