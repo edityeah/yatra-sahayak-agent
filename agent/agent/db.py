@@ -104,6 +104,23 @@ CREATE TABLE IF NOT EXISTS sos_events (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS routed_to TEXT;
+-- Contact snapshot for callers with no registration (voice SOS, walk-ins).
+ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS reporter_name TEXT;
+ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS reporter_phone TEXT;
+-- Incident timeline: every action an officer takes on an SOS is logged here
+-- (acknowledgement, unit dispatch, resolution, plain notes) with who did it and
+-- structured detail (unit name, contact, ETA, outcome). This is the audit trail
+-- the control room / 112 CAD would keep.
+CREATE TABLE IF NOT EXISTS sos_updates (
+  id             BIGSERIAL PRIMARY KEY,
+  sos_id         TEXT NOT NULL,
+  status         TEXT,                              -- status set by this update (null = comment only)
+  actor          TEXT,                              -- officer who logged it
+  note           TEXT,
+  meta           JSONB NOT NULL DEFAULT '{}'::jsonb, -- unit / contact / eta / outcome
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS sos_updates_sos_idx ON sos_updates(sos_id, created_at);
 """
 
 

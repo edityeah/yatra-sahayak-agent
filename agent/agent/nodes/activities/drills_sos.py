@@ -89,6 +89,8 @@ async def _handle_sos(state: YatraState) -> YatraState:
 
     await persistence.create_sos(
         user_id, yatra=sos_yatra, yatra_id=yatra_id, location=location, nature=nature,
+        reporter_name=(reg["name"] if reg else None),
+        reporter_phone=(reg["phone"] if reg else None),
     )
 
     control_number = _control_room_number(sos_yatra)

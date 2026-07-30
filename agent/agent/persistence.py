@@ -16,6 +16,7 @@ from agent import db
 _USER_STATE: dict[str, dict] = {}
 _REGISTRATIONS: dict[str, dict] = {}   # yatra_id -> row
 _SOS: list[dict] = []
+_SOS_UPDATES: list[dict] = []          # incident timeline (audit trail per SOS)
 _LOSTFOUND: list[dict] = []            # lost & found reports
 _GRIEVANCES: list[dict] = []           # pilgrim grievances/complaints
 _ALERTS: list[dict] = []               # officer → pilgrim broadcast alerts
@@ -34,6 +35,7 @@ def reset() -> None:
     _USER_STATE.clear()
     _REGISTRATIONS.clear()
     _SOS.clear()
+    _SOS_UPDATES.clear()
     _LOSTFOUND.clear()
     _GRIEVANCES.clear()
     _ALERTS.clear()
@@ -48,6 +50,10 @@ def _next() -> int:
 
 def _today() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d")
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 async def _pool():
@@ -291,24 +297,31 @@ def sos_control_for(yatra: str | None) -> str:
 
 async def create_sos(user_id: str, *, yatra: str | None = None, yatra_id: str | None = None,
                      location: str | None = None, nature: str | None = None,
-                     routed_to: str | None = None) -> str:
+                     routed_to: str | None = None, reporter_name: str | None = None,
+                     reporter_phone: str | None = None) -> str:
     sid = f"SOS-{_today()}-{_next():04d}"
     routed_to = routed_to or sos_control_for(yatra)
     # status starts "open" = escalated/awaiting-acknowledgement at the control room.
     row = {"id": sid, "user_id": user_id, "yatra": yatra, "yatra_id": yatra_id,
-           "location": location, "nature": nature, "status": "open", "routed_to": routed_to}
+           "location": location, "nature": nature, "status": "open", "routed_to": routed_to,
+           "reporter_name": reporter_name, "reporter_phone": reporter_phone}
     pool = await _pool()
     if pool:
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
-                    "INSERT INTO sos_events(id,user_id,yatra,yatra_id,location,nature,status,routed_to) "
-                    "VALUES(%(id)s,%(user_id)s,%(yatra)s,%(yatra_id)s,%(location)s,%(nature)s,%(status)s,%(routed_to)s)",
+                    "INSERT INTO sos_events(id,user_id,yatra,yatra_id,location,nature,status,routed_to,"
+                    "reporter_name,reporter_phone) "
+                    "VALUES(%(id)s,%(user_id)s,%(yatra)s,%(yatra_id)s,%(location)s,%(nature)s,%(status)s,"
+                    "%(routed_to)s,%(reporter_name)s,%(reporter_phone)s)",
                     row,
                 )
             await conn.commit()
     else:
-        _SOS.append(row)
+        _SOS.append({**row, "created_at": _now_iso()})
+    # Seed the timeline: the escalation to the control room is the first event.
+    await add_sos_update(sid, status="open", actor="system",
+                         note=f"SOS raised · auto-escalated to {routed_to}", _touch_status=False)
     return sid
 
 
@@ -319,23 +332,87 @@ async def list_sos() -> list[dict]:
             async with conn.cursor() as cur:
                 await cur.execute("SELECT * FROM sos_events ORDER BY created_at DESC")
                 return [dict(r) for r in await cur.fetchall()]
-    return list(_SOS)
+    return list(reversed(_SOS))
 
 
-async def set_sos_status(sos_id: str, status: str) -> bool:
+async def get_sos(sos_id: str) -> dict | None:
     pool = await _pool()
     if pool:
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
-                await cur.execute("UPDATE sos_events SET status=%s WHERE id=%s", (status, sos_id))
-                changed = cur.rowcount
+                await cur.execute("SELECT * FROM sos_events WHERE id=%s", (sos_id,))
+                row = await cur.fetchone()
+                return dict(row) if row else None
+    return next((dict(r) for r in _SOS if r["id"] == sos_id), None)
+
+
+async def list_sos_updates(sos_id: str) -> list[dict]:
+    """The incident timeline for one SOS, oldest → newest."""
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM sos_updates WHERE sos_id=%s ORDER BY created_at ASC, id ASC",
+                    (sos_id,),
+                )
+                return [dict(r) for r in await cur.fetchall()]
+    return [dict(u) for u in _SOS_UPDATES if u["sos_id"] == sos_id]
+
+
+async def add_sos_update(sos_id: str, *, status: str | None = None, actor: str | None = None,
+                         note: str | None = None, meta: dict | None = None,
+                         _touch_status: bool = True) -> dict | None:
+    """Log one action on an SOS to the timeline, and (optionally) advance its
+    status. Returns the created update, or None if the SOS doesn't exist."""
+    if await get_sos(sos_id) is None:
+        return None
+    import json as _json
+    meta = meta or {}
+    update = {"sos_id": sos_id, "status": status, "actor": actor or "officer",
+              "note": note, "meta": meta}
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO sos_updates(sos_id,status,actor,note,meta) "
+                    "VALUES(%s,%s,%s,%s,%s::jsonb) RETURNING id, created_at",
+                    (sos_id, status, update["actor"], note, _json.dumps(meta)),
+                )
+                r = await cur.fetchone()
+                update["id"], update["created_at"] = r["id"], r["created_at"]
+                if status and _touch_status:
+                    await cur.execute("UPDATE sos_events SET status=%s WHERE id=%s", (status, sos_id))
             await conn.commit()
-            return bool(changed)
-    for r in _SOS:
-        if r["id"] == sos_id:
-            r["status"] = status
-            return True
-    return False
+    else:
+        update["id"] = len(_SOS_UPDATES) + 1
+        update["created_at"] = _now_iso()
+        _SOS_UPDATES.append(update)
+        if status and _touch_status:
+            for r in _SOS:
+                if r["id"] == sos_id:
+                    r["status"] = status
+    return update
+
+
+async def set_sos_status(sos_id: str, status: str) -> bool:
+    """Back-compat thin wrapper — advances status and logs it to the timeline."""
+    return await add_sos_update(sos_id, status=status, actor="officer") is not None
+
+
+async def sos_detail(sos_id: str) -> dict | None:
+    """Full incident view for the officer console: the SOS, the reporter's
+    registration (who they are, contacts, medical flags), and the timeline."""
+    sos = await get_sos(sos_id)
+    if sos is None:
+        return None
+    reporter = None
+    if sos.get("yatra_id"):
+        reporter = await get_registration_by_id(sos["yatra_id"])
+    if reporter is None and sos.get("user_id"):
+        reporter = await get_registration_for_user(sos["user_id"])
+    return {**sos, "reporter": reporter, "timeline": await list_sos_updates(sos_id)}
 
 
 async def officer_summary() -> dict:

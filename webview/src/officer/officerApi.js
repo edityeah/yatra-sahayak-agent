@@ -52,4 +52,9 @@ export async function officerAsk(text, key) {
   return out;
 }
 
+// SOS incident console — full record (reporter registration + timeline) and
+// logging an action (status change and/or a note with structured detail).
+export const sosDetail = (id, key) => adminGet(`/api/sos/${id}`, key);
+export const sosUpdate = (id, key, body) => adminPost(`/api/sos/${id}/update`, key, body);
+
 export const YATRA = { pandharpur: "Pandharpur Wari", kumbh: "Simhastha Kumbh" };

@@ -537,7 +537,8 @@ async def api_lostfound_create(request: Request, x_api_key: str | None = Header(
     if kind == "person":
         await persistence.create_sos(
             b.get("reporter_phone") or "lost-found", yatra=b.get("yatra"), yatra_id=b.get("yatra_id"),
-            location=b.get("last_seen"), nature=f"Missing person: {b.get('name', '')}".strip())
+            location=b.get("last_seen"), nature=f"Missing person: {b.get('name', '')}".strip(),
+            reporter_name=b.get("reporter_name"), reporter_phone=b.get("reporter_phone"))
     return {"id": lid}
 
 
@@ -631,8 +632,36 @@ async def api_sos_list(status: str | None = None, x_api_key: str | None = Header
     return rows
 
 
+@app.get("/api/sos/{sos_id}")
+async def api_sos_detail(sos_id: str, x_api_key: str | None = Header(default=None)):
+    """Full incident record — the SOS, who raised it (their registration:
+    contacts, emergency contact, medical flags, group, pass id) and the
+    action timeline. ADMIN_API_KEY-gated (pilgrim PII)."""
+    _require_admin(x_api_key)
+    detail = await persistence.sos_detail(sos_id)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="sos not found")
+    return detail
+
+
+@app.post("/api/sos/{sos_id}/update")
+async def api_sos_update(sos_id: str, request: Request, x_api_key: str | None = Header(default=None)):
+    """Log an action on an SOS: advance status (acknowledge / dispatch / resolve)
+    and/or attach a note + structured detail (responding unit, contact, ETA,
+    outcome). Every call is appended to the incident timeline."""
+    _require_admin(x_api_key)
+    b = await request.json()
+    update = await persistence.add_sos_update(
+        sos_id, status=b.get("status"), actor=(b.get("actor") or "").strip() or None,
+        note=(b.get("note") or "").strip() or None, meta=b.get("meta") or {})
+    if update is None:
+        raise HTTPException(status_code=404, detail="sos not found")
+    return update
+
+
 @app.post("/api/sos/{sos_id}/status")
 async def api_sos_status(sos_id: str, request: Request, x_api_key: str | None = Header(default=None)):
+    # Back-compat: bare status change (also logs to the timeline).
     _require_admin(x_api_key)
     b = await request.json()
     ok = await persistence.set_sos_status(sos_id, b.get("status", "resolved"))
