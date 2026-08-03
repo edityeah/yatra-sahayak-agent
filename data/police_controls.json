@@ -1,0 +1,104 @@
+{
+  "pandharpur": [
+    {
+      "name": { "mr": "पुणे जिल्हा नियंत्रण कक्ष", "hi": "पुणे जिला नियंत्रण कक्ष", "en": "Pune District Control Room" },
+      "type": "control_room",
+      "phone": "1077",
+      "lat": 18.5204,
+      "lng": 73.8567
+    },
+    {
+      "name": { "mr": "सासवड पोलीस ठाणे", "hi": "सासवड पुलिस स्टेशन", "en": "Saswad Police Station" },
+      "type": "station",
+      "phone": "02115-222133",
+      "lat": 18.3460,
+      "lng": 74.0310
+    },
+    {
+      "name": { "mr": "जेजुरी पोलीस ठाणे", "hi": "जेजुरी पुलिस स्टेशन", "en": "Jejuri Police Station" },
+      "type": "station",
+      "phone": "02115-252133",
+      "lat": 18.2770,
+      "lng": 74.1610
+    },
+    {
+      "name": { "mr": "लोणंद पोलीस ठाणे", "hi": "लोणंद पुलिस स्टेशन", "en": "Lonand Police Station" },
+      "type": "station",
+      "phone": "02169-224133",
+      "lat": 18.0360,
+      "lng": 74.1960
+    },
+    {
+      "name": { "mr": "फलटण शहर पोलीस ठाणे", "hi": "फलटण शहर पुलिस स्टेशन", "en": "Phaltan City Police Station" },
+      "type": "station",
+      "phone": "02166-222133",
+      "lat": 17.9920,
+      "lng": 74.4310
+    },
+    {
+      "name": { "mr": "नातेपुते पोलीस ठाणे", "hi": "नातेपुते पुलिस स्टेशन", "en": "Natepute Police Station" },
+      "type": "station",
+      "phone": "02185-223133",
+      "lat": 17.9200,
+      "lng": 75.0700
+    },
+    {
+      "name": { "mr": "पंढरपूर शहर पोलीस ठाणे", "hi": "पंढरपुर शहर पुलिस स्टेशन", "en": "Pandharpur City Police Station" },
+      "type": "station",
+      "phone": "02186-224133",
+      "lat": 17.6790,
+      "lng": 75.3330
+    },
+    {
+      "name": { "mr": "पंढरपूर तालुका पोलीस ठाणे (चंद्रभागा घाट)", "hi": "पंढरपुर तालुका पुलिस स्टेशन (चंद्रभागा घाट)", "en": "Pandharpur Taluka Police Station (Chandrabhaga Ghat)" },
+      "type": "station",
+      "phone": "02186-225133",
+      "lat": 17.6730,
+      "lng": 75.3300
+    }
+  ],
+  "kumbh": [
+    {
+      "name": { "mr": "नाशिक ग्रामीण जिल्हा नियंत्रण कक्ष", "hi": "नासिक ग्रामीण जिला नियंत्रण कक्ष", "en": "Nashik Rural District Control Room" },
+      "type": "control_room",
+      "phone": "1077",
+      "lat": 19.9970,
+      "lng": 73.7900
+    },
+    {
+      "name": { "mr": "पंचवटी पोलीस ठाणे", "hi": "पंचवटी पुलिस स्टेशन", "en": "Panchavati Police Station" },
+      "type": "station",
+      "phone": "0253-2629133",
+      "lat": 20.0070,
+      "lng": 73.7920
+    },
+    {
+      "name": { "mr": "भद्रकाली पोलीस ठाणे", "hi": "भद्रकाली पुलिस स्टेशन", "en": "Bhadrakali Police Station" },
+      "type": "station",
+      "phone": "0253-2505133",
+      "lat": 19.9960,
+      "lng": 73.7880
+    },
+    {
+      "name": { "mr": "सरकारवाडा पोलीस ठाणे", "hi": "सरकारवाडा पुलिस स्टेशन", "en": "Sarkarwada Police Station" },
+      "type": "station",
+      "phone": "0253-2504133",
+      "lat": 19.9940,
+      "lng": 73.7900
+    },
+    {
+      "name": { "mr": "त्र्यंबकेश्वर पोलीस ठाणे", "hi": "त्र्यंबकेश्वर पुलिस स्टेशन", "en": "Trimbakeshwar Police Station" },
+      "type": "station",
+      "phone": "02594-233133",
+      "lat": 19.9320,
+      "lng": 73.5290
+    },
+    {
+      "name": { "mr": "म्हसरूळ पोलीस ठाणे", "hi": "म्हसरूल पुलिस स्टेशन", "en": "Mhasrul Police Station" },
+      "type": "station",
+      "phone": "0253-2510133",
+      "lat": 20.0200,
+      "lng": 73.7800
+    }
+  ]
+}

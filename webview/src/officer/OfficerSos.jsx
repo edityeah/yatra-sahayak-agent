@@ -221,7 +221,14 @@ function DetailModal({ id, keyStr, officer, setOfficer, onClose, onChanged }) {
 
             <div className="rounded-xl border border-bdr bg-surface p-3 grid grid-cols-2 gap-x-4 gap-y-2.5">
               <Field icon={Siren} label="Yatra">{YATRA[sos.yatra] || sos.yatra || "—"}</Field>
-              <Field icon={MapPin} label="Location">{sos.location || "Not shared"}</Field>
+              <Field icon={MapPin} label="Location">
+                {typeof sos.lat === "number" && typeof sos.lng === "number" ? (
+                  <a className="text-primary underline" target="_blank" rel="noopener"
+                    href={`https://www.google.com/maps?q=${sos.lat},${sos.lng}`}>
+                    📍 {sos.lat.toFixed(5)}, {sos.lng.toFixed(5)} — open map
+                  </a>
+                ) : (sos.location || "Not shared")}
+              </Field>
               <Field icon={Landmark} label="Escalated to">{sos.routed_to}</Field>
               <Field icon={Clock} label="Raised">{sos.created_at ? timeAgo(sos.created_at) : "—"}</Field>
             </div>

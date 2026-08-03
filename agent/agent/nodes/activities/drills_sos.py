@@ -55,6 +55,26 @@ _DRILLS_HEADER = {
     "en": "🦺 **Preparedness drills / safety information**",
 }
 
+# Appended to the SOS ack when we do NOT yet have coordinates — asks the pilgrim
+# to share their live location so responders route to the NEAREST police control.
+_SOS_ASK_LOCATION = {
+    "mr": "\n\n📍 कृपया तुमचे **थेट लोकेशन शेअर करा** (📎 → Location) — म्हणजे जवळचे पोलीस नियंत्रण तुमच्यापर्यंत लवकर पोहोचेल.",
+    "hi": "\n\n📍 कृपया अपना **लाइव लोकेशन शेयर करें** (📎 → Location) — ताकि नज़दीकी पुलिस नियंत्रण आप तक जल्दी पहुँचे।",
+    "en": "\n\n📍 Please **share your live location** (📎 → Location) so the nearest police control can reach you faster.",
+}
+# Appended when we already have coordinates — names the nearest control.
+_SOS_NEAREST = {
+    "mr": "\n\n📍 सर्वात जवळचे मदत केंद्र: **{control}**. मदत तुमच्याकडे पाठवली जात आहे.",
+    "hi": "\n\n📍 सबसे नज़दीकी मदद केंद्र: **{control}**। मदद आपकी ओर भेजी जा रही है।",
+    "en": "\n\n📍 Nearest help: **{control}**. Responders are being directed to you.",
+}
+# The confirmation after a live pin arrives for an open SOS.
+_SOS_LOCATED = {
+    "mr": "✅ तुमचे लोकेशन मिळाले. सर्वात जवळचे मदत केंद्र — **{control}** — यांना कळवले आहे. जिथे आहात तिथेच थांबा.",
+    "hi": "✅ आपका लोकेशन मिल गया। सबसे नज़दीकी मदद केंद्र — **{control}** — को सूचित कर दिया गया है। जहाँ हैं वहीं रुकें।",
+    "en": "✅ Got your location. The nearest help — **{control}** — has been notified. Stay where you are.",
+}
+
 
 def _control_room_number(sos_yatra: str | None) -> str | None:
     if not sos_yatra:
@@ -83,12 +103,16 @@ async def _handle_sos(state: YatraState) -> YatraState:
     yatra_id = reg["yatra_id"] if reg else None
 
     nature = _infer_nature(_last_human_text(messages))
-    # Real GPS capture is out of scope here — the Plan 3 web app captures
-    # the browser/device location and will pass it through when available.
-    location = None
+
+    # Capture the pilgrim's location if they've shared a live pin this turn — it
+    # routes the SOS to the NEAREST police control. If not, we still raise the
+    # SOS immediately (safety first) and ask for a pin as a follow-up.
+    loc = state.get("shared_location") or {}
+    lat, lng = loc.get("lat"), loc.get("lng")
 
     await persistence.create_sos(
-        user_id, yatra=sos_yatra, yatra_id=yatra_id, location=location, nature=nature,
+        user_id, yatra=sos_yatra, yatra_id=yatra_id, location=None, nature=nature,
+        lat=lat, lng=lng,
         reporter_name=(reg["name"] if reg else None),
         reporter_phone=(reg["phone"] if reg else None),
     )
@@ -105,9 +129,44 @@ async def _handle_sos(state: YatraState) -> YatraState:
             lines.append(_SOS_ACK_TRILINGUAL_COMPACT[code].format(control=control_str))
         body = "\n".join(lines)
 
+    # With coordinates: name the nearest control, no follow-up needed. Without:
+    # ask for a live pin and stay sticky so the next location message re-routes.
+    awaiting = None
+    if lat is not None and lng is not None:
+        nearest = persistence.sos_control_for(sos_yatra, lat, lng)
+        body += _SOS_NEAREST.get(lang or "en", _SOS_NEAREST["en"]).format(control=nearest)
+    else:
+        awaiting = "sos_location"
+        body += _SOS_ASK_LOCATION.get(lang or "en", _SOS_ASK_LOCATION["en"])
+
     return {
         **state,
         "current_node": "drills_sos",
+        "awaiting": awaiting,   # type: ignore[typeddict-item]
+        "messages": messages + [AIMessage(content=body)],
+    }
+
+
+async def _handle_sos_locate(state: YatraState) -> YatraState:
+    """A live pin arrived for an open SOS — attach it and re-route to the
+    nearest police control."""
+    messages = state.get("messages") or []
+    lang = state.get("language") or "en"
+    user_id = state.get("user_id")
+    loc = state.get("shared_location") or {}
+    lat, lng = loc.get("lat"), loc.get("lng")
+
+    sos = await persistence.update_latest_open_sos_location(user_id, lat, lng)
+    control = sos["routed_to"] if sos else persistence.sos_control_for(
+        state.get("active_yatra"), lat, lng)
+    body = _SOS_LOCATED.get(lang, _SOS_LOCATED["en"]).format(control=control)
+
+    return {
+        **state,
+        "current_node": "drills_sos",
+        "awaiting": None,          # type: ignore[typeddict-item]
+        "sos_locate": False,       # type: ignore[typeddict-item]
+        "shared_location": None,   # type: ignore[typeddict-item]
         "messages": messages + [AIMessage(content=body)],
     }
 
@@ -130,6 +189,8 @@ async def _handle_drills(state: YatraState) -> YatraState:
 
 
 async def drills_sos(state: YatraState) -> YatraState:
+    if state.get("sos_locate"):
+        return await _handle_sos_locate(state)
     if state.get("sos"):
         return await _handle_sos(state)
     return await _handle_drills(state)

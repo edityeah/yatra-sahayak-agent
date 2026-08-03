@@ -743,12 +743,19 @@ async def api_voice_token(request: Request, x_api_key: str | None = Header(defau
 async def api_voice_sos(request: Request, x_api_key: str | None = Header(default=None)):
     _require_key(x_api_key)
     body = await request.json()
+    def _coord(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
     sos_id = await persistence.create_sos(
         body.get("user_id", "voice-caller"),
         yatra=body.get("yatra"),
         yatra_id=body.get("yatra_id"),
         location=body.get("location"),
         nature=body.get("nature"),
+        lat=_coord(body.get("lat")),
+        lng=_coord(body.get("lng")),
     )
     return {"sos_id": sos_id}
 

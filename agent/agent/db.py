@@ -107,6 +107,11 @@ ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS routed_to TEXT;
 -- Contact snapshot for callers with no registration (voice SOS, walk-ins).
 ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS reporter_name TEXT;
 ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS reporter_phone TEXT;
+-- Exact incident coordinates (captured when the pilgrim shares their live
+-- location on SOS). Drives nearest-police-control routing; NULL falls back to
+-- the district control room.
+ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION;
+ALTER TABLE sos_events ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION;
 -- Incident timeline: every action an officer takes on an SOS is logged here
 -- (acknowledgement, unit dispatch, resolution, plain notes) with who did it and
 -- structured detail (unit name, contact, ETA, outcome). This is the audit trail

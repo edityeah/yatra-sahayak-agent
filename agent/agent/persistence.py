@@ -291,29 +291,72 @@ _SOS_CONTROL = {
 _SOS_CONTROL_DEFAULT = "State Emergency Control Centre · 112"
 
 
-def sos_control_for(yatra: str | None) -> str:
+def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Great-circle distance in km between two lat/lng points."""
+    import math
+    r = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lng2 - lng1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def nearest_control(yatra: str | None, lat: float, lng: float) -> dict | None:
+    """The closest police station / control room to an incident, from the
+    seeded per-route directory. Returns the entry plus its distance_km, or None
+    when the yatra has no directory. This is what makes 'nearest police control'
+    real once we have the pilgrim's coordinates."""
+    from agent.seed import load
+    try:
+        controls = load("police_controls").get(yatra or "", [])
+    except Exception:
+        return None
+    pts = [c for c in controls if isinstance(c.get("lat"), (int, float)) and isinstance(c.get("lng"), (int, float))]
+    if not pts:
+        return None
+    best = min(pts, key=lambda c: _haversine_km(lat, lng, c["lat"], c["lng"]))
+    return {**best, "distance_km": round(_haversine_km(lat, lng, best["lat"], best["lng"]), 1)}
+
+
+def sos_control_for(yatra: str | None, lat: float | None = None, lng: float | None = None) -> str:
+    """The escalation target label stored on an SOS. With coordinates, this is
+    the NEAREST police control from the route directory (name · phone / 112,
+    with distance). Without coordinates, it falls back to the district control
+    room — which is why capturing the pilgrim's location on SOS matters."""
+    if lat is not None and lng is not None:
+        c = nearest_control(yatra, lat, lng)
+        if c:
+            name = c["name"]["en"] if isinstance(c.get("name"), dict) else c.get("name")
+            phone = c.get("phone")
+            tail = f" · {phone} / 112" if phone and phone != "112" else " · 112"
+            dist = f" ({c['distance_km']} km away)" if c.get("distance_km") is not None else ""
+            return f"{name}{tail}{dist}"
     return _SOS_CONTROL.get(yatra or "", _SOS_CONTROL_DEFAULT)
 
 
 async def create_sos(user_id: str, *, yatra: str | None = None, yatra_id: str | None = None,
                      location: str | None = None, nature: str | None = None,
                      routed_to: str | None = None, reporter_name: str | None = None,
-                     reporter_phone: str | None = None) -> str:
+                     reporter_phone: str | None = None,
+                     lat: float | None = None, lng: float | None = None) -> str:
     sid = f"SOS-{_today()}-{_next():04d}"
-    routed_to = routed_to or sos_control_for(yatra)
+    # With coordinates, route to the NEAREST police control; else the district room.
+    routed_to = routed_to or sos_control_for(yatra, lat, lng)
     # status starts "open" = escalated/awaiting-acknowledgement at the control room.
     row = {"id": sid, "user_id": user_id, "yatra": yatra, "yatra_id": yatra_id,
            "location": location, "nature": nature, "status": "open", "routed_to": routed_to,
-           "reporter_name": reporter_name, "reporter_phone": reporter_phone}
+           "reporter_name": reporter_name, "reporter_phone": reporter_phone,
+           "lat": lat, "lng": lng}
     pool = await _pool()
     if pool:
         async with pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     "INSERT INTO sos_events(id,user_id,yatra,yatra_id,location,nature,status,routed_to,"
-                    "reporter_name,reporter_phone) "
+                    "reporter_name,reporter_phone,lat,lng) "
                     "VALUES(%(id)s,%(user_id)s,%(yatra)s,%(yatra_id)s,%(location)s,%(nature)s,%(status)s,"
-                    "%(routed_to)s,%(reporter_name)s,%(reporter_phone)s)",
+                    "%(routed_to)s,%(reporter_name)s,%(reporter_phone)s,%(lat)s,%(lng)s)",
                     row,
                 )
             await conn.commit()
@@ -323,6 +366,33 @@ async def create_sos(user_id: str, *, yatra: str | None = None, yatra_id: str | 
     await add_sos_update(sid, status="open", actor="system",
                          note=f"SOS raised · auto-escalated to {routed_to}", _touch_status=False)
     return sid
+
+
+async def update_latest_open_sos_location(user_id: str, lat: float, lng: float) -> dict | None:
+    """A pilgrim shared their live location right after raising an SOS. Attach it
+    to their most recent still-open incident and RE-ROUTE to the nearest police
+    control. Returns the updated SOS (with the new routed_to), or None."""
+    rows = [r for r in await list_sos()
+            if r.get("user_id") == user_id and (r.get("status") or "open") != "resolved"]
+    if not rows:
+        return None
+    sos = rows[0]                       # list_sos is newest-first
+    sid = sos["id"]
+    routed_to = sos_control_for(sos.get("yatra"), lat, lng)
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("UPDATE sos_events SET lat=%s, lng=%s, routed_to=%s WHERE id=%s",
+                                  (lat, lng, routed_to, sid))
+            await conn.commit()
+    else:
+        for r in _SOS:
+            if r["id"] == sid:
+                r.update(lat=lat, lng=lng, routed_to=routed_to)
+    await add_sos_update(sid, actor="system",
+                         note=f"Live location received · re-routed to {routed_to}", _touch_status=False)
+    return await get_sos(sid)
 
 
 async def list_sos() -> list[dict]:

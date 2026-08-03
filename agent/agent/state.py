@@ -67,6 +67,11 @@ class YatraState(TypedDict, total=False):
     # message by the webhook. None on text-only turns.
     shared_location: dict[str, Any] | None
 
+    # ── SOS follow-up: a location shared while awaiting=="sos_location" is a
+    # live pin for an OPEN incident (re-route to nearest police control), not a
+    # weather origin. Set by the router, consumed by drills_sos. ──────────
+    sos_locate: bool
+
 
 def new_state(session_id: str, user_id: str) -> YatraState:
     return {
@@ -85,4 +90,5 @@ def new_state(session_id: str, user_id: str) -> YatraState:
         "reg_fields": {},
         "awaiting": None,
         "shared_location": None,
+        "sos_locate": False,
     }

@@ -121,7 +121,16 @@ async def intent_router(state: YatraState) -> YatraState:
     if state.get("reg_stage") and state.get("reg_stage") != "done":
         return {**state, "current_node": "intent_router", "intent": "registration"}  # type: ignore[typeddict-item]
 
-    # A location shared natively in chat is, today, only meaningful to weather
+    # An SOS just asked for the pilgrim's LIVE location. A pin shared now is for
+    # that open incident — attach it and re-route to the nearest police control.
+    # This takes precedence over the weather-origin path below.
+    if state.get("awaiting") == "sos_location":
+        if state.get("shared_location"):
+            return {**state, "current_node": "intent_router",  # type: ignore[typeddict-item]
+                    "intent": "drills_sos", "sos_locate": True}
+        state = {**state, "awaiting": None}  # no pin this turn — don't trap them
+
+    # A location shared natively in chat is otherwise meaningful to weather
     # (route weather from that origin). Route it there whether or not we were
     # explicitly awaiting an origin — a shared pin is an unambiguous signal.
     if state.get("shared_location"):
