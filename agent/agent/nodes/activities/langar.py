@@ -6,6 +6,7 @@ from langchain_core.messages import AIMessage
 from agent.state import YatraState
 from agent.seed import load, t
 from agent import persistence
+from agent.nodes.activities.followups import followup_line
 
 _HEADER = {
     "mr": "🍲 **मोफत अन्नदान / लंगर**",
@@ -53,7 +54,7 @@ async def langar(state: YatraState) -> YatraState:
                 lines.append("")
         for e in entries:
             lines.append(_one(e, lang))
-        body = "\n".join(lines).rstrip()
+        body = "\n".join(lines).rstrip() + followup_line("langar", lang)
 
     return {
         **state,

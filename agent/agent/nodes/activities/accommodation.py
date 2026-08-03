@@ -4,6 +4,7 @@ from __future__ import annotations
 from langchain_core.messages import AIMessage
 from agent.state import YatraState
 from agent.seed import load, t
+from agent.nodes.activities.followups import followup_line
 
 _HEADER = {
     "mr": "🏠 **निवास व्यवस्था व दर**",
@@ -36,7 +37,7 @@ async def accommodation(state: YatraState) -> YatraState:
             if e.get("contact"):
                 lines.append(f"{_CONTACT[lang]}: {e['contact']}")
             lines.append("")
-        body = "\n".join(lines).rstrip()
+        body = "\n".join(lines).rstrip() + followup_line("accommodation", lang)
 
     return {
         **state,

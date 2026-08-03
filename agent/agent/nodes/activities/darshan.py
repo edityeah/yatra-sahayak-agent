@@ -4,6 +4,7 @@ from __future__ import annotations
 from langchain_core.messages import AIMessage
 from agent.state import YatraState
 from agent.seed import load, t
+from agent.nodes.activities.followups import followup_line
 
 _EMPTY = {
     "mr": "दर्शन माहिती लवकरच जोडली जाईल.",
@@ -24,7 +25,7 @@ async def darshan(state: YatraState) -> YatraState:
         lines = [t(data.get("title"), lang), ""]
         for item in data.get("items", []):
             lines.append(f"**{t(item.get('label'), lang)}** — {t(item.get('value'), lang)}")
-        body = "\n".join(lines).rstrip()
+        body = "\n".join(lines).rstrip() + followup_line("darshan", lang)
 
     return {
         **state,

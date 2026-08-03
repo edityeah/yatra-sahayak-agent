@@ -95,6 +95,18 @@ function parseChoices(text) {
   return { text: String(text).replace(CHOICES_RE, "").trim(), choices };
 }
 
+// Proactive follow-up suggestions the agent appends as a trailing line:
+//   👉 You can also ask: A · B · C
+// Rendered as tappable chips here; shown as plain text in SwiftChat.
+const FOLLOWUP_RE = /\n*👉\s*[^:：]+[:：]\s*(.+?)\s*$/;
+function parseFollowups(text) {
+  const hit = String(text || "").match(FOLLOWUP_RE);
+  if (!hit) return { text, choices: [] };
+  const choices = hit[1].split("·").map((s) => s.trim()).filter(Boolean)
+    .map((s) => ({ label: s, value: s }));
+  return { text: String(text).replace(FOLLOWUP_RE, "").trim(), choices };
+}
+
 function MessageBubble({ m, waitingFirstDelta, language, onChoice }) {
   if (m.role === "user") {
     // A shared location renders as a map card (like SwiftChat's native pin),
@@ -114,7 +126,10 @@ function MessageBubble({ m, waitingFirstDelta, language, onChoice }) {
       </div>
     );
   }
-  const { text: cleanText, choices } = parseChoices(m.text);
+  const parsed = parseChoices(m.text);
+  const fu = parseFollowups(parsed.text);
+  const cleanText = fu.text;
+  const choices = [...parsed.choices, ...fu.choices];
   const isTyping = cleanText === "" && waitingFirstDelta && choices.length === 0;
   return (
     <div className="flex gap-2.5">

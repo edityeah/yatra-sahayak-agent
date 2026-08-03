@@ -6,6 +6,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from agent.state import YatraState
 from agent.seed import load, t
 from agent import persistence
+from agent.nodes.activities.followups import followup_line
 
 # Facility kind (matches routes.json `kind`) → trilingual label + detection words.
 _KINDS = [
@@ -98,7 +99,7 @@ async def amenity(state: YatraState) -> YatraState:
         if lat is None:
             lines.append(_ASK_LOC[lang])
             awaiting = f"amenity:{kind}"   # so the next shared pin re-routes here
-        body = "\n".join(lines).rstrip()
+        body = "\n".join(lines).rstrip() + followup_line("amenity", lang)
 
     return {
         **state,

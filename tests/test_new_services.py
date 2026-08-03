@@ -44,6 +44,15 @@ def test_accommodation_lists_tariffs():
     assert "Bhakta Niwas" in body and "night" in body
 
 
+def test_responses_end_with_tappable_followups():
+    """Each service closes with a 👉 follow-up line cross-linking to related
+    services, so the conversation keeps going (webview renders these as chips)."""
+    for node, needle in ((darshan, "Directions"), (accommodation, "Free food"),
+                         (langar, "Nearest medical"), (amenity, "Helpline")):
+        body = _reply(asyncio.run(node(_mk("hi"))))
+        assert "👉" in body and needle in body
+
+
 def test_langar_nearest_when_location_shared():
     # No location → plain list.
     plain = _reply(asyncio.run(langar(_mk("free food"))))
