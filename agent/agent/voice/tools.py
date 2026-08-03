@@ -244,6 +244,31 @@ async def get_advisories(context: RunContext) -> str:
 
 
 @function_tool
+async def get_alerts(context: RunContext) -> str:
+    """Get the active emergency alerts the control room / State Emergency Control
+    Centre has broadcast for the caller's yatra, to read aloud. Use when the
+    caller asks 'any alerts?', 'is it safe?', 'any warnings', or about a current
+    situation (crowd, weather, closure) affecting the yatra right now."""
+    from agent import persistence
+
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    alerts = await persistence.list_alerts(yatra, active_only=True)
+    if not alerts:
+        return "Tell the caller there are no active alerts right now, and to stay with their group."
+    # Most severe first so the caller hears the critical ones first.
+    order = {"critical": 0, "danger": 0, "warning": 1, "info": 2}
+    alerts.sort(key=lambda a: order.get((a.get("severity") or "info").lower(), 2))
+    lines = []
+    for a in alerts[:4]:
+        sev = (a.get("severity") or "info").lower()
+        tag = "URGENT — " if sev in ("critical", "danger") else ""
+        lines.append(f"{tag}{a.get('title') or ''}: {a.get('message') or ''}".strip())
+    return ("Read these official control-room alerts aloud in the caller's language, urgent ones "
+            "first, calmly and clearly: " + " | ".join(lines))
+
+
+@function_tool
 async def get_transport_rates(context: RunContext) -> str:
     """Get approved transport / porter rates (bullock cart, pony, palkhi porter,
     etc.) for the caller's yatra, to read aloud. Use when the caller asks about
@@ -331,5 +356,5 @@ async def report_lost_found(context: RunContext, kind: str, name: str,
 
 ALL_TOOLS = [
     raise_sos, register_for_yatra, file_grievance, get_weather, get_helplines,
-    get_advisories, get_transport_rates, get_route_info, report_lost_found,
+    get_advisories, get_alerts, get_transport_rates, get_route_info, report_lost_found,
 ]
