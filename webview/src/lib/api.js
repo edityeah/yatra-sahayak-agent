@@ -56,7 +56,7 @@ export async function apiPost(path, body, { retries = 10, onWaking } = {}) {
 
 // Stream a chat turn from the agent's /messages SSE endpoint (POST). Calls
 // onDelta(textChunk) as text arrives. Returns the full reply string.
-export async function streamChat({ user_id, conversation_id, text, location, language, yatra }, onDelta) {
+export async function streamChat({ user_id, conversation_id, text, location, language, yatra }, onDelta, onWaking) {
   // Pass the known language so the agent replies in it. The YATRA is
   // deliberately NOT defaulted — it's selected in the chat itself, so when the
   // user hasn't picked one yet we send nothing and the agent asks.
@@ -68,14 +68,30 @@ export async function streamChat({ user_id, conversation_id, text, location, lan
   const content = location
     ? [{ type: "location", location: { latitude: location.lat, longitude: location.lng } }]
     : [{ type: "text", text: { value: text } }];
-  const resp = await fetch(`${BASE}/messages`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-API-Key": KEY },
-    body: JSON.stringify({
-      user_id, conversation_id, language, yatra,
-      message: { content },
-    }),
-  });
+  const payload = JSON.stringify({ user_id, conversation_id, language, yatra, message: { content } });
+
+  // Connect with cold-start resilience: the agent may be waking (30–60s), where
+  // the edge returns a network error or 502/503/504 BEFORE the app streams. We
+  // retry the CONNECTION (never mid-stream) so the chat never silently shows an
+  // empty bubble. onWaking fires after the first miss so the UI can show it.
+  let resp, lastErr;
+  for (let attempt = 0; attempt <= 10; attempt++) {
+    try {
+      resp = await fetch(`${BASE}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": KEY },
+        body: payload,
+      });
+      if (resp.ok && resp.body) break;
+      if (!_GATEWAY.has(resp.status)) throw new Error(`/messages -> ${resp.status}`);
+      lastErr = new Error(`/messages -> ${resp.status}`);   // gateway → cold start → retry
+    } catch (e) {
+      lastErr = e; resp = null;   // pre-response network error → retry
+    }
+    if (attempt < 10) { onWaking?.(attempt + 1); await _sleep(_backoff(attempt)); }
+  }
+  if (!resp || !resp.ok || !resp.body) throw lastErr || new Error("/messages failed");
+
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "", full = "";

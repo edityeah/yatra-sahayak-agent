@@ -28,6 +28,11 @@ const TYPING = { mr: "टाइप करत आहे…", hi: "टाइप �
 const LOC_SHARED = { mr: "📍 स्थान शेअर केले", hi: "📍 स्थान साझा किया", en: "📍 Location shared" };
 const LOC_DENIED = { mr: "स्थान मिळाले नाही. कृपया शहर टाइप करा.", hi: "स्थान नहीं मिला। कृपया शहर टाइप करें।", en: "Couldn't get your location. Please type a city instead." };
 const LOC_UNSUPPORTED = { mr: "या डिव्हाइसवर स्थान उपलब्ध नाही. शहर टाइप करा.", hi: "इस डिवाइस पर स्थान उपलब्ध नहीं। शहर टाइप करें।", en: "Location isn't available here. Please type a city instead." };
+const SEND_FAILED = {
+  mr: "उत्तर मिळाले नाही — सर्व्हर सुरू होत असावा. पुन्हा पाठवा.",
+  hi: "जवाब नहीं मिला — सर्वर शुरू हो रहा होगा। दोबारा भेजें।",
+  en: "No response — the server may be waking up. Please send again.",
+};
 
 // Very small markdown-ish renderer: **bold**, [label](url), bare URLs,
 // tel: links, and line breaks. Returns an array of React nodes.
@@ -231,12 +236,19 @@ export default function ChatPage() {
           (chunk) => {
             setWaitingFirstDelta(false);
             setStreamText((prev) => (prev || "") + chunk);
-          }
+          },
+          () => setWaitingFirstDelta(true)   // server waking — keep the typing indicator
         );
-        appendMessage(id, { role: "bot", text: full });
-        setThreads(loadThreads());
+        // Never render an empty bubble — an empty reply means the stream failed
+        // (e.g. cold start) so surface a retry instead.
+        if (full && full.trim()) {
+          appendMessage(id, { role: "bot", text: full });
+          setThreads(loadThreads());
+        } else {
+          setError(t(SEND_FAILED, language));
+        }
       } catch (e) {
-        setError(e?.message || String(e));
+        setError(t(SEND_FAILED, language));
       } finally {
         setBusy(false);
         setWaitingFirstDelta(false);
@@ -268,12 +280,17 @@ export default function ChatPage() {
         try {
           const full = await streamChat(
             { user_id: ctx.user_id, conversation_id: id, location, language, yatra },
-            (chunk) => { setWaitingFirstDelta(false); setStreamText((prev) => (prev || "") + chunk); }
+            (chunk) => { setWaitingFirstDelta(false); setStreamText((prev) => (prev || "") + chunk); },
+            () => setWaitingFirstDelta(true)
           );
-          appendMessage(id, { role: "bot", text: full });
-          setThreads(loadThreads());
+          if (full && full.trim()) {
+            appendMessage(id, { role: "bot", text: full });
+            setThreads(loadThreads());
+          } else {
+            setError(t(SEND_FAILED, language));
+          }
         } catch (e) {
-          setError(e?.message || String(e));
+          setError(t(SEND_FAILED, language));
         } finally {
           setBusy(false); setWaitingFirstDelta(false); setStreamText(null);
         }

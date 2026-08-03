@@ -32,8 +32,12 @@ VALID_INTENTS = {
 # trilingual (English / Marathi / Hindi). Signage deliberately does NOT match a
 # bare "route" (that word also appears in "weather on the route").
 _KEYWORD_INTENTS: list[tuple[str, tuple[str, ...]]] = [
-    ("drills_sos", ("sos", "emergency", "help me", "drill", "first aid", "आपत्कालीन",
-                    "आणीबाणी", "सराव", "प्रथमोपचार", "आपातकाल", "प्राथमिक उपचार")),
+    # NOTE: live emergencies ("sos", "emergency", "help me", "danger", …) are
+    # caught UPSTREAM by the content_policy SOS tripwire (sets sos=True and skips
+    # this fallback), so this entry is only the DRILLS/preparedness side — no
+    # emergency synonyms, else an info query like "emergency helpline numbers"
+    # (which the tripwire deliberately let through) would misroute to drills.
+    ("drills_sos", ("drill", "first aid", "सराव", "प्रथमोपचार", "प्राथमिक उपचार")),
     ("helpline", ("helpline", "help line", "phone", "number", "call", "contact", "police",
                   "ambulance", "control room", "हेल्पलाइन", "फोन", "नंबर", "संपर्क", "पोलिस",
                   "पोलीस", "रुग्णवाहिका", "नियंत्रण कक्ष", "एम्बुलेंस", "पुलिस")),

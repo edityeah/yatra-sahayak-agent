@@ -98,6 +98,17 @@ def test_danger_phrases_trip_sos():
     assert not _sos_tripwire("what is the route today")
 
 
+def test_emergency_info_requests_do_not_false_trip_sos():
+    """Asking FOR emergency info is not a live SOS — it must route to helplines."""
+    from agent.nodes.content_policy import _sos_tripwire
+    assert not _sos_tripwire("give me the emergency helpline numbers")
+    assert not _sos_tripwire("emergency contact number")
+    assert not _sos_tripwire("आपत्कालीन मदत क्रमांक द्या")   # mr: give emergency help numbers
+    # …but a real distress phrase still trips even with a number word present.
+    assert _sos_tripwire("help me, what number do I call")
+    assert _sos_tripwire("stampede! give me a number")
+
+
 def test_chat_sos_asks_for_location_then_reroutes():
     """The conversational flow: an SOS with no pin asks for a live location and
     sets the sticky flag; a shared pin then re-routes to the nearest control."""

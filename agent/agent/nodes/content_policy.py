@@ -67,8 +67,32 @@ def _tripwire_category(text: str) -> str | None:
     return "policy_violation"
 
 
+# A query that merely MENTIONS an emergency word while asking for INFO — e.g.
+# "emergency helpline numbers", "emergency contact", "which number to call" — is
+# NOT a live SOS. But a hard-distress signal ("help me", "i am in danger",
+# "stampede") IS an SOS even with a number nearby, so it overrides the guard.
+_SOS_INFO_GUARD = re.compile(
+    r"helpline|help\s*line|numbers?\b|contact|list|"
+    r"क्रमांक|नंबर|यादी|संपर्क|सूची",
+    re.IGNORECASE,
+)
+_SOS_HARD = re.compile(
+    r"\b(sos|help\s*me|in\s*danger|save\s*me|trapped|stampede|drowning|"
+    r"unconscious|heart\s*attack|accident)\b"
+    r"|धोका|धोक्यात|वाचवा|अडकल|चेंगराचेंगरी"
+    r"|खतरा|खतरे|बचाओ|फँस|फंस|भगदड़",
+    re.IGNORECASE,
+)
+
+
 def _sos_tripwire(text: str) -> bool:
-    return bool(_SOS_TRIPWIRE.search(text or ""))
+    t = text or ""
+    if not _SOS_TRIPWIRE.search(t):
+        return False
+    # Suppress only pure info requests (no hard-distress phrase present).
+    if _SOS_INFO_GUARD.search(t) and not _SOS_HARD.search(t):
+        return False
+    return True
 
 
 def _refusal(category: str) -> str:
