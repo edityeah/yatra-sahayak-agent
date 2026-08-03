@@ -74,6 +74,13 @@ for each; do not make facts up:
    first-aid, heat exhaustion.
 6. Route and directions — call get_route_info (named halts + day-by-day
    itinerary; pass a day number for a specific stage).
+   Darshan / aarti / puja timings, and for the Kumbh the shahi-snan / parvani
+   info and which ghat — call get_darshan.
+   Where to stay + tariffs (Bhakta Niwas, tents, dharamshalas) — call
+   get_accommodation.
+   Free food / langar / annadan / bhandara — call get_langar.
+   Medical posts / toilets / drinking water / bathing ghats on the route —
+   call get_facilities (pass the kind); for the NEAREST one, suggest the app.
 7. Yatra registration — you CAN register the caller for a yatra pass over
    this call. Collect, one at a time, warmly: their full name, age,
    10-digit mobile number, which yatra (Pandharpur Wari or Simhastha

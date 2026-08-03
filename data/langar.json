@@ -1,0 +1,48 @@
+{
+  "pandharpur": [
+    {
+      "name": { "mr": "अन्नछत्र — विठ्ठल मंदिर परिसर", "hi": "अन्नक्षेत्र — विट्ठल मंदिर क्षेत्र", "en": "Annachhatra — Vitthal temple area" },
+      "location": { "mr": "पंढरपूर", "hi": "पंढरपुर", "en": "Pandharpur" },
+      "lat": 17.6790, "lng": 75.3330,
+      "note": { "mr": "मंदिर ट्रस्टतर्फे मोफत महाप्रसाद.", "hi": "मंदिर ट्रस्ट द्वारा मुफ्त महाप्रसाद।", "en": "Free mahaprasad by the temple trust." }
+    },
+    {
+      "name": { "mr": "दिंडी अन्नदान — वाखरी मुक्काम", "hi": "दिंडी अन्नदान — वाखरी पड़ाव", "en": "Dindi Annadan — Wakhari halt" },
+      "location": { "mr": "वाखरी", "hi": "वाखरी", "en": "Wakhari" },
+      "lat": 17.7030, "lng": 75.3080,
+      "note": { "mr": "वारकरी दिंडींकडून मोफत जेवण व पाणी.", "hi": "वारकरी दिंडियों द्वारा मुफ्त भोजन व पानी।", "en": "Free food & water by warkari dindis." }
+    },
+    {
+      "name": { "mr": "अन्नदान केंद्र — जेजुरी", "hi": "अन्नदान केंद्र — जेजुरी", "en": "Annadan centre — Jejuri" },
+      "location": { "mr": "जेजुरी", "hi": "जेजुरी", "en": "Jejuri" },
+      "lat": 18.2770, "lng": 74.1610,
+      "note": { "mr": "NGO/मंडळांकडून नाश्ता व जेवण.", "hi": "एनजीओ/मंडलों द्वारा नाश्ता व भोजन।", "en": "Breakfast & meals by NGOs/mandals." }
+    },
+    {
+      "name": { "mr": "पाणपोई व अन्नदान — सासवड", "hi": "पानी व अन्नदान — सासवड", "en": "Water & food point — Saswad" },
+      "location": { "mr": "सासवड", "hi": "सासवड", "en": "Saswad" },
+      "lat": 18.3450, "lng": 74.0310,
+      "note": { "mr": "मार्गावर मोफत पाणी व फराळ.", "hi": "मार्ग पर मुफ्त पानी व फरार।", "en": "Free water & snacks en route." }
+    }
+  ],
+  "kumbh": [
+    {
+      "name": { "mr": "भंडारा — रामकुंड घाट", "hi": "भंडारा — रामकुंड घाट", "en": "Bhandara — Ramkund Ghat" },
+      "location": { "mr": "पंचवटी, नाशिक", "hi": "पंचवटी, नासिक", "en": "Panchavati, Nashik" },
+      "lat": 19.9950, "lng": 73.7900,
+      "note": { "mr": "आखाडे/ट्रस्टतर्फे मोफत भोजन.", "hi": "अखाड़ों/ट्रस्ट द्वारा मुफ्त भोजन।", "en": "Free meals by akharas/trusts." }
+    },
+    {
+      "name": { "mr": "अन्नदान — साधुग्राम", "hi": "अन्नदान — साधुग्राम", "en": "Annadan — Sadhugram" },
+      "location": { "mr": "साधुग्राम, नाशिक", "hi": "साधुग्राम, नासिक", "en": "Sadhugram, Nashik" },
+      "lat": 19.9900, "lng": 73.7750,
+      "note": { "mr": "तंबू नगरीत मोफत महाप्रसाद.", "hi": "तंबू नगरी में मुफ्त महाप्रसाद।", "en": "Free mahaprasad in the tent city." }
+    },
+    {
+      "name": { "mr": "अन्नछत्र — त्र्यंबकेश्वर", "hi": "अन्नक्षेत्र — त्र्यंबकेश्वर", "en": "Annachhatra — Trimbakeshwar" },
+      "location": { "mr": "त्र्यंबकेश्वर", "hi": "त्र्यंबकेश्वर", "en": "Trimbakeshwar" },
+      "lat": 19.9320, "lng": 73.5290,
+      "note": { "mr": "कुशावर्ताजवळ मोफत भोजन.", "hi": "कुशावर्त के पास मुफ्त भोजन।", "en": "Free meals near Kushavarta." }
+    }
+  ]
+}

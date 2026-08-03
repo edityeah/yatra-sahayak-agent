@@ -1,0 +1,48 @@
+{
+  "pandharpur": [
+    {
+      "name": { "mr": "श्री विठ्ठल भक्त निवास", "hi": "श्री विट्ठल भक्त निवास", "en": "Shri Vitthal Bhakta Niwas, Pandharpur" },
+      "type": { "mr": "भक्त निवास", "hi": "भक्त निवास", "en": "Devotee lodging" },
+      "tariff": "₹300–₹1200 / room / night",
+      "contact": "02186-224200",
+      "note": { "mr": "मंदिरापासून जवळ; ऑनलाइन/काउंटर बुकिंग.", "hi": "मंदिर के पास; ऑनलाइन/काउंटर बुकिंग।", "en": "Near the temple; online or counter booking." }
+    },
+    {
+      "name": { "mr": "वारकरी दिंडी तंबू निवास, वाखरी", "hi": "वारकरी दिंडी तंबू निवास, वाखरी", "en": "Warkari Dindi Tent City, Wakhari" },
+      "type": { "mr": "तंबू / दिंडी", "hi": "तंबू / दिंडी", "en": "Tent / dindi camp" },
+      "tariff": "₹150–₹400 / bed / night",
+      "contact": "जिल्हा प्रशासन / District Administration",
+      "note": { "mr": "पालखी मुक्कामाजवळ; प्रथम येणाऱ्यास प्राधान्य.", "hi": "पालकी पड़ाव के पास; पहले आओ पहले पाओ।", "en": "Near the palkhi halt; first-come basis." }
+    },
+    {
+      "name": { "mr": "यात्री निवास, सासवड", "hi": "यात्री निवास, सासवड", "en": "Yatri Niwas, Saswad" },
+      "type": { "mr": "शासकीय निवास", "hi": "सरकारी निवास", "en": "Government rest house" },
+      "tariff": "₹200–₹600 / room / night",
+      "contact": "02115-222100",
+      "note": { "mr": "मार्गावरील मुक्काम.", "hi": "मार्ग पर पड़ाव।", "en": "En-route night halt." }
+    }
+  ],
+  "kumbh": [
+    {
+      "name": { "mr": "साधुग्राम तंबू नगरी, नाशिक", "hi": "साधुग्राम तंबू नगरी, नासिक", "en": "Sadhugram Tent City, Nashik" },
+      "type": { "mr": "तंबू नगरी", "hi": "तंबू नगरी", "en": "Tent city" },
+      "tariff": "₹250–₹800 / bed / night",
+      "contact": "नाशिक महापालिका / Nashik Municipal Corp.",
+      "note": { "mr": "पंचवटी घाट परिसराजवळ.", "hi": "पंचवटी घाट क्षेत्र के पास।", "en": "Near the Panchavati ghat area." }
+    },
+    {
+      "name": { "mr": "भक्त निवास, त्र्यंबकेश्वर", "hi": "भक्त निवास, त्र्यंबकेश्वर", "en": "Bhakta Niwas, Trimbakeshwar" },
+      "type": { "mr": "भक्त निवास", "hi": "भक्त निवास", "en": "Devotee lodging" },
+      "tariff": "₹400–₹1500 / room / night",
+      "contact": "02594-233100",
+      "note": { "mr": "कुशावर्त तीर्थाजवळ.", "hi": "कुशावर्त तीर्थ के पास।", "en": "Near Kushavarta Teerth." }
+    },
+    {
+      "name": { "mr": "धर्मशाळा — पंचवटी", "hi": "धर्मशाला — पंचवटी", "en": "Dharamshalas — Panchavati" },
+      "type": { "mr": "धर्मशाळा", "hi": "धर्मशाला", "en": "Dharamshala" },
+      "tariff": "₹150–₹700 / room / night",
+      "contact": "स्थानिक ट्रस्ट / Local trusts",
+      "note": { "mr": "रामकुंडाजवळ अनेक धर्मशाळा.", "hi": "रामकुंड के पास कई धर्मशालाएँ।", "en": "Several dharamshalas near Ramkund." }
+    }
+  ]
+}

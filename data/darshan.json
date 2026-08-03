@@ -1,0 +1,48 @@
+{
+  "pandharpur": {
+    "title": { "mr": "🛕 श्री विठ्ठल-रुक्मिणी दर्शन — पंढरपूर", "hi": "🛕 श्री विट्ठल-रुक्मिणी दर्शन — पंढरपुर", "en": "🛕 Shri Vitthal-Rukmini Darshan — Pandharpur" },
+    "items": [
+      {
+        "label": { "mr": "दर्शन वेळ (यात्राकाळात)", "hi": "दर्शन समय (यात्रा काल में)", "en": "Darshan hours (during yatra)" },
+        "value": { "mr": "पहाटे ३:०० ते रात्री ११:०० (गर्दीनुसार २४ तास).", "hi": "सुबह 3:00 से रात 11:00 (भीड़ अनुसार 24 घंटे)।", "en": "3:00 AM–11:00 PM (often 24h at peak)." }
+      },
+      {
+        "label": { "mr": "आरती वेळा", "hi": "आरती समय", "en": "Aarti times" },
+        "value": { "mr": "काकड आरती ~४:३०, महापूजा ~११:१५, धूपारती ~१८:४५, शेजारती ~२३:००.", "hi": "काकड़ आरती ~4:30, महापूजा ~11:15, धूपारती ~18:45, शेजारती ~23:00।", "en": "Kakad ~4:30, Mahapuja ~11:15, Dhuparti ~18:45, Shej ~23:00." }
+      },
+      {
+        "label": { "mr": "दर्शन प्रकार", "hi": "दर्शन प्रकार", "en": "Darshan types" },
+        "value": { "mr": "मुख दर्शन (रांगेतून) व पद-स्पर्श दर्शन. गर्दीच्या दिवशी फक्त मुख दर्शन.", "hi": "मुख दर्शन (कतार से) व पद-स्पर्श दर्शन। भीड़ के दिन केवल मुख दर्शन।", "en": "Mukh-darshan (queue) & pad-sparsh darshan. Peak days may be mukh-darshan only." }
+      },
+      {
+        "label": { "mr": "मुख्य दिवस", "hi": "मुख्य दिन", "en": "Main day" },
+        "value": { "mr": "आषाढी एकादशी — मुख्य वारी सोहळा (नेमकी तारीख मंदिर समितीकडून तपासा).", "hi": "आषाढी एकादशी — मुख्य वारी उत्सव (सटीक तिथि मंदिर समिति से जाँचें)।", "en": "Ashadhi Ekadashi — the main Wari day (confirm the exact date with the temple committee)." }
+      },
+      {
+        "label": { "mr": "पेहराव / सूचना", "hi": "पहनावा / सूचना", "en": "Dress & tips" },
+        "value": { "mr": "सभ्य पेहराव; मौल्यवान वस्तू टाळा; रांगेत सूचनांचे पालन करा.", "hi": "शालीन पहनावा; कीमती सामान न लाएँ; कतार में निर्देश मानें।", "en": "Modest dress; avoid valuables; follow queue instructions." }
+      }
+    ]
+  },
+  "kumbh": {
+    "title": { "mr": "🛕 सिंहस्थ कुंभमेळा — स्नान व दर्शन (नाशिक-त्र्यंबक)", "hi": "🛕 सिंहस्थ कुंभमेला — स्नान व दर्शन (नासिक-त्र्यंबक)", "en": "🛕 Simhastha Kumbh — Snan & Darshan (Nashik-Trimbak)" },
+    "items": [
+      {
+        "label": { "mr": "शाही स्नान / पर्वणी", "hi": "शाही स्नान / पर्वणी", "en": "Shahi Snan / Parvani (royal baths)" },
+        "value": { "mr": "मुख्य पर्वणी दिवशी आखाड्यांची मिरवणूक व स्नान. नेमक्या तारखा प्रशासनाकडून जाहीर होतात — कृपया अधिकृत तारखा तपासा.", "hi": "मुख्य पर्वणी पर अखाड़ों का जुलूस व स्नान। सटीक तिथियाँ प्रशासन द्वारा घोषित — कृपया आधिकारिक तिथि जाँचें।", "en": "Akhara processions & bathing on the main parvani days. Exact dates are announced by the administration — please check official dates." }
+      },
+      {
+        "label": { "mr": "मुख्य स्नान घाट", "hi": "मुख्य स्नान घाट", "en": "Main bathing ghats" },
+        "value": { "mr": "रामकुंड (नाशिक) व कुशावर्त तीर्थ (त्र्यंबकेश्वर).", "hi": "रामकुंड (नासिक) व कुशावर्त तीर्थ (त्र्यंबकेश्वर)।", "en": "Ramkund (Nashik) & Kushavarta Teerth (Trimbakeshwar)." }
+      },
+      {
+        "label": { "mr": "मंदिर दर्शन", "hi": "मंदिर दर्शन", "en": "Temple darshan" },
+        "value": { "mr": "त्र्यंबकेश्वर ज्योतिर्लिंग ~५:३० ते ९:००; काळाराम मंदिर, नाशिक.", "hi": "त्र्यंबकेश्वर ज्योतिर्लिंग ~5:30 से 9:00; कालाराम मंदिर, नासिक।", "en": "Trimbakeshwar Jyotirlinga ~5:30 AM–9:00 PM; Kalaram temple, Nashik." }
+      },
+      {
+        "label": { "mr": "स्नान सूचना", "hi": "स्नान सूचना", "en": "Snan tips" },
+        "value": { "mr": "पर्वणी दिवशी प्रचंड गर्दी — नेमून दिलेल्या घाटावर, वेळेत जा; प्रशासनाच्या मार्गदर्शनाचे पालन करा.", "hi": "पर्वणी पर भारी भीड़ — निर्धारित घाट पर, समय पर जाएँ; प्रशासन का पालन करें।", "en": "Huge crowds on parvani — use your assigned ghat, go on time, follow marshals." }
+      }
+    ]
+  }
+}

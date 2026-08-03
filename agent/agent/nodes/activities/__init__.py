@@ -14,6 +14,10 @@ from agent.nodes.activities.signage import signage
 from agent.nodes.activities.registration import registration
 from agent.nodes.activities.lost_found import lost_found
 from agent.nodes.activities.grievance import grievance
+from agent.nodes.activities.darshan import darshan
+from agent.nodes.activities.accommodation import accommodation
+from agent.nodes.activities.langar import langar
+from agent.nodes.activities.amenity import amenity
 
 ACTIVITY_NODES = {
     "weather": weather,
@@ -25,4 +29,8 @@ ACTIVITY_NODES = {
     "registration": registration,
     "lost_found": lost_found,
     "grievance": grievance,
+    "darshan": darshan,
+    "accommodation": accommodation,
+    "langar": langar,
+    "amenity": amenity,
 }

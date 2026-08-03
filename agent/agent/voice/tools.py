@@ -269,6 +269,81 @@ async def get_alerts(context: RunContext) -> str:
 
 
 @function_tool
+async def get_darshan(context: RunContext) -> str:
+    """Get temple darshan / aarti / puja timings (and for the Kumbh, the
+    shahi-snan / parvani bathing info and which ghat) for the caller's yatra, to
+    read aloud. Use for 'darshan timings', 'aarti', 'when is the snan', 'which
+    ghat', 'temple hours'."""
+    from agent.seed import load, t
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    lang = md.get("language") or "mr"
+    data = load("darshan").get(yatra)
+    if not data:
+        return "Tell the caller darshan details aren't listed yet; suggest asking a marshal."
+    parts = [f"{t(i.get('label'), lang)}: {t(i.get('value'), lang)}" for i in data.get("items", [])]
+    return ("Read this darshan/snan info aloud, in the caller's language, clearly: "
+            + t(data.get("title"), lang) + " — " + "; ".join(parts))
+
+
+@function_tool
+async def get_accommodation(context: RunContext) -> str:
+    """Get where to stay and the per-night tariffs (Bhakta Niwas, tents, dindi
+    camps, dharamshalas) for the caller's yatra, to read aloud. Use for 'where
+    to stay', 'lodging', 'room', 'tent', 'tariff', 'accommodation'."""
+    from agent.seed import load, t
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    lang = md.get("language") or "mr"
+    entries = load("accommodation").get(yatra, [])
+    if not entries:
+        return "Tell the caller accommodation details aren't listed yet."
+    lines = [f"{t(e['name'], lang)} ({t(e.get('type'), lang)}): {e.get('tariff','')}" for e in entries[:5]]
+    return "Read these stay options and tariffs aloud, in the caller's language: " + "; ".join(lines)
+
+
+@function_tool
+async def get_langar(context: RunContext) -> str:
+    """Get the free-food / langar / annadan / bhandara locations along the
+    caller's route, to read aloud. Use for 'free food', 'langar', 'annadan',
+    'bhandara', 'where can I eat'."""
+    from agent.seed import load, t
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    lang = md.get("language") or "mr"
+    entries = load("langar").get(yatra, [])
+    if not entries:
+        return "Tell the caller free-food points aren't listed yet."
+    lines = [f"{t(e['name'], lang)} — {t(e.get('location'), lang)}" for e in entries[:6]]
+    return "Read these free-food / langar points aloud, in the caller's language: " + "; ".join(lines)
+
+
+@function_tool
+async def get_facilities(context: RunContext, kind: str = "medical") -> str:
+    """List route facilities of a given kind for the caller's yatra, to read
+    aloud. Use for 'where are the medical posts / toilets / drinking water /
+    bathing ghats'.
+
+    Args:
+        context: injected by the runtime, do not pass manually.
+        kind:    one of 'medical', 'water', 'toilet', 'ghat'.
+    """
+    from agent.seed import load, t
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    lang = md.get("language") or "mr"
+    kind = (kind or "medical").lower()
+    if kind not in ("medical", "water", "toilet", "ghat"):
+        kind = "medical"
+    pois = [p for p in load("routes").get(yatra, []) if p.get("kind") == kind]
+    if not pois:
+        return f"Tell the caller no {kind} facilities are mapped for this route yet."
+    names = [t(p.get("name"), lang) for p in pois[:8]]
+    return (f"Read these {kind} facilities aloud, in the caller's language, and suggest they use "
+            f"the app to find the nearest one by location: " + "; ".join(names))
+
+
+@function_tool
 async def get_transport_rates(context: RunContext) -> str:
     """Get approved transport / porter rates (bullock cart, pony, palkhi porter,
     etc.) for the caller's yatra, to read aloud. Use when the caller asks about
@@ -357,4 +432,5 @@ async def report_lost_found(context: RunContext, kind: str, name: str,
 ALL_TOOLS = [
     raise_sos, register_for_yatra, file_grievance, get_weather, get_helplines,
     get_advisories, get_alerts, get_transport_rates, get_route_info, report_lost_found,
+    get_darshan, get_accommodation, get_langar, get_facilities,
 ]

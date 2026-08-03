@@ -23,7 +23,8 @@ from agent.i18n import LANG_NAME
 
 VALID_INTENTS = {
     "browse", "weather", "advisory", "logistics", "helpline",
-    "drills_sos", "signage", "registration", "lost_found", "grievance", "answer", "off_topic",
+    "drills_sos", "signage", "registration", "lost_found", "grievance",
+    "darshan", "accommodation", "langar", "amenity", "answer", "off_topic",
 }
 
 # Deterministic keyword fallback for when the LLM classifier is unavailable.
@@ -43,6 +44,18 @@ _KEYWORD_INTENTS: list[tuple[str, tuple[str, ...]]] = [
                   "पोलीस", "रुग्णवाहिका", "नियंत्रण कक्ष", "एम्बुलेंस", "पुलिस")),
     ("registration", ("register", "registration", "yatra pass", "qr", "permit", "नोंदणी",
                       "नोंदणीकृत", "पंजीकरण", "पास", "परमिट")),
+    ("darshan", ("darshan", "aarti", "arti", "snan", "shahi snan", "temple timing", "puja",
+                 "mukh darshan", "ekadashi", "parvani", "दर्शन", "आरती", "स्नान", "पूजा",
+                 "मंदिर वेळ", "एकादशी", "पर्वणी", "मंदिर समय")),
+    ("langar", ("langar", "annadan", "anna chhatra", "annachhatra", "bhandara", "free food",
+                "free meal", "prasad", "mahaprasad", "food camp", "लंगर", "अन्नदान", "अन्नछत्र",
+                "भंडारा", "मोफत जेवण", "महाप्रसाद", "मुफ्त भोजन", "प्रसाद")),
+    ("accommodation", ("accommodation", "stay", "lodging", "room", "tent", "bhakta niwas",
+                       "dharamshala", "where to stay", "tariff", "निवास", "मुक्काम", "खोली",
+                       "तंबू", "भक्त निवास", "धर्मशाळा", "ठहरने", "कमरा", "आवास")),
+    ("amenity", ("nearest", "medical post", "health center", "health centre", "toilet", "washroom",
+                 "drinking water", "bathing ghat", "facility", "facilities", "सुविधा", "जवळचे",
+                 "शौचालय", "पिण्याचे पाणी", "आरोग्य केंद्र", "नज़दीकी", "पेयजल", "स्वास्थ्य केंद्र")),
     ("grievance", ("complaint", "grievance", "overcharg", "over charge", "dirty", "unclean",
                    "misbehav", "तक्रार", "गैरवर्तन", "शिकायत", "जास्त पैसे")),
     ("lost_found", ("lost", "found", "missing item", "misplaced", "lost and found", "हरवले",
@@ -87,7 +100,7 @@ def _keyword_intent(text: str) -> str | None:
 
 class RouteDecision(BaseModel):
     reply: str = Field(default="", description="Reply text ONLY for answer/off_topic. Empty for activity intents.")
-    intent: str = Field(description="One of: weather advisory logistics helpline drills_sos signage registration lost_found grievance answer off_topic browse")
+    intent: str = Field(description="One of: weather advisory logistics helpline drills_sos signage registration lost_found grievance darshan accommodation langar amenity answer off_topic browse")
 
 
 def _system(lang: str, yatra: str) -> str:
@@ -104,6 +117,10 @@ Pick ONE intent for the latest user turn:
 - registration   — register for the yatra, yatra pass, QR pass, group/Dindi registration
 - lost_found     — lost & found: a lost belonging/item, a lost-and-found desk, reuniting with a group member (NOT a live emergency — a person missing right now is drills_sos)
 - grievance      — a complaint: overcharging, bad/absent facilities, cleanliness, staff conduct, wanting to file/lodge a grievance
+- darshan        — temple darshan / aarti / puja timings, mukh-darshan/queue; Kumbh shahi-snan / parvani dates, which bathing ghat
+- accommodation  — where to stay, lodging, rooms, tents, Bhakta Niwas / dharamshala, night-halt tariffs
+- langar         — free food / langar / annadan / annachhatra / bhandara / mahaprasad locations
+- amenity        — nearest medical post, toilet, drinking water, or bathing ghat facility ("nearest X")
 - answer         — a general on-topic question you can answer in 40-80 words
 - off_topic      — unrelated to the yatra; politely redirect in {LANG_NAME[lang]}
 - browse         — a bare greeting / "what can you do" / "menu"
@@ -133,6 +150,14 @@ async def intent_router(state: YatraState) -> YatraState:
             return {**state, "current_node": "intent_router",  # type: ignore[typeddict-item]
                     "intent": "drills_sos", "sos_locate": True}
         state = {**state, "awaiting": None}  # no pin this turn — don't trap them
+
+    # The amenity node asked for a location to find the NEAREST facility. A pin
+    # shared now belongs to that lookup (nearest medical/toilet/water), not to
+    # weather. `awaiting` carries the kind, e.g. "amenity:medical".
+    if (state.get("awaiting") or "").startswith("amenity:"):
+        if state.get("shared_location"):
+            return {**state, "current_node": "intent_router", "intent": "amenity"}  # type: ignore[typeddict-item]
+        state = {**state, "awaiting": None}   # topic changed — release
 
     # A location shared natively in chat is otherwise meaningful to weather
     # (route weather from that origin). Route it there whether or not we were
@@ -175,7 +200,9 @@ async def intent_router(state: YatraState) -> YatraState:
             intent, reply = "answer", _FALLBACK_MENU.get(lang, _FALLBACK_MENU["en"])
 
     # Activity intents are answered downstream; suppress router reply.
-    if intent in {"weather", "advisory", "logistics", "helpline", "drills_sos", "signage", "registration", "lost_found", "grievance"}:
+    if intent in {"weather", "advisory", "logistics", "helpline", "drills_sos", "signage",
+                  "registration", "lost_found", "grievance", "darshan", "accommodation",
+                  "langar", "amenity"}:
         reply = ""
 
     updates: YatraState = {**state, "current_node": "intent_router", "intent": intent}  # type: ignore[typeddict-item]
