@@ -42,6 +42,11 @@ const LOAD_FAILED = {
   en: "Couldn't load the route info — the server may be waking up. Try again.",
 };
 const RETRY = { mr: "पुन्हा प्रयत्न करा", hi: "फिर से कोशिश करें", en: "Retry" };
+const WAKING = {
+  mr: "सर्व्हर सुरू होत आहे, थोडा वेळ थांबा…",
+  hi: "सर्वर शुरू हो रहा है, कृपया प्रतीक्षा करें…",
+  en: "Starting the server, this can take a moment on first open…",
+};
 // Quick prompts that hop back to the chat (the webview → SwiftChat bridge).
 const PROMPTS = [
   { mr: "आजचा टप्पा नियोजित करा", hi: "आज का चरण प्लान करें", en: "Plan today's stage" },
@@ -67,6 +72,7 @@ export default function MapPage() {
   const [itinerary, setItinerary] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [waking, setWaking] = useState(false);
   const [error, setError] = useState(null);
 
   const yatraName = YATRA_NAMES[yatra] ? t(YATRA_NAMES[yatra], language) : yatra;
@@ -76,11 +82,13 @@ export default function MapPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setWaking(false);
     setError(null);
     // routes is the primary dataset — if it FAILS (vs returns empty), surface a
     // retryable error, don't silently show "no information". events/itinerary
-    // stay best-effort. apiGet already retries to ride out a cold start.
-    apiGet(`/api/yatra/${yatra}/routes`)
+    // stay best-effort. apiGet retries across a full cold start (~60–90s); the
+    // onWaking hook lets us show a "starting up" note instead of a blank wait.
+    apiGet(`/api/yatra/${yatra}/routes`, { onWaking: () => !cancelled && setWaking(true) })
       .then(async (routes) => {
         if (cancelled) return;
         setEntries(routes || []);
@@ -122,7 +130,11 @@ export default function MapPage() {
 
   return (
     <PageShell title={tr(strings, "map", language)}>
-      {loading ? <div className="text-[13.5px] text-muted px-1 py-3">{tr(strings, "loading", language)}</div> : null}
+      {loading ? (
+        <div className="text-[13.5px] text-muted px-1 py-3">
+          {waking ? t(WAKING, language) : tr(strings, "loading", language)}
+        </div>
+      ) : null}
       {!loading && error ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 text-[13.5px] px-4 py-3 flex items-center justify-between gap-3">
           <span>{t(LOAD_FAILED, language)}</span>

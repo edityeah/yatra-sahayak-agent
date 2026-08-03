@@ -5,34 +5,53 @@ const KEY = import.meta.env.VITE_AGENT_KEY || "local-dev-key";
 
 const _sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-// The agent runs on a free tier that sleeps when idle, so the first request
-// after a lull can fail or 5xx while it cold-starts (~10–30s). Retry GETs a
-// few times with backoff so a cold start recovers instead of surfacing as
-// "no data". A 4xx (bad request/not found) is NOT retried — it won't change.
-export async function apiGet(path, { retries = 3 } = {}) {
+// The agent runs on a free tier that SLEEPS when idle; the first request after
+// a lull can take 30–60s to cold-start (edge returns a network error or
+// 502/503/504 until the app boots). We retry across a window LONGER than a full
+// cold start so activities always recover instead of showing "couldn't load".
+// `onWaking(n)` fires after the first miss so the page can show a "waking up"
+// state instead of a scary error. A 4xx (or app-level 500) is the server's real
+// answer and is NOT retried — it won't change.
+const _GATEWAY = new Set([502, 503, 504]);           // proxy-level = never reached the app
+// Backoff capped at 5s; total window ≈ 1+2+3+4+5 + 5·(retries-4) seconds.
+const _backoff = (attempt) => Math.min(1000 * (attempt + 1), 5000);
+
+export async function apiGet(path, { retries = 14, onWaking } = {}) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const r = await fetch(`${BASE}${path}`, { headers: { "X-API-Key": KEY } });
       if (r.ok) return r.json();
       if (r.status >= 400 && r.status < 500) throw new Error(`${path} -> ${r.status}`);
-      lastErr = new Error(`${path} -> ${r.status}`);   // 5xx → retry
+      lastErr = new Error(`${path} -> ${r.status}`);   // 5xx / cold start → retry
     } catch (e) {
       lastErr = e;   // network error (cold start / DNS) → retry
     }
-    if (attempt < retries) await _sleep(1200 * (attempt + 1));   // 1.2s, 2.4s, 3.6s
+    if (attempt < retries) { onWaking?.(attempt + 1); await _sleep(_backoff(attempt)); }
   }
   throw lastErr;
 }
 
-export async function apiPost(path, body) {
-  const r = await fetch(`${BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-API-Key": KEY },
-    body: JSON.stringify(body || {}),
-  });
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
+export async function apiPost(path, body, { retries = 10, onWaking } = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const r = await fetch(`${BASE}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": KEY },
+        body: JSON.stringify(body || {}),
+      });
+      if (r.ok) return r.json();
+      // Only proxy-level failures are safe to retry (the request never reached
+      // the app, so no double-submit). A 4xx/500 is the app's real answer.
+      if (!_GATEWAY.has(r.status)) throw new Error(`${path} -> ${r.status}`);
+      lastErr = new Error(`${path} -> ${r.status}`);
+    } catch (e) {
+      lastErr = e;   // pre-response network error → never reached the app → retry
+    }
+    if (attempt < retries) { onWaking?.(attempt + 1); await _sleep(_backoff(attempt)); }
+  }
+  throw lastErr;
 }
 
 // Stream a chat turn from the agent's /messages SSE endpoint (POST). Calls
