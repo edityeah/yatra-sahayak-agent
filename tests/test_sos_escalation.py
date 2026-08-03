@@ -89,6 +89,15 @@ def test_live_location_reroutes_open_sos_to_nearest():
     assert any("re-routed" in (u["note"] or "") for u in timeline)  # logged to the audit trail
 
 
+def test_danger_phrases_trip_sos():
+    from agent.nodes.content_policy import _sos_tripwire
+    assert _sos_tripwire("I am in danger")          # the phrase the client named
+    assert _sos_tripwire("emergency! help")
+    assert _sos_tripwire("मी धोक्यात आहे")           # Marathi: I am in danger
+    assert _sos_tripwire("मैं खतरे में हूँ")          # Hindi: I am in danger
+    assert not _sos_tripwire("what is the route today")
+
+
 def test_chat_sos_asks_for_location_then_reroutes():
     """The conversational flow: an SOS with no pin asks for a live location and
     sets the sticky flag; a shared pin then re-routes to the nearest control."""

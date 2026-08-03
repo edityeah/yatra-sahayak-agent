@@ -43,10 +43,11 @@ _BLOCK_TRIPWIRE = re.compile(
 
 # Emergency keywords across en / hi / mr (Devanagari). Sets sos=True.
 _SOS_TRIPWIRE = re.compile(
-    r"\b(sos|emergency|help\s*me|stampede|drowning|accident|heart\s*attack|"
-    r"unconscious|missing\s*(?:person|child)|lost\s*(?:child|my\s*child))\b"
-    r"|मदत|आपत्कालीन|चेंगराचेंगरी|अपघात|हरवल"          # Marathi
-    r"|मदद|आपातकाल|भगदड़|दुर्घटना|खो\s*गया",           # Hindi
+    r"\b(sos|emergency|danger|in\s*danger|save\s*me|trapped|help\s*me|stampede|"
+    r"drowning|accident|heart\s*attack|unconscious|"
+    r"missing\s*(?:person|child)|lost\s*(?:child|my\s*child))\b"
+    r"|मदत|आपत्कालीन|चेंगराचेंगरी|अपघात|हरवल|धोका|धोक्यात|वाचवा|अडकल"   # Marathi
+    r"|मदद|आपातकाल|भगदड़|दुर्घटना|खो\s*गया|खतरा|खतरे|बचाओ|फँस|फंस",      # Hindi
     re.IGNORECASE,
 )
 
