@@ -152,15 +152,26 @@ async def run_migrations() -> None:
         log.info("run_migrations: no DATABASE_URL — skipping (DB disabled)")
         return
     url = _sanitize_pg_url(raw)
+    # Commit PER STATEMENT (autocommit) so one failing migration can't roll back
+    # the others. Previously the whole batch ran in a single transaction, so a
+    # single failure reverted every ADD COLUMN — which is exactly how the live DB
+    # ended up with routed_to/sos_updates but NOT lat/lng. Each statement is
+    # idempotent (IF NOT EXISTS), so re-running is safe; failures are logged
+    # individually instead of silently reverting good migrations.
     try:
-        async with await psycopg.AsyncConnection.connect(url) as conn:
+        async with await psycopg.AsyncConnection.connect(url, autocommit=True) as conn:
             async with conn.cursor() as cur:
+                ok = failed = 0
                 for stmt in [s.strip() for s in MIGRATIONS_SQL.split(";") if s.strip()]:
-                    await cur.execute(stmt)
-            await conn.commit()
-        print("[run_migrations] complete", flush=True)
+                    try:
+                        await cur.execute(stmt)
+                        ok += 1
+                    except Exception as e:   # noqa: BLE001 — keep going, log the culprit
+                        failed += 1
+                        print(f"[run_migrations] STMT FAILED: {stmt[:70]!r}: {e!r}", flush=True)
+        print(f"[run_migrations] complete ({ok} ok, {failed} failed)", flush=True)
     except Exception as e:
-        print(f"[run_migrations] FAILED: {e!r}", flush=True)
+        print(f"[run_migrations] CONNECTION FAILED: {e!r}", flush=True)
 
 
 async def schema_probe() -> dict:
