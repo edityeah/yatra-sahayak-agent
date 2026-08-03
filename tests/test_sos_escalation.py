@@ -109,6 +109,27 @@ def test_emergency_info_requests_do_not_false_trip_sos():
     assert _sos_tripwire("stampede! give me a number")
 
 
+def test_sos_ack_survives_persistence_failure():
+    """SAFETY: if the DB write blows up (schema lag, outage), the pilgrim must
+    STILL get the emergency acknowledgement — never a 500 / empty reply."""
+    from agent import persistence as p
+    from agent.nodes.activities.drills_sos import drills_sos
+
+    async def boom(*a, **k):
+        raise RuntimeError('column "lat" does not exist')
+
+    orig = p.create_sos
+    p.create_sos = boom
+    try:
+        s = asyncio.run(drills_sos({"sos": True, "user_id": "u", "language": "en",
+                                    "active_yatra": "pandharpur", "messages": []}))
+    finally:
+        p.create_sos = orig
+    body = s["messages"][-1].content
+    assert "112" in body                                # the ack still reaches them
+    assert "share your live location" in body.lower()   # and still asks for location
+
+
 def test_chat_sos_asks_for_location_then_reroutes():
     """The conversational flow: an SOS with no pin asks for a live location and
     sets the sticky flag; a shared pin then re-routes to the nearest control."""

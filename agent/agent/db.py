@@ -163,6 +163,33 @@ async def run_migrations() -> None:
         print(f"[run_migrations] FAILED: {e!r}", flush=True)
 
 
+async def schema_probe() -> dict:
+    """Lightweight check of whether the SOS-related migrations actually applied
+    on this deploy's DB — so /version can tell a stale deploy from a failed
+    migration without needing DB console access. Never raises."""
+    settings = get_settings()
+    if not settings.DATABASE_URL:
+        return {"db": False}
+    out: dict = {"db": True}
+    try:
+        url = _sanitize_pg_url(settings.DIRECT_URL or settings.DATABASE_URL)
+        async with await psycopg.AsyncConnection.connect(url) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT column_name FROM information_schema.columns WHERE table_name='sos_events'")
+                cols = {r[0] for r in await cur.fetchall()}
+                await cur.execute("SELECT to_regclass('public.sos_updates')")
+                updates_tbl = (await cur.fetchone())[0] is not None
+        out.update({
+            "sos_events.lat": "lat" in cols,
+            "sos_events.routed_to": "routed_to" in cols,
+            "sos_updates": updates_tbl,
+        })
+    except Exception as e:   # noqa: BLE001
+        out["probe_error"] = repr(e)
+    return out
+
+
 async def get_pool() -> AsyncConnectionPool | None:
     global _pool
     if _pool is not None:

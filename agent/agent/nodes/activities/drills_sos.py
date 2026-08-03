@@ -98,10 +98,6 @@ async def _handle_sos(state: YatraState) -> YatraState:
     user_id = state.get("user_id")
     lang = state.get("language")
 
-    reg = await persistence.get_registration_for_user(user_id)
-    sos_yatra = state.get("active_yatra") or (reg["yatra"] if reg else None)
-    yatra_id = reg["yatra_id"] if reg else None
-
     nature = _infer_nature(_last_human_text(messages))
 
     # Capture the pilgrim's location if they've shared a live pin this turn — it
@@ -110,12 +106,24 @@ async def _handle_sos(state: YatraState) -> YatraState:
     loc = state.get("shared_location") or {}
     lat, lng = loc.get("lat"), loc.get("lng")
 
-    await persistence.create_sos(
-        user_id, yatra=sos_yatra, yatra_id=yatra_id, location=None, nature=nature,
-        lat=lat, lng=lng,
-        reporter_name=(reg["name"] if reg else None),
-        reporter_phone=(reg["phone"] if reg else None),
-    )
+    # SAFETY-CRITICAL: the acknowledgement (control room alerted + call 112 + stay
+    # put) MUST reach the pilgrim even if persistence fails (DB outage, schema lag
+    # during a deploy, etc.). Never let a database error swallow an emergency
+    # reply — persist best-effort and always continue to the ack.
+    sos_yatra = state.get("active_yatra")
+    persisted = False
+    try:
+        reg = await persistence.get_registration_for_user(user_id)
+        sos_yatra = sos_yatra or (reg["yatra"] if reg else None)
+        await persistence.create_sos(
+            user_id, yatra=sos_yatra, yatra_id=(reg["yatra_id"] if reg else None),
+            location=None, nature=nature, lat=lat, lng=lng,
+            reporter_name=(reg["name"] if reg else None),
+            reporter_phone=(reg["phone"] if reg else None),
+        )
+        persisted = True
+    except Exception as e:   # noqa: BLE001 — an emergency ack must never be blocked
+        print(f"[drills_sos] SOS persistence FAILED (still acking pilgrim): {e!r}", flush=True)
 
     control_number = _control_room_number(sos_yatra)
 
@@ -156,9 +164,14 @@ async def _handle_sos_locate(state: YatraState) -> YatraState:
     loc = state.get("shared_location") or {}
     lat, lng = loc.get("lat"), loc.get("lng")
 
-    sos = await persistence.update_latest_open_sos_location(user_id, lat, lng)
-    control = sos["routed_to"] if sos else persistence.sos_control_for(
-        state.get("active_yatra"), lat, lng)
+    # Best-effort persist; always confirm the nearest control to the pilgrim.
+    control = persistence.sos_control_for(state.get("active_yatra"), lat, lng)
+    try:
+        sos = await persistence.update_latest_open_sos_location(user_id, lat, lng)
+        if sos:
+            control = sos["routed_to"]
+    except Exception as e:   # noqa: BLE001
+        print(f"[drills_sos] SOS re-route persistence FAILED (still confirming): {e!r}", flush=True)
     body = _SOS_LOCATED.get(lang, _SOS_LOCATED["en"]).format(control=control)
 
     return {

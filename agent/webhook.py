@@ -127,6 +127,14 @@ async def health() -> dict:
     return {"status": "ok", "service": "yatra-sahayak-agent", "db": settings.DB_ENABLED}
 
 
+@app.get("/version")
+async def version() -> dict:
+    """Deployed git commit + a probe of whether the SOS migrations applied — so
+    we can tell a stale deploy from a failed migration at a glance."""
+    commit = os.environ.get("RENDER_GIT_COMMIT") or os.environ.get("GIT_COMMIT") or "unknown"
+    return {"commit": commit[:12], "schema": await db.schema_probe()}
+
+
 def _require_key(x_api_key: str | None) -> None:
     if x_api_key != settings.INTERNAL_API_KEY:
         raise HTTPException(status_code=401, detail="bad api key")
