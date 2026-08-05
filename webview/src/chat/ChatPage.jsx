@@ -334,6 +334,10 @@ export default function ChatPage() {
       navigate(a.action.href);
       return;
     }
+    if (a.action?.type === "link") {
+      window.open(a.action.href, "_blank", "noopener");
+      return;
+    }
     send(a.action?.text || t(a.label, language));
   }
 

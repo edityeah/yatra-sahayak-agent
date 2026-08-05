@@ -39,6 +39,16 @@ _SUGGESTIONS = {
         "hi": ["नज़दीकी स्वास्थ्य केंद्र", "आज की सूचनाएँ"],
         "en": ["Nearest medical post", "Today's advisories"],
     },
+    "palkhi": {
+        "mr": ["वाहनतळ", "दर्शन वेळा", "आजच्या सूचना"],
+        "hi": ["पार्किंग", "दर्शन समय", "आज की सूचनाएँ"],
+        "en": ["Parking", "Darshan timings", "Today's advisories"],
+    },
+    "parking": {
+        "mr": ["पालखी मागोवा", "मार्ग नकाशा", "आज कुठे राहू?"],
+        "hi": ["पालकी ट्रैकिंग", "मार्ग मानचित्र", "आज कहाँ रुकें?"],
+        "en": ["Palkhi tracking", "Route map", "Where can I stay tonight?"],
+    },
 }
 
 

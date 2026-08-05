@@ -29,6 +29,10 @@ export default function QuickActivitiesPage() {
       navigate(a.action.href);
       return;
     }
+    if (a.action?.type === "link") {
+      window.open(a.action.href, "_blank", "noopener");
+      return;
+    }
     navigate(`/?q=${encodeURIComponent(a.action?.text || t(a.label, language))}`);
   }
 

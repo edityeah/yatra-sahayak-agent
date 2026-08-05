@@ -11,6 +11,12 @@ _EMPTY = {
     "hi": "दर्शन जानकारी शीघ्र जोड़ी जाएगी।",
     "en": "Darshan details will be added soon.",
 }
+_TEMPLE_LABEL = {"mr": "🗺️ मंदिराचे स्थान (नकाशा)", "hi": "🗺️ मंदिर स्थान (मानचित्र)", "en": "🗺️ Temple location (map)"}
+# Real Google Maps deep links so "temple locator" opens turn-by-turn navigation.
+_TEMPLE_MAP = {
+    "pandharpur": "https://www.google.com/maps/search/?api=1&query=Vitthal+Rukmini+Temple+Pandharpur",
+    "kumbh": "https://www.google.com/maps/search/?api=1&query=Trimbakeshwar+Temple+Nashik",
+}
 
 
 async def darshan(state: YatraState) -> YatraState:
@@ -25,6 +31,8 @@ async def darshan(state: YatraState) -> YatraState:
         lines = [t(data.get("title"), lang), ""]
         for item in data.get("items", []):
             lines.append(f"**{t(item.get('label'), lang)}** — {t(item.get('value'), lang)}")
+        if _TEMPLE_MAP.get(yatra):
+            lines.append(f"\n[{_TEMPLE_LABEL[lang]}]({_TEMPLE_MAP[yatra]})")
         body = "\n".join(lines).rstrip() + followup_line("darshan", lang)
 
     return {

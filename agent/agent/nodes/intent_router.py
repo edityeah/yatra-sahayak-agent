@@ -24,7 +24,8 @@ from agent.i18n import LANG_NAME
 VALID_INTENTS = {
     "browse", "weather", "advisory", "logistics", "helpline",
     "drills_sos", "signage", "registration", "lost_found", "grievance",
-    "darshan", "accommodation", "langar", "amenity", "answer", "off_topic",
+    "darshan", "accommodation", "langar", "amenity", "palkhi", "parking",
+    "answer", "off_topic",
 }
 
 # Deterministic keyword fallback for when the LLM classifier is unavailable.
@@ -39,6 +40,11 @@ _KEYWORD_INTENTS: list[tuple[str, tuple[str, ...]]] = [
     # emergency synonyms, else an info query like "emergency helpline numbers"
     # (which the tripwire deliberately let through) would misroute to drills.
     ("drills_sos", ("drill", "first aid", "सराव", "प्रथमोपचार", "प्राथमिक उपचार")),
+    # palkhi BEFORE helpline: "nodal officer number" is a palkhi query, but
+    # helpline owns the generic "number"/"contact" — so check the specific one first.
+    ("palkhi", ("palkhi", "palki", "palakhi", "dindi", "nodal officer", "palkhi chief",
+                "where is the palkhi", "track the palkhi", "wari schedule", "पालखी", "पालकी",
+                "दिंडी", "मागोवा", "नियंत्रण अधिकारी", "पालखी प्रमुख")),
     ("helpline", ("helpline", "help line", "phone", "number", "call", "contact", "police",
                   "ambulance", "control room", "हेल्पलाइन", "फोन", "नंबर", "संपर्क", "पोलिस",
                   "पोलीस", "रुग्णवाहिका", "नियंत्रण कक्ष", "एम्बुलेंस", "पुलिस")),
@@ -56,6 +62,8 @@ _KEYWORD_INTENTS: list[tuple[str, tuple[str, ...]]] = [
     ("amenity", ("nearest", "medical post", "health center", "health centre", "toilet", "washroom",
                  "drinking water", "bathing ghat", "facility", "facilities", "सुविधा", "जवळचे",
                  "शौचालय", "पिण्याचे पाणी", "आरोग्य केंद्र", "नज़दीकी", "पेयजल", "स्वास्थ्य केंद्र")),
+    ("parking", ("parking", "park my", "vehicle park", "where to park", "car park", "gaadi",
+                 "वाहनतळ", "पार्किंग", "गाडी", "वाहन")),
     ("grievance", ("complaint", "grievance", "overcharg", "over charge", "dirty", "unclean",
                    "misbehav", "तक्रार", "गैरवर्तन", "शिकायत", "जास्त पैसे")),
     ("lost_found", ("lost", "found", "missing item", "misplaced", "lost and found", "हरवले",
@@ -100,7 +108,7 @@ def _keyword_intent(text: str) -> str | None:
 
 class RouteDecision(BaseModel):
     reply: str = Field(default="", description="Reply text ONLY for answer/off_topic. Empty for activity intents.")
-    intent: str = Field(description="One of: weather advisory logistics helpline drills_sos signage registration lost_found grievance darshan accommodation langar amenity answer off_topic browse")
+    intent: str = Field(description="One of: weather advisory logistics helpline drills_sos signage registration lost_found grievance darshan accommodation langar amenity palkhi parking answer off_topic browse")
 
 
 def _system(lang: str, yatra: str) -> str:
@@ -121,6 +129,8 @@ Pick ONE intent for the latest user turn:
 - accommodation  — where to stay, lodging, rooms, tents, Bhakta Niwas / dharamshala, night-halt tariffs
 - langar         — free food / langar / annadan / annachhatra / bhandara / mahaprasad locations
 - amenity        — nearest medical post, toilet, drinking water, or bathing ghat facility ("nearest X")
+- palkhi         — live palkhi/dindi tracking, "where is the palkhi", the Wari schedule/dates, or nodal-officer / palkhi-chief contacts
+- parking        — where to park a vehicle, parking lots / navigation to parking
 - answer         — a general on-topic question you can answer in 40-80 words
 - off_topic      — unrelated to the yatra; politely redirect in {LANG_NAME[lang]}
 - browse         — a bare greeting / "what can you do" / "menu"
@@ -202,7 +212,7 @@ async def intent_router(state: YatraState) -> YatraState:
     # Activity intents are answered downstream; suppress router reply.
     if intent in {"weather", "advisory", "logistics", "helpline", "drills_sos", "signage",
                   "registration", "lost_found", "grievance", "darshan", "accommodation",
-                  "langar", "amenity"}:
+                  "langar", "amenity", "palkhi", "parking"}:
         reply = ""
 
     updates: YatraState = {**state, "current_node": "intent_router", "intent": intent}  # type: ignore[typeddict-item]

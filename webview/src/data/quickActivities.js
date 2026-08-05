@@ -1,7 +1,7 @@
 // Yatra Quick Activities — shown as chips above the composer and as the
-// full-page colored grid at /quick-activities. `action.type` is either
-// "send" (feeds `text` into the chat as a user turn) or "route" (navigates
-// to an in-app page).
+// full-page colored grid at /quick-activities. `action.type` is one of
+// "send" (feeds `text` into the chat as a user turn), "route" (navigates to an
+// in-app page), or "link" (opens an external URL in a new tab).
 export const QUICK_ACTIVITIES = [
   {
     id: "register",
@@ -60,6 +60,41 @@ export const QUICK_ACTIVITIES = [
     label: { mr: "जवळच्या सुविधा", hi: "नज़दीकी सुविधाएँ", en: "Nearest facilities" },
     tagline: { mr: "आरोग्य, पाणी, शौचालय, घाट", hi: "स्वास्थ्य, पानी, शौचालय, घाट", en: "Medical, water, toilet, ghat" },
     action: { type: "send", text: "Where is the nearest medical post?" },
+  },
+  {
+    id: "palkhi",
+    icon: "🚩",
+    label: { mr: "पालखी मागोवा", hi: "पालकी ट्रैकिंग", en: "Palkhi tracking" },
+    tagline: { mr: "थेट मागोवा, वेळापत्रक, अधिकारी", hi: "लाइव ट्रैकिंग, कार्यक्रम, अधिकारी", en: "Live track, schedule, officers" },
+    action: { type: "send", text: "Where is the palkhi and what is the schedule?" },
+  },
+  {
+    id: "parking",
+    icon: "🅿️",
+    label: { mr: "वाहनतळ", hi: "पार्किंग", en: "Parking" },
+    tagline: { mr: "GPS मार्गदर्शनासह वाहनतळ", hi: "GPS नेविगेशन सहित पार्किंग", en: "GPS-navigable parking lots" },
+    action: { type: "send", text: "Where can I park my vehicle?" },
+  },
+  {
+    id: "route-qr",
+    icon: "🔳",
+    label: { mr: "मार्ग QR", hi: "मार्ग QR", en: "Route QR" },
+    tagline: { mr: "फोनवर मार्ग व वाहनतळ नकाशा", hi: "फोन पर रूट व पार्किंग मैप", en: "Route & parking map to phone" },
+    action: { type: "route", href: "/yatri/route-qr" },
+  },
+  {
+    id: "report-phone",
+    icon: "📱",
+    label: { mr: "हरवलेला फोन ब्लॉक करा", hi: "खोया फोन ब्लॉक करें", en: "Block lost phone" },
+    tagline: { mr: "सरकारी CEIR पोर्टल", hi: "सरकारी CEIR पोर्टल", en: "Govt CEIR portal" },
+    action: { type: "link", href: "https://www.ceir.gov.in/Request/CeirUserBlockRequestDirect.jsp" },
+  },
+  {
+    id: "gallery",
+    icon: "🖼️",
+    label: { mr: "छायाचित्र दालन", hi: "फोटो गैलरी", en: "Photo gallery" },
+    tagline: { mr: "मागील वारीची झलक", hi: "पिछली वारी की झलक", en: "Glimpses of past Wari" },
+    action: { type: "route", href: "/yatri/gallery" },
   },
   {
     id: "helplines",

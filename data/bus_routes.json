@@ -1,0 +1,10 @@
+{
+  "pandharpur": [
+    { "region": { "mr": "कराड / कोल्हापूर", "hi": "कराड / कोल्हापुर", "en": "Karad / Kolhapur" } },
+    { "region": { "mr": "सांगोला / मंगळवेढा / सांगली / मिरज / विजयपुरा", "hi": "सांगोला / मंगलवेढा / सांगली / मिरज / विजयपुरा", "en": "Sangola / Mangalwedha / Sangli / Miraj / Vijayapura" } },
+    { "region": { "mr": "अहिल्यानगर / बार्शी / टेंभुर्णी / कारकंब", "hi": "अहिल्यानगर / बार्शी / टेंभुर्णी / करकंब", "en": "Ahilyanagar / Barshi / Tembhurni / Karkamb" } },
+    { "region": { "mr": "सोलापूर / मोहोळ", "hi": "सोलापुर / मोहोल", "en": "Solapur / Mohol" } },
+    { "region": { "mr": "कराड / आटपाडी / दिघंची", "hi": "कराड / आटपाडी / दिघंची", "en": "Karad / Atpadi / Dighanchi" } },
+    { "region": { "mr": "पुणे / सातारा / वाखरी", "hi": "पुणे / सातारा / वाखरी", "en": "Pune / Satara / Wakhari" } }
+  ]
+}

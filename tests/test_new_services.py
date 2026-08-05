@@ -72,3 +72,29 @@ def test_amenity_sticky_location_flow():
                                      awaiting="amenity:medical")))
     assert step2["awaiting"] is None
     assert "Nearest" in _reply(step2)
+
+
+# ── palkhi tracking + nodal directory, parking (Solapur police data) ──
+from agent.nodes.activities.palkhi import palkhi
+from agent.nodes.activities.parking import parking
+from agent.nodes.activities.signage import signage
+
+
+def test_palkhi_tracking_and_nodal_directory():
+    # Plain tracking query → tracker link + schedule, no full officer dump.
+    track = _reply(asyncio.run(palkhi(_mk("where is the palkhi"))))
+    assert "ashadhi.solapurpolice.gov.in" in track and "July 2026" in track
+    assert "Nodal:" not in track
+    # Officer query → statewide directory with tel: links.
+    nodal = _reply(asyncio.run(palkhi(_mk("nodal officer contact numbers"))))
+    assert "Sant Dnyaneshwar" in nodal and "tel:" in nodal
+
+
+def test_parking_lists_navigable_lots():
+    body = _reply(asyncio.run(parking(_mk("where to park"))))
+    assert "maps.app.goo.gl" in body and "Navigate" in body
+
+
+def test_signage_folds_in_bus_routes():
+    body = _reply(asyncio.run(signage(_mk("route map"))))
+    assert "bus routes" in body.lower() and "Kolhapur" in body

@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "tracker_url": "https://ashadhi.solapurpolice.gov.in/",
+    "pune_tracker_url": "https://diversion.punepolice.gov.in/",
+    "temple_map_url": "https://maps.app.goo.gl/vitthal-rukmini-pandharpur",
+    "schedule": {
+      "period": { "mr": "१५ – ३० जुलै २०२६", "hi": "15 – 30 जुलाई 2026", "en": "15 – 30 July 2026" },
+      "main_days": { "mr": "२४ जुलै (दशमी) व २५ जुलै (आषाढी एकादशी)", "hi": "24 जुलाई (दशमी) व 25 जुलाई (आषाढी एकादशी)", "en": "24 July (Dashami) & 25 July (Ashadhi Ekadashi)" },
+      "entries": { "mr": "ज्ञानेश्वर पालखी १९ जुलै (नातेपुते), तुकाराम पालखी २० जुलै (अकलूज)", "hi": "ज्ञानेश्वर पालकी 19 जुलाई (नातेपुते), तुकाराम पालकी 20 जुलाई (अकलूज)", "en": "Dnyaneshwar palkhi 19 Jul (Natepute), Tukaram palkhi 20 Jul (Akluj)" }
+    }
+  },
+  "palkhis": [
+    { "name": "Sant Dnyaneshwar Maharaj", "origin": "Alandi, Pune", "chief": "Adv. Rajendra Umap", "chief_phone": "9822069465", "nodal": "API Zalte", "nodal_ps": "Barshi City", "nodal_phone": "9326861799" },
+    { "name": "Sant Tukaram Maharaj", "origin": "Dehu, Pune", "chief": "Bhavarth Dekhane / Vikram More", "chief_phone": "9168359955", "nodal": "PSI Sachin Mali", "nodal_ps": "Mohol P.S.", "nodal_phone": "8888852097" },
+    { "name": "Sant Gajanan Maharaj", "origin": "Shegaon, Buldhana", "chief": "Satish Fukat", "chief_phone": "9922528540", "nodal": "PSI Kale", "nodal_ps": "Anti-Narcotics & Traffic Cell", "nodal_phone": "8408989444" },
+    { "name": "Sant Sopankaka Maharaj", "origin": "Saswad, Pune", "chief": "Tribhuvan Gosavi", "chief_phone": "9822052300", "nodal": "API More", "nodal_ps": "Solapur Taluka", "nodal_phone": "7588047601" },
+    { "name": "Sant Nivruttinath Maharaj", "origin": "Trimbakeshwar, Nashik", "chief": "Gokul Gangurde", "chief_phone": "7588175231", "nodal": "PSI Dhore", "nodal_ps": "Karmala P.S.", "nodal_phone": "9011161161" },
+    { "name": "Sant Muktabai", "origin": "Muktainagar, Jalgaon", "chief": "Ravindra Patil", "chief_phone": "8698111171", "nodal": "PSI Jadhav", "nodal_ps": "Vairag P.S.", "nodal_phone": "9604767433" },
+    { "name": "Sant Namdev Maharaj", "origin": "Pandharpur", "chief": "Dnyaneshwar Maharaj Namdas", "chief_phone": "8208110521", "nodal": "PSI Fugare", "nodal_ps": "Pandharpur Rural P.S.", "nodal_phone": "9923081178" },
+    { "name": "Sant Eknath Maharaj", "origin": "Paithan, Ch. Sambhaji Nagar", "chief": "Raghunath Gosavi Palkhiwale", "chief_phone": "9273512279", "nodal": "API Shinde", "nodal_ps": "Kurduwadi P.S.", "nodal_phone": "9923135755" },
+    { "name": "Sant Nilobaray Maharaj", "origin": "Pimpalner, Ahilyanagar", "chief": "Ashok Sawant", "chief_phone": "9604744411", "nodal": "PSI Sandeep Bankar", "nodal_ps": "Karmala P.S.", "nodal_phone": "9011848181" },
+    { "name": "Vitthal Rukmini Sansthan", "origin": "Kaundanyapur, Amravati", "chief": "Suresh Chavan / Sadanand Sadhu", "chief_phone": "9763321579", "nodal": "PSI Sheikh", "nodal_ps": "Kamati", "nodal_phone": "7840945407" },
+    { "name": "Sant Changavateshwar Maharaj", "origin": "Saswad, Pune", "chief": "Shashikant Jagtap", "chief_phone": "9823217196", "nodal": "PSI Madane", "nodal_ps": "Tembhurni P.S.", "nodal_phone": "7977258857" }
+  ]
+}

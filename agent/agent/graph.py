@@ -25,7 +25,7 @@ from agent.nodes.yatra_context import yatra_context
 from agent.nodes.intent_router import intent_router
 from agent.nodes.activities import ACTIVITY_NODES
 
-_ACTIVITY_INTENTS = ("weather", "advisory", "logistics", "helpline", "drills_sos", "signage", "registration", "lost_found", "grievance", "darshan", "accommodation", "langar", "amenity")
+_ACTIVITY_INTENTS = ("weather", "advisory", "logistics", "helpline", "drills_sos", "signage", "registration", "lost_found", "grievance", "darshan", "accommodation", "langar", "amenity", "palkhi", "parking")
 
 
 def _after_policy(state: YatraState):

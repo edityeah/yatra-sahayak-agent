@@ -18,6 +18,8 @@ from agent.nodes.activities.darshan import darshan
 from agent.nodes.activities.accommodation import accommodation
 from agent.nodes.activities.langar import langar
 from agent.nodes.activities.amenity import amenity
+from agent.nodes.activities.palkhi import palkhi
+from agent.nodes.activities.parking import parking
 
 ACTIVITY_NODES = {
     "weather": weather,
@@ -33,4 +35,6 @@ ACTIVITY_NODES = {
     "accommodation": accommodation,
     "langar": langar,
     "amenity": amenity,
+    "palkhi": palkhi,
+    "parking": parking,
 }

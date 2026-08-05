@@ -1,0 +1,24 @@
+{
+  "pandharpur": [
+    { "name": "Tulshi Vrindavan Parking", "zone": "outer", "maps_url": "https://maps.app.goo.gl/wwZRCRedZ4ES6Xn19" },
+    { "name": "Yamai Tukai Parking (Sangola Road)", "zone": "outer", "maps_url": "https://maps.app.goo.gl/DRgNCvmD1WQDqHq66" },
+    { "name": "Bidari Bungalow Parking 1", "zone": "outer", "maps_url": "https://maps.app.goo.gl/uWpw6VgCuQXgT9CcA" },
+    { "name": "Bidari Bungalow Parking 2", "zone": "outer", "maps_url": "https://maps.app.goo.gl/BaFWDyLPT9VNMLUZ9" },
+    { "name": "Dr. Babasaheb Ambedkar Nagar Parking", "zone": "outer", "maps_url": "https://maps.app.goo.gl/PZzTj57SQFZFqV7B9" },
+    { "name": "Riddhi Siddhi Parking (Mangalwedha Naka)", "zone": "outer", "maps_url": "https://maps.app.goo.gl/1jq49XhBr9R2i89H8" },
+    { "name": "65 Acres Backside Parking 1", "zone": "outer", "maps_url": "https://maps.app.goo.gl/vt2GkcKzEXwxSUkTA" },
+    { "name": "65 Acres Backside Parking 2", "zone": "outer", "maps_url": "https://maps.app.goo.gl/ZCdCNw74mdARY5hF8" },
+    { "name": "Bhima Bus Stand Parking (Mohol Road)", "zone": "outer", "maps_url": "https://maps.app.goo.gl/bi3t1Jrg6hYVwQbv9" },
+    { "name": "Warehouse Parking", "zone": "outer", "maps_url": "https://maps.app.goo.gl/4iwayWDaWyAz231A8" },
+    { "name": "Isbavi Visawa Parking", "zone": "outer", "maps_url": "https://maps.app.goo.gl/9WsTM5CBb4DwVqJz7" },
+    { "name": "52 Acres Parking Isbavi", "zone": "outer", "maps_url": "https://maps.app.goo.gl/Fpog7aH69i5M9L1MA" },
+    { "name": "65 Acres Parking (Dindi vehicles)", "zone": "outer", "maps_url": "https://maps.app.goo.gl/HBiQQgLxaRM2gWzh6" },
+    { "name": "Sant Gadge Baba Chowk Parking", "zone": "inner", "maps_url": "https://maps.app.goo.gl/yPsmE7cwWREdtKuj6" },
+    { "name": "Sulabh Sauchalay Parking", "zone": "inner", "maps_url": "https://maps.app.goo.gl/1AsZuUruAFxRUxRx7" },
+    { "name": "Sakhubai Kanya Prashala / Shivaji Park", "zone": "inner", "maps_url": "https://maps.app.goo.gl/WS4dJau5k4VgSvnF7" },
+    { "name": "Gajanan Maharaj Math No. 1", "zone": "inner", "maps_url": "https://maps.app.goo.gl/R6NNRawVrgCZkjot6" },
+    { "name": "Khadi Gramodyog Parking", "zone": "inner", "maps_url": "https://maps.app.goo.gl/5bg6fJDMuqRQLEM86" },
+    { "name": "Ambabai Patangan Parking", "zone": "inner", "maps_url": "https://maps.app.goo.gl/NHUKCM4YKw7erXdf9" },
+    { "name": "LIC Parking", "zone": "inner", "maps_url": "https://maps.app.goo.gl/S927NxdWmCYdW2yN7" }
+  ]
+}

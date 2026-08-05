@@ -319,6 +319,43 @@ async def get_langar(context: RunContext) -> str:
 
 
 @function_tool
+async def get_palkhi(context: RunContext) -> str:
+    """Get palkhi tracking info and the Wari schedule to read aloud: the official
+    live-tracking website, the key dates, and — if asked — nodal-officer contact
+    numbers. Use for 'where is the palkhi', 'track the palkhi', 'wari dates', or
+    'nodal officer number'."""
+    from agent.seed import load, t
+    md = _meta(context)
+    lang = md.get("language") or "mr"
+    data = load("palkhis")
+    meta = data.get("meta", {})
+    sched = meta.get("schedule", {})
+    parts = [f"Live palkhi tracking during the yatra is on the Solapur police website "
+             f"{meta.get('tracker_url','')}."]
+    for k in ("period", "main_days", "entries"):
+        if sched.get(k):
+            parts.append(t(sched[k], lang))
+    return ("Read this palkhi/schedule info aloud, in the caller's language, and spell the "
+            "website slowly: " + " ".join(parts))
+
+
+@function_tool
+async def get_parking(context: RunContext) -> str:
+    """Get the names of the designated vehicle parking areas for the yatra town,
+    to read aloud. Use for 'where to park', 'parking'. Tell the caller to use the
+    app for turn-by-turn navigation to each lot."""
+    from agent.seed import load
+    md = _meta(context)
+    yatra = md.get("yatra") or "pandharpur"
+    lots = load("parking").get(yatra, [])
+    if not lots:
+        return "Tell the caller parking details aren't listed yet."
+    names = [l["name"] for l in lots[:8]]
+    return ("Read these parking areas aloud, in the caller's language, and say they can open the "
+            "app for GPS navigation to any of them: " + "; ".join(names))
+
+
+@function_tool
 async def get_facilities(context: RunContext, kind: str = "medical") -> str:
     """List route facilities of a given kind for the caller's yatra, to read
     aloud. Use for 'where are the medical posts / toilets / drinking water /
@@ -433,4 +470,5 @@ ALL_TOOLS = [
     raise_sos, register_for_yatra, file_grievance, get_weather, get_helplines,
     get_advisories, get_alerts, get_transport_rates, get_route_info, report_lost_found,
     get_darshan, get_accommodation, get_langar, get_facilities,
+    get_palkhi, get_parking,
 ]

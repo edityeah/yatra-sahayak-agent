@@ -16,6 +16,11 @@ _MAP_LINE = {
     "hi": "पूरा मार्ग मानचित्र यहाँ देखें",
     "en": "View the full route map",
 }
+_BUS_HEADER = {
+    "mr": "🚌 एसटी बस मार्ग (विभागनिहाय)",
+    "hi": "🚌 एसटी बस मार्ग (क्षेत्रवार)",
+    "en": "🚌 ST bus routes (by region)",
+}
 
 
 async def signage(state: YatraState) -> YatraState:
@@ -27,6 +32,14 @@ async def signage(state: YatraState) -> YatraState:
     lines = [_HEADER[lang], ""]
     for entry in entries:
         lines.append(f"- {t(entry['at'], lang)}: {t(entry['guidance'], lang)}")
+
+    # Bus-route guide (folded in here per the route activity).
+    bus = load("bus_routes").get(yatra, [])
+    if bus:
+        lines.append("")
+        lines.append(f"**{_BUS_HEADER[lang]}**")
+        for b in bus:
+            lines.append(f"- {t(b['region'], lang)}")
 
     map_url = f"{get_settings().PUBLIC_WEBVIEW_BASE}/yatri/map?yatra={yatra}"
     lines.append("")
