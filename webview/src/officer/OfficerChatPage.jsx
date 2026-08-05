@@ -97,7 +97,8 @@ function Inner() {
         </div>
       </div>
 
-      {isEmpty ? <QuickActivities activities={OFFICER_ACTIVITIES} onPick={pickActivity} onSeeAll={null} /> : null}
+      {/* Always visible so the modules stay one tap away, even mid-conversation. */}
+      <QuickActivities activities={OFFICER_ACTIVITIES} onPick={pickActivity} onSeeAll={null} max={OFFICER_ACTIVITIES.length} />
       <Composer disabled={busy} onSend={send} onPlus={() => setMenuOpen(true)} />
 
       <PersistentMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} onQuickActivities={() => setMenuOpen(false)} />
