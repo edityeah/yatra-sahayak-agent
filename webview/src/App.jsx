@@ -21,6 +21,7 @@ import OfficerAlerts from "./officer/OfficerAlerts.jsx";
 import OfficerSos from "./officer/OfficerSos.jsx";
 import OfficerRegistry from "./officer/OfficerRegistry.jsx";
 import OfficerHeatmap from "./officer/OfficerHeatmap.jsx";
+import OfficerActivitiesPage from "./officer/OfficerActivitiesPage.jsx";
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="/officer/sos" element={<OfficerSos />} />
         <Route path="/officer/registry" element={<OfficerRegistry />} />
         <Route path="/officer/heatmap" element={<OfficerHeatmap />} />
+        <Route path="/officer/activities" element={<OfficerActivitiesPage />} />
       </Routes>
     </LangProvider>
   );

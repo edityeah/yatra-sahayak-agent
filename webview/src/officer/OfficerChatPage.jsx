@@ -10,18 +10,11 @@ import PersistentMenuDrawer from "../components/chat/PersistentMenuDrawer.jsx";
 import { makeThreadStore } from "../store/threads.js";
 import OfficerGate, { useOfficerKey } from "./OfficerGate.jsx";
 import { officerAsk } from "./officerApi.js";
+import { OFFICER_ACTIVITIES } from "./officerActivities.js";
 
 // Officer chat threads live in their own namespace (separate from the yatri
 // agent's history).
 const store = makeThreadStore("ysahayak.officer");
-
-const OFFICER_ACTIVITIES = [
-  { id: "grievances", icon: "📝", label: { mr: "तक्रारी", hi: "शिकायतें", en: "Grievances" }, action: { type: "route", href: "/officer/grievances" } },
-  { id: "alerts", icon: "📢", label: { mr: "सूचना पाठवा", hi: "अलर्ट भेजें", en: "Alerts" }, action: { type: "route", href: "/officer/alerts" } },
-  { id: "sos", icon: "🆘", label: { mr: "SOS", hi: "SOS", en: "SOS feed" }, action: { type: "route", href: "/officer/sos" } },
-  { id: "heatmap", icon: "🗺️", label: { mr: "गर्दी नकाशा", hi: "भीड़ मानचित्र", en: "Crowd map" }, action: { type: "route", href: "/officer/heatmap" } },
-  { id: "registry", icon: "🧾", label: { mr: "नोंदणी व हरवले", hi: "पंजीकरण", en: "Registry & L&F" }, action: { type: "route", href: "/officer/registry" } },
-];
 const HELLO = { mr: "👮 नियंत्रण कक्ष. सारांश, SOS, तक्रारी, हरवले–सापडले विचारा किंवा यात्रेकरू शोधा — किंवा वरील मॉड्यूल उघडा.",
                 hi: "👮 नियंत्रण कक्ष। सारांश, SOS, शिकायतें, खोया–पाया पूछें या यात्री खोजें — या ऊपर के मॉड्यूल खोलें।",
                 en: "👮 Control room. Ask me for a summary, SOS, grievances, lost & found, or to find a pilgrim — or open a module above." };
@@ -101,7 +94,8 @@ function Inner() {
       <QuickActivities activities={OFFICER_ACTIVITIES} onPick={pickActivity} onSeeAll={null} max={OFFICER_ACTIVITIES.length} />
       <Composer disabled={busy} onSend={send} onPlus={() => setMenuOpen(true)} />
 
-      <PersistentMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} onQuickActivities={() => setMenuOpen(false)} />
+      <PersistentMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)}
+        onQuickActivities={() => { setMenuOpen(false); navigate("/officer/activities"); }} />
       <ThreadsDrawer open={threadsOpen} onClose={() => setThreadsOpen(false)} threads={threads} activeId={activeId}
         onPick={pickThread} onNewChat={newChat} onDelete={store.deleteThread} />
     </div>
