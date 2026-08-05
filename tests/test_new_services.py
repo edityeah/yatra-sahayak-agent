@@ -44,13 +44,14 @@ def test_accommodation_lists_tariffs():
     assert "Bhakta Niwas" in body and "night" in body
 
 
-def test_responses_end_with_tappable_followups():
-    """Each service closes with a 👉 follow-up line cross-linking to related
-    services, so the conversation keeps going (webview renders these as chips)."""
+def test_responses_end_with_text_followups_no_buttons():
+    """Each service closes with a PLAIN-TEXT follow-up suggestion (no [[choices]]
+    buttons — they don't render in SwiftChat) cross-linking to related services."""
     for node, needle in ((darshan, "Directions"), (accommodation, "Free food"),
                          (langar, "Nearest medical"), (amenity, "Helpline")):
         body = _reply(asyncio.run(node(_mk("hi"))))
-        assert "👉" in body and needle in body
+        assert "💬" in body and needle in body
+        assert "[[choices" not in body and "·" not in body
 
 
 def test_langar_nearest_when_location_shared():

@@ -1,11 +1,12 @@
 """Proactive follow-up suggestions appended to an activity reply so the agent
 always offers a relevant next step instead of ending the conversation. Rendered
-as tappable chips in the web chat (the webview parses the `👉` line) and as
-plain, readable text in SwiftChat / voice. Each phrase is written so it routes
-to the intended activity via the keyword router."""
+as PLAIN TEXT everywhere (no tappable buttons — those don't render in SwiftChat).
+Each phrase is written so, if the user types it, it routes to the intended
+activity via the keyword router."""
 from __future__ import annotations
 
-_LABEL = {"mr": "पुढे विचारा", "hi": "आगे पूछें", "en": "You can also ask"}
+_LABEL = {"mr": "पुढे तुम्ही विचारू शकता —", "hi": "आगे आप पूछ सकते हैं —", "en": "You can also ask about —"}
+_OR = {"mr": "किंवा", "hi": "या", "en": "or"}
 
 # intent → up to three follow-up prompts (trilingual), cross-linking services.
 _SUGGESTIONS = {
@@ -53,10 +54,14 @@ _SUGGESTIONS = {
 
 
 def followup_line(intent: str, lang: str) -> str:
-    """The trailing suggestion line, or '' if none for this intent. Format:
-    `👉 <label>: A · B · C` — the webview turns A/B/C into tappable chips."""
+    """The trailing suggestion sentence, or '' if none for this intent. Plain
+    prose (comma-joined, no buttons): `💬 You can also ask about — A, B or C.`"""
     lang = lang if lang in ("mr", "hi", "en") else "en"
     opts = _SUGGESTIONS.get(intent, {}).get(lang)
     if not opts:
         return ""
-    return f"\n\n👉 {_LABEL[lang]}: " + " · ".join(opts)
+    if len(opts) == 1:
+        joined = opts[0]
+    else:
+        joined = ", ".join(opts[:-1]) + f" {_OR[lang]} " + opts[-1]
+    return f"\n\n💬 {_LABEL[lang]} {joined}."

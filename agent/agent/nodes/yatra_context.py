@@ -16,18 +16,16 @@ _YATRA_MARKER_RE = re.compile(r"\[yatra:(pandharpur|kumbh)\]")
 _PANDHARPUR_RE = re.compile(r"pandharpur|wari|warkari|vitthal|palkhi|dehu|alandi|पंढरपूर|वारी|वारकरी|विठ्ठल|पालखी", re.IGNORECASE)
 _KUMBH_RE = re.compile(r"kumbh|simhastha|nashik|nasik|trimbak|godavari|सिंहस्थ|कुंभ|नाशिक|त्र्यंबक", re.IGNORECASE)
 
-# Tappable choice chips — the webview renders these as buttons and strips the
-# token; on SwiftChat they read as the two bold options in the text. Format:
-# [[choices:Label::value||Label::value]]
-_CHOICES = "[[choices:Pandharpur Wari::pandharpur||Simhastha Kumbh (Nashik)::kumbh]]"
-
-# Trilingual "which yatra?" ask, with the choice chips appended. The
-# [yatra-ask] marker (stripped before display) marks the ask deterministically.
+# Plain numbered options — NO tappable buttons (they don't render in SwiftChat).
+# The user replies with the number or the yatra name; both are parsed below.
 _YATRA_ASK = {
-    "mr": f"[yatra-ask]तुम्ही कोणत्या यात्रेला जात आहात? खालील पर्याय निवडा:\n\n{_CHOICES}",
-    "hi": f"[yatra-ask]आप किस यात्रा पर हैं? नीचे से चुनें:\n\n{_CHOICES}",
-    "en": f"[yatra-ask]Which yatra are you on? Pick one below:\n\n{_CHOICES}",
+    "mr": "[yatra-ask]तुम्ही कोणत्या यात्रेला जात आहात?\n\n**1.** पंढरपूर वारी\n**2.** सिंहस्थ कुंभ (नाशिक)\n\n(१ किंवा २ लिहा, किंवा यात्रेचे नाव सांगा)",
+    "hi": "[yatra-ask]आप किस यात्रा पर हैं?\n\n**1.** पंढरपुर वारी\n**2.** सिंहस्थ कुंभ (नासिक)\n\n(1 या 2 लिखें, या यात्रा का नाम बताएँ)",
+    "en": "[yatra-ask]Which yatra are you on?\n\n**1.** Pandharpur Wari\n**2.** Simhastha Kumbh (Nashik)\n\n(reply 1 or 2, or the yatra name)",
 }
+
+# Numbered reply → yatra (only meaningful while we're asking, i.e. no yatra set).
+_NUM_YATRA = {"1": "pandharpur", "2": "kumbh"}
 
 # Confirmation shown after a yatra is picked (bare selection turn).
 _YATRA_NAME = {
@@ -87,6 +85,17 @@ async def yatra_context(state: YatraState) -> YatraState:
         return {
             **state, "current_node": "yatra_context", "active_yatra": None,
             "messages": messages + [AIMessage(content=_YATRA_ASK[lang])],
+        }
+
+    # A bare "1" / "2" reply to the yatra ask (only when no yatra is set yet, so
+    # it can't be confused with the weather city-number picker).
+    numbered = _NUM_YATRA.get(last_text.strip())
+    if numbered and not reg_active and not origin_answer and not state.get("active_yatra"):
+        name = _YATRA_NAME[numbered][lang]
+        return {
+            **state, "current_node": "yatra_context", "active_yatra": numbered,
+            "just_selected_yatra": True,
+            "messages": messages + [AIMessage(content=_CONFIRM[lang].format(name=name))],
         }
 
     # Explicit mention in the latest turn wins (covers switching) — UNLESS a
