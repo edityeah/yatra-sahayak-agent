@@ -19,6 +19,7 @@ const OFFICER_ACTIVITIES = [
   { id: "grievances", icon: "📝", label: { mr: "तक्रारी", hi: "शिकायतें", en: "Grievances" }, action: { type: "route", href: "/officer/grievances" } },
   { id: "alerts", icon: "📢", label: { mr: "सूचना पाठवा", hi: "अलर्ट भेजें", en: "Alerts" }, action: { type: "route", href: "/officer/alerts" } },
   { id: "sos", icon: "🆘", label: { mr: "SOS", hi: "SOS", en: "SOS feed" }, action: { type: "route", href: "/officer/sos" } },
+  { id: "heatmap", icon: "🗺️", label: { mr: "गर्दी नकाशा", hi: "भीड़ मानचित्र", en: "Crowd map" }, action: { type: "route", href: "/officer/heatmap" } },
   { id: "registry", icon: "🧾", label: { mr: "नोंदणी व हरवले", hi: "पंजीकरण", en: "Registry & L&F" }, action: { type: "route", href: "/officer/registry" } },
 ];
 const HELLO = { mr: "👮 नियंत्रण कक्ष. सारांश, SOS, तक्रारी, हरवले–सापडले विचारा किंवा यात्रेकरू शोधा — किंवा वरील मॉड्यूल उघडा.",

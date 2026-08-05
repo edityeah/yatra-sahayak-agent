@@ -1,0 +1,19 @@
+{
+  "pandharpur": [
+    { "id": "PWK-diveghat", "name": { "mr": "दिवे घाट प्रवेश", "hi": "दिवे घाट प्रवेश", "en": "Dive Ghat entry" }, "lat": 18.4200, "lng": 73.9800, "capacity": 400 },
+    { "id": "PWK-saswad", "name": { "mr": "सासवड गेट", "hi": "सासवड गेट", "en": "Saswad gate" }, "lat": 18.3450, "lng": 74.0310, "capacity": 500 },
+    { "id": "PWK-jejuri", "name": { "mr": "जेजुरी थांबा", "hi": "जेजुरी पड़ाव", "en": "Jejuri halt" }, "lat": 18.2770, "lng": 74.1610, "capacity": 500 },
+    { "id": "PWK-lonand", "name": { "mr": "लोणंद थांबा", "hi": "लोणंद पड़ाव", "en": "Lonand halt" }, "lat": 18.0360, "lng": 74.1960, "capacity": 500 },
+    { "id": "PWK-wakhari", "name": { "mr": "वाखरी प्रवेश", "hi": "वाखरी प्रवेश", "en": "Wakhari entry" }, "lat": 17.7050, "lng": 75.3100, "capacity": 700 },
+    { "id": "PWK-chandrabhaga", "name": { "mr": "चंद्रभागा घाट", "hi": "चंद्रभागा घाट", "en": "Chandrabhaga Ghat" }, "lat": 17.6730, "lng": 75.3300, "capacity": 900 },
+    { "id": "PWK-temple", "name": { "mr": "विठ्ठल मंदिर रांग", "hi": "विट्ठल मंदिर कतार", "en": "Vitthal temple queue" }, "lat": 17.6790, "lng": 75.3330, "capacity": 800 },
+    { "id": "PWK-isbavi", "name": { "mr": "इसबावी प्रवेश", "hi": "इसबावी प्रवेश", "en": "Isbavi entry" }, "lat": 17.6600, "lng": 75.3200, "capacity": 600 }
+  ],
+  "kumbh": [
+    { "id": "KMB-ramkund", "name": { "mr": "रामकुंड घाट", "hi": "रामकुंड घाट", "en": "Ramkund Ghat" }, "lat": 19.9950, "lng": 73.7900, "capacity": 1000 },
+    { "id": "KMB-kushavarta", "name": { "mr": "कुशावर्त तीर्थ", "hi": "कुशावर्त तीर्थ", "en": "Kushavarta Teerth" }, "lat": 19.9320, "lng": 73.5290, "capacity": 700 },
+    { "id": "KMB-panchavati", "name": { "mr": "पंचवटी प्रवेश", "hi": "पंचवटी प्रवेश", "en": "Panchavati approach" }, "lat": 20.0070, "lng": 73.7920, "capacity": 800 },
+    { "id": "KMB-sadhugram", "name": { "mr": "साधुग्राम गेट", "hi": "साधुग्राम गेट", "en": "Sadhugram gate" }, "lat": 19.9900, "lng": 73.7750, "capacity": 700 },
+    { "id": "KMB-godavari", "name": { "mr": "गोदावरी घाट", "hi": "गोदावरी घाट", "en": "Godavari Ghat" }, "lat": 19.9960, "lng": 73.7910, "capacity": 900 }
+  ]
+}

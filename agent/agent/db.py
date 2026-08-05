@@ -126,6 +126,18 @@ CREATE TABLE IF NOT EXISTS sos_updates (
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS sos_updates_sos_idx ON sos_updates(sos_id, created_at);
+-- Pass-scan events at gates/halts/ghats. Aggregated into a live occupancy
+-- heatmap for the control room — a headcount per checkpoint per time window,
+-- with NO tracking of anyone between checkpoints (privacy-preserving crowd sense).
+CREATE TABLE IF NOT EXISTS checkpoint_scans (
+  id             BIGSERIAL PRIMARY KEY,
+  checkpoint_id  TEXT NOT NULL,
+  yatra          TEXT,
+  yatra_id       TEXT,
+  user_id        TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS checkpoint_scans_idx ON checkpoint_scans(checkpoint_id, created_at);
 """
 
 

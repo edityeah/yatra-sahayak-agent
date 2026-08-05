@@ -57,4 +57,10 @@ export async function officerAsk(text, key) {
 export const sosDetail = (id, key) => adminGet(`/api/sos/${id}`, key);
 export const sosUpdate = (id, key, body) => adminPost(`/api/sos/${id}/update`, key, body);
 
+// Live crowd occupancy (pass-scan headcounts per checkpoint) + SOS hotspots.
+export const getHeatmap = (key, yatra, window = 30) =>
+  adminGet(`/api/officer/heatmap?yatra=${yatra}&window=${window}`, key);
+export const simulateArrivals = (key, yatra) =>
+  adminPost("/api/officer/heatmap/simulate", key, { yatra });
+
 export const YATRA = { pandharpur: "Pandharpur Wari", kumbh: "Simhastha Kumbh" };

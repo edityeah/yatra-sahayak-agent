@@ -17,6 +17,7 @@ _USER_STATE: dict[str, dict] = {}
 _REGISTRATIONS: dict[str, dict] = {}   # yatra_id -> row
 _SOS: list[dict] = []
 _SOS_UPDATES: list[dict] = []          # incident timeline (audit trail per SOS)
+_SCANS: list[dict] = []                # pass-scan events at checkpoints (crowd sense)
 _LOSTFOUND: list[dict] = []            # lost & found reports
 _GRIEVANCES: list[dict] = []           # pilgrim grievances/complaints
 _ALERTS: list[dict] = []               # officer → pilgrim broadcast alerts
@@ -36,6 +37,7 @@ def reset() -> None:
     _REGISTRATIONS.clear()
     _SOS.clear()
     _SOS_UPDATES.clear()
+    _SCANS.clear()
     _LOSTFOUND.clear()
     _GRIEVANCES.clear()
     _ALERTS.clear()
@@ -483,6 +485,101 @@ async def sos_detail(sos_id: str) -> dict | None:
     if reporter is None and sos.get("user_id"):
         reporter = await get_registration_for_user(sos["user_id"])
     return {**sos, "reporter": reporter, "timeline": await list_sos_updates(sos_id)}
+
+
+# ── checkpoint scans → crowd occupancy heatmap ──────────────────────
+async def record_scan(checkpoint_id: str, *, yatra: str | None = None,
+                      yatra_id: str | None = None, user_id: str | None = None) -> None:
+    """Log one pass scan at a gate/halt/ghat. Aggregated into occupancy; we never
+    store where anyone is BETWEEN checkpoints."""
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO checkpoint_scans(checkpoint_id,yatra,yatra_id,user_id) "
+                    "VALUES(%s,%s,%s,%s)",
+                    (checkpoint_id, yatra, yatra_id, user_id))
+            await conn.commit()
+    else:
+        _SCANS.append({"checkpoint_id": checkpoint_id, "yatra": yatra,
+                       "yatra_id": yatra_id, "user_id": user_id,
+                       "created_at": datetime.now(timezone.utc)})
+
+
+def _load_checkpoints(yatra: str | None):
+    from agent.seed import load
+    try:
+        data = load("checkpoints")
+    except Exception:
+        return []
+    return data.get(yatra or "", []) if yatra else [c for v in data.values() for c in v]
+
+
+def _scan_status(load_pct: float) -> str:
+    if load_pct >= 1.0:
+        return "over"
+    if load_pct >= 0.7:
+        return "busy"
+    return "ok"
+
+
+async def checkpoint_occupancy(yatra: str | None = None, window_min: int = 30) -> dict:
+    """Live crowd picture for the control room: recent scan counts per checkpoint
+    vs its comfortable capacity (→ ok / busy / over), plus open-SOS hotspots
+    mapped to the nearest checkpoint. First-party, no GPS, no per-person tracking."""
+    from datetime import timedelta
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=window_min)
+    checkpoints = _load_checkpoints(yatra)
+
+    # Recent scan counts per checkpoint.
+    counts: dict[str, int] = {}
+    pool = await _pool()
+    if pool:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT checkpoint_id, COUNT(*) AS n FROM checkpoint_scans "
+                    "WHERE created_at >= %s GROUP BY checkpoint_id", (cutoff,))
+                for r in await cur.fetchall():
+                    counts[r["checkpoint_id"]] = r["n"]
+    else:
+        for s in _SCANS:
+            if s["created_at"] >= cutoff:
+                counts[s["checkpoint_id"]] = counts.get(s["checkpoint_id"], 0) + 1
+
+    # Open-SOS hotspots → nearest checkpoint (SOS carries coordinates).
+    open_sos = [s for s in await list_sos() if (s.get("status") or "open") != "resolved"]
+    incidents: dict[str, int] = {}
+    for s in open_sos:
+        if isinstance(s.get("lat"), (int, float)) and checkpoints:
+            nearest = min(checkpoints, key=lambda c: _haversine_km(s["lat"], s["lng"], c["lat"], c["lng"]))
+            incidents[nearest["id"]] = incidents.get(nearest["id"], 0) + 1
+
+    rows, alerts = [], []
+    for c in checkpoints:
+        cap = c.get("capacity") or 500
+        n = counts.get(c["id"], 0)
+        load_pct = round(n / cap, 2)
+        status = _scan_status(load_pct)
+        row = {**c, "count": n, "load": load_pct, "status": status,
+               "incidents": incidents.get(c["id"], 0)}
+        rows.append(row)
+        if status == "over":
+            alerts.append({"id": c["id"], "name": c["name"], "count": n, "capacity": cap})
+
+    lf = [x for x in await list_lost_found() if (x.get("status") or "open") != "reunited"]
+    grv = [x for x in await list_grievances() if (x.get("status") or "open") != "resolved"]
+    rows.sort(key=lambda r: r["load"], reverse=True)
+    return {
+        "window_min": window_min,
+        "generated_at": _now_iso(),
+        "checkpoints": rows,
+        "alerts": alerts,
+        "totals": {"scans": sum(counts.values()), "over": len(alerts),
+                   "open_sos": len(open_sos), "open_lostfound": len(lf),
+                   "open_grievances": len(grv)},
+    }
 
 
 async def officer_summary() -> dict:

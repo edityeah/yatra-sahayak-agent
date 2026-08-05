@@ -684,6 +684,45 @@ async def api_officer_summary(x_api_key: str | None = Header(default=None)):
     return await persistence.officer_summary()
 
 
+@app.post("/api/checkpoint/scan")
+async def api_checkpoint_scan(request: Request, x_api_key: str | None = Header(default=None)):
+    """A gate/halt scanner records a pass scan. Feeds the crowd-occupancy map."""
+    if not _auth_level(x_api_key):
+        raise HTTPException(status_code=401, detail="bad api key")
+    b = await request.json()
+    if not b.get("checkpoint_id"):
+        raise HTTPException(status_code=400, detail="checkpoint_id required")
+    await persistence.record_scan(
+        b["checkpoint_id"], yatra=b.get("yatra"),
+        yatra_id=b.get("yatra_id"), user_id=b.get("user_id"))
+    return {"ok": True}
+
+
+@app.get("/api/officer/heatmap")
+async def api_officer_heatmap(yatra: str | None = None, window: int = 30,
+                             x_api_key: str | None = Header(default=None)):
+    """Live crowd occupancy per checkpoint + open-SOS hotspots. ADMIN-gated."""
+    _require_admin(x_api_key)
+    return await persistence.checkpoint_occupancy(yatra, window_min=window)
+
+
+@app.post("/api/officer/heatmap/simulate")
+async def api_heatmap_simulate(request: Request, x_api_key: str | None = Header(default=None)):
+    """Demo only: generate a wave of pass scans across checkpoints so the crowd
+    map lights up (a real gate scanner would post to /api/checkpoint/scan)."""
+    _require_admin(x_api_key)
+    import random
+    b = await request.json()
+    yatra = b.get("yatra") or "pandharpur"
+    checkpoints = persistence._load_checkpoints(yatra)
+    for c in checkpoints:
+        # Random load 0.3–1.3× capacity so a few zones tip over.
+        n = int((c.get("capacity") or 500) * random.uniform(0.3, 1.3))
+        for _ in range(n):
+            await persistence.record_scan(c["id"], yatra=yatra)
+    return {"ok": True, "checkpoints": len(checkpoints)}
+
+
 async def _officer_stream(body: dict) -> AsyncIterator[dict]:
     from agent.officer import officer_reply
     reply = _clean(await officer_reply(_extract_user_text(body.get("message", {})))) or "🙏"
