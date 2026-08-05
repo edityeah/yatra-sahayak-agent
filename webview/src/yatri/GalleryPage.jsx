@@ -24,7 +24,7 @@ export default function GalleryPage() {
           <ImageIcon size={30} />
         </div>
         <p className="text-[14px] text-ink px-3">{t(BODY, language)}</p>
-        <a href={GALLERY_URL} target="_blank" rel="noopener"
+        <a href={GALLERY_URL}
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary text-white text-[14px] font-bold px-5 h-11 hover:bg-primary-700 transition">
           <ExternalLink size={16} /> {t(OPEN, language)}
         </a>

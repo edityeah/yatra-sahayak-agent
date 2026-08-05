@@ -8,9 +8,16 @@ from agent.seed import load, t
 from agent.nodes.activities.followups import followup_line
 
 _HEADER = {
-    "mr": "🚩 **पालखी थेट मागोवा व नियंत्रण अधिकारी**",
-    "hi": "🚩 **पालकी लाइव ट्रैकिंग व नोडल अधिकारी**",
-    "en": "🚩 **Palkhi live tracking & nodal officers**",
+    "mr": "🚩 **पालखी थेट मागोवा, वेळापत्रक व नियंत्रण अधिकारी**",
+    "hi": "🚩 **पालकी लाइव ट्रैकिंग, कार्यक्रम व नोडल अधिकारी**",
+    "en": "🚩 **Palkhi tracking, schedule & nodal officers**",
+}
+# The 11 sant palkhis start from ACROSS Maharashtra and converge on Pandharpur
+# through the Pune → Satara → Solapur corridor (hence two official trackers).
+_STATEWIDE = {
+    "mr": "महाराष्ट्रभरातून ११ संत पालख्या पंढरपूरकडे — पुणे → सातारा → सोलापूर मार्गे.",
+    "hi": "पूरे महाराष्ट्र से 11 संत पालकियाँ पंढरपुर की ओर — पुणे → सातारा → सोलापुर मार्ग से।",
+    "en": "11 sant palkhis from across Maharashtra converge on Pandharpur via the Pune → Satara → Solapur corridor.",
 }
 _TRACK = {
     "mr": "📍 थेट पालखी मागोवा (यात्राकाळात): {url}\n(पुणे टप्पा: {pune})",
@@ -18,9 +25,9 @@ _TRACK = {
     "en": "📍 Live palkhi tracking (during the yatra): {url}\n(Pune leg: {pune})",
 }
 _SCHED = {"mr": "🗓️ वेळापत्रक", "hi": "🗓️ कार्यक्रम", "en": "🗓️ Schedule"}
-_DIR = {"mr": "👮 पालखीनिहाय नियंत्रण अधिकारी (संपूर्ण महाराष्ट्र)",
-        "hi": "👮 पालकीवार नोडल अधिकारी (संपूर्ण महाराष्ट्र)",
-        "en": "👮 Nodal officers by palkhi (all Maharashtra)"}
+_DIR = {"mr": "👥 सर्व ११ पालख्या — प्रमुख व नियंत्रण अधिकारी (संपूर्ण महाराष्ट्र)",
+        "hi": "👥 सभी 11 पालकियाँ — प्रमुख व नोडल अधिकारी (संपूर्ण महाराष्ट्र)",
+        "en": "👥 All 11 palkhis — chiefs & nodal officers (across Maharashtra)"}
 _CHIEF = {"mr": "प्रमुख", "hi": "प्रमुख", "en": "Chief"}
 _NODAL = {"mr": "नियंत्रण अधिकारी", "hi": "नोडल अधिकारी", "en": "Nodal"}
 
@@ -45,7 +52,7 @@ async def palkhi(state: YatraState) -> YatraState:
     meta = data.get("meta", {})
     sched = meta.get("schedule", {})
 
-    lines = [_HEADER[lang], ""]
+    lines = [_HEADER[lang], "", _STATEWIDE[lang], ""]
     lines.append(_TRACK[lang].format(url=meta.get("tracker_url", ""),
                                      pune=meta.get("pune_tracker_url", "")))
     lines.append("")
@@ -58,10 +65,13 @@ async def palkhi(state: YatraState) -> YatraState:
         lines.append("")
         lines.append(f"**{_DIR[lang]}**")
         for p in data.get("palkhis", []):
-            lines.append(
-                f"**{p['name']}** ({p.get('origin','')}) — "
-                f"{_NODAL[lang]}: {p.get('nodal','')}, {p.get('nodal_ps','')} "
-                f"[{p.get('nodal_phone','')}](tel:{p.get('nodal_phone','')})")
+            lines.append(f"**{p['name']}** — {p.get('origin','')}")
+            if p.get("chief_phone"):
+                lines.append(f"  {_CHIEF[lang]}: {p.get('chief','')} "
+                             f"[{p['chief_phone']}](tel:{p['chief_phone']})")
+            if p.get("nodal_phone"):
+                lines.append(f"  {_NODAL[lang]}: {p.get('nodal','')}, {p.get('nodal_ps','')} "
+                             f"[{p['nodal_phone']}](tel:{p['nodal_phone']})")
 
     body = "\n".join(lines).rstrip() + followup_line("palkhi", lang)
     return {**state, "current_node": "palkhi",

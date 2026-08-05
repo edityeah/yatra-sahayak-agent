@@ -335,7 +335,7 @@ export default function ChatPage() {
       return;
     }
     if (a.action?.type === "link") {
-      window.open(a.action.href, "_blank", "noopener");
+      window.location.assign(a.action.href);   // open in-webview, not a new tab
       return;
     }
     send(a.action?.text || t(a.label, language));

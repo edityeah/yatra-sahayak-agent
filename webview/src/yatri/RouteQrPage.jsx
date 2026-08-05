@@ -38,7 +38,7 @@ export default function RouteQrPage() {
           {qr ? <img src={qr} alt="Route QR" className="w-56 h-56 mx-auto" /> :
             <div className="w-56 h-56 mx-auto flex items-center justify-center text-muted text-sm">…</div>}
         </div>
-        <a href={ROUTE_URL} target="_blank" rel="noopener"
+        <a href={ROUTE_URL}
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary text-white text-[14px] font-bold px-5 h-11 hover:bg-primary-700 transition">
           <ExternalLink size={16} /> {t(OPEN, language)}
         </a>

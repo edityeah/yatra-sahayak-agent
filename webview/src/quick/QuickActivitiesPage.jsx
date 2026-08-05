@@ -30,7 +30,7 @@ export default function QuickActivitiesPage() {
       return;
     }
     if (a.action?.type === "link") {
-      window.open(a.action.href, "_blank", "noopener");
+      window.location.assign(a.action.href);   // open in-webview, not a new tab
       return;
     }
     navigate(`/?q=${encodeURIComponent(a.action?.text || t(a.label, language))}`);
