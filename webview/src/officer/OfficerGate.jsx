@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, ArrowLeft, RefreshCw } from "lucide-react";
 import { useLang } from "../components/AppShell.jsx";
@@ -30,8 +30,22 @@ export const useOfficerKey = () => useContext(KeyCtx);
 export default function OfficerGate({ title, subtitle = "Officer dashboard", back = false, bare = false, onRefresh, children }) {
   const navigate = useNavigate();
   const [key, setK] = useState(() => getKey());
-  const [input, setInput] = useState("");
-  const [err, setErr] = useState(null);
+
+  // Auth comes from the URL, NOT a prompt: the officer bot opens its activities
+  // with ?officerKey=<ADMIN_API_KEY> (SwiftChat BotExtension config), so officers
+  // never see a login screen. We persist it and strip it from the address bar.
+  useEffect(() => {
+    if (key) return;
+    const params = new URLSearchParams(window.location.search);
+    const urlKey = (params.get("officerKey") || params.get("key") || "").trim();
+    if (!urlKey) return;
+    persistKey(urlKey);
+    setK(urlKey);
+    params.delete("officerKey");
+    params.delete("key");
+    const clean = window.location.pathname + (params.toString() ? `?${params}` : "") + window.location.hash;
+    window.history.replaceState({}, "", clean);
+  }, [key]);
 
   if (key && bare) {
     // Gate only — the child renders its own chrome (used by the chat landing).
@@ -39,22 +53,14 @@ export default function OfficerGate({ title, subtitle = "Officer dashboard", bac
   }
 
   if (!key) {
-    const unlock = () => {
-      const k = input.trim();
-      if (!k) return;
-      persistKey(k); setK(k); setErr(null);
-    };
+    // No prompt (that UX can't exist in SwiftChat). PII stays protected — the
+    // console only opens from the officer bot, which carries the key in the URL.
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center px-4 font-sans">
         <div className="w-full max-w-sm rounded-2xl border border-bdr bg-surface shadow-card p-6 text-center">
           <div className="w-12 h-12 rounded-full bg-primary-100 text-primary flex items-center justify-center mx-auto"><ShieldCheck size={22} /></div>
           <h1 className="mt-3 text-[17px] font-extrabold text-ink">Yatra Officer — Control Room</h1>
-          <p className="mt-1 text-[13px] text-muted">Officer access only. Enter your officer key.</p>
-          <input type="password" value={input} onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && unlock()} placeholder="Officer key"
-            className="mt-4 w-full h-11 rounded-xl border border-bdr bg-surface px-3 text-[14px] text-ink focus:border-primary outline-none" />
-          {err ? <p className="mt-2 text-[12.5px] text-red-600">{err}</p> : null}
-          <button onClick={unlock} className="mt-3 w-full h-11 rounded-full bg-primary text-white font-extrabold hover:bg-primary-700 transition">Unlock</button>
+          <p className="mt-2 text-[13px] text-muted">Officer access only. Open the Control Room from your officer bot.</p>
         </div>
       </div>
     );
